@@ -54,6 +54,14 @@ The page posts its content height to the parent whenever it changes, so the ifra
 
 Add `?demo` to the URL, or press **Try the demo**. Made-up players and bounties, statuses that move, no API calls. Good for the project page and for testing.
 
+## Which key works
+
+Torn offers Public Only, Minimal Access, Limited Access, Full Access and Custom keys. Any of the first four works. A Custom key only reads what was ticked when it was made, so it needs **User → Basic** and **Torn → Bounties**.
+
+Connect calls `GET /v2/key/info` first. It answers for any key, so the page can name the key type and stop a Custom key that's missing either selection before anything else runs.
+
+The key you registered on FFScouter is a Custom key built from FFScouter's own list (battle stats, attacks, profile and so on). Torn → Bounties isn't on it, so Torn refuses the bounty board with "access level too low". It belongs in the FFScouter field, with a Public Only key in the Torn field.
+
 ## Limits worth knowing
 
 - Torn allows 100 calls per minute per player, shared across every tool and script they run. The default pace is 60. It's adjustable from 20 to 90 under "Pace and live checks".
@@ -69,7 +77,7 @@ Add `?demo` to the URL, or press **Try the demo**. Made-up players and bounties,
 | Data sharing | Nobody. The Torn key goes only to api.torn.com, in a header. The FFScouter key (or the Torn key, if that field is empty) goes only to ffscouter.com. |
 | Purpose of use | Finding bounty targets and showing their live status. |
 | Key storage and sharing | Local storage, only if "Remember on this device" is ticked. Never sent to The Great Stag. Disconnect wipes it. |
-| Key access level | Public. |
+| Key access level | Public Only. A Custom key with User → Basic and Torn → Bounties also works. |
 
 ## Local preview
 

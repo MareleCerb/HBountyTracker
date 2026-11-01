@@ -344,16 +344,16 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
 
 <section class="connect" id="connect" aria-labelledby="keyTitle">
   <h2 id="keyTitle">Your Torn key</h2>
-  <p class="sub">A Public key is enough. <a href="https://www.torn.com/preferences.php#tab=api?step=addNewKey&amp;title=HBountyTracker&amp;type=1" target="_blank" rel="noopener">Create one in Torn</a>. It never leaves this browser except to talk to Torn and FFScouter.</p>
+  <p class="sub">A <b>Public Only</b> key is enough. Minimal, Limited and Full Access keys work too. A <b>Custom</b> key needs User → Basic and Torn → Bounties ticked: <a href="https://www.torn.com/preferences.php#tab=api?step=addNewKey&amp;title=HBountyTracker&amp;user=basic&amp;torn=bounties" target="_blank" rel="noopener">create one with just those</a>. Your key never leaves this browser except to talk to Torn and FFScouter.</p>
   <div class="krow">
     <label class="field" for="tornKey"><span>Torn API key</span>
       <span class="keywrap">
-        <input id="tornKey" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="16" placeholder="16 letters and numbers">
+        <input id="tornKey" type="password" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="16" placeholder="Public Only is enough">
         <button type="button" class="reveal" id="revealKey" aria-pressed="false" aria-label="Show key">Show</button>
       </span>
     </label>
     <label class="field" for="ffKey"><span>FFScouter key <em>optional</em></span>
-      <input id="ffKey" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="16" placeholder="Empty means use your Torn key">
+      <input id="ffKey" type="password" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="16" placeholder="Empty means use your Torn key">
     </label>
     <div class="kbtns">
       <button class="btn gold" id="connectBtn" type="button">Connect</button>
@@ -362,7 +362,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
   </div>
   <div class="kfoot">
     <label class="check"><input type="checkbox" id="remember" checked><span>Remember on this device</span></label>
-    <p class="hint">Fair fight needs a key you registered on <a href="https://ffscouter.com" target="_blank" rel="noopener">FFScouter</a>.</p>
+    <p class="hint">Fair fight needs the key you registered on <a href="https://ffscouter.com" target="_blank" rel="noopener">FFScouter</a>. That one is a Custom key without Torn → Bounties, so it goes in the FFScouter field, not the Torn one.</p>
   </div>
   <p class="msg" id="keyMsg" role="alert"></p>
   <details class="privacy">
@@ -372,7 +372,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
       <tr><th scope="row">Data sharing</th><td>Nobody. Your Torn key goes only to the Torn API. Your FFScouter key (or your Torn key, if that field is empty) goes only to FFScouter, to fetch fair fight.</td></tr>
       <tr><th scope="row">Purpose of use</th><td>Finding bounty targets and showing their live status.</td></tr>
       <tr><th scope="row">Key storage and sharing</th><td>Saved in this browser's local storage only if you tick "Remember on this device". Never sent to The Great Stag. Disconnect wipes it.</td></tr>
-      <tr><th scope="row">Key access level</th><td>Public.</td></tr>
+      <tr><th scope="row">Key access level</th><td>Public Only. A Custom key with User → Basic and Torn → Bounties also works.</td></tr>
     </table>
   </details>
 </section>
@@ -577,7 +577,7 @@ const TORN_MSG = {
   13: 'This key is disabled because the account was inactive.',
   14: 'This key hit its daily read limit.',
   15: 'Torn had a temporary error.',
-  16: "This key's access level is too low. Use a Public key or higher.",
+  16: "Torn says this key isn't allowed to read that.",
   17: 'Torn had a backend error.',
   18: 'This key is paused. Unpause it in your Torn settings.',
   24: 'The Torn API is closed for now.',
@@ -591,6 +591,7 @@ const savedF = store.get('filters', null);
 
 const S = {
   key: '', ffKey: '', demo: false, me: null,
+  keyType: '',                                // as Torn names it: Public Only, Minimal Access, Limited Access, Full Access, Custom
   ffState: 'off', ffNote: '',                 // off | checking | on | unregistered | error
   pace: clamp(Number(store.get('pace', 60)) || 60, 20, 90),
   live: store.get('live', true) !== false,
@@ -820,6 +821,22 @@ function loadFF() {
  *  Key handling
  * ------------------------------------------------------------------ */
 const KEY_RE = /^[A-Za-z0-9]{16}$/;
+const NEEDS = 'User → Basic and Torn → Bounties';
+const keyLabel = () => (S.keyType ? S.keyType + ' key' : 'key');
+
+// /key/info answers for any key, so it tells us what the key is before we ask it for anything.
+// Preset keys (Public Only and up) can read all public data. A Custom key can only read what was ticked.
+function keyCheck(j) {
+  const info = (j && j.info) || {}, access = info.access || {}, sel = info.selections || {};
+  const type = String(access.type || '');
+  const has = (cat, name) => Array.isArray(sel[cat]) && sel[cat].includes(name);
+  const missing = [];
+  if (type === 'Custom') {
+    if (!has('user', 'basic')) missing.push('User → Basic');
+    if (!has('torn', 'bounties')) missing.push('Torn → Bounties');
+  }
+  return { type, missing, looksFFS: type === 'Custom' && has('user', 'battlestats') };
+}
 
 function keyMsg(text, kind = 'error') {
   // Once connected the key form is gone, so key trouble shows up under the search instead.
@@ -836,13 +853,21 @@ async function connect(silent) {
   const btn = $('connectBtn');
   btn.disabled = true; btn.textContent = 'Connecting';
   keyMsg('');
-  S.key = key; S.ffKey = ffKey;
+  S.key = key; S.ffKey = ffKey; S.keyType = '';
   try {
-    const me = normProfile(await tornTry('/user/basic'));
+    const k = keyCheck(await tornTry('/key/info'));
+    S.keyType = k.type;
+    if (k.missing.length) {
+      throw new ApiError('torn', 16, `This is a Custom key and it doesn't have ${k.missing.join(' or ')} ticked, so it can't read the bounty board.`
+        + (k.looksFFS ? ' It looks like your FFScouter key: put that one in the FFScouter field, and use a Public Only key for Torn.' : ` Use a Public Only key, or a Custom key with ${NEEDS}.`));
+    }
+    let me;
+    try { me = normProfile(await tornTry('/user/basic')); }
+    catch (e) { if (e.code === 16) e.message = `Torn says this ${keyLabel()} can't read your basic profile.`; throw e; }
     if (!me.id) throw new ApiError('torn', -2, 'Torn did not return a player for this key.');
     S.me = me;
   } catch (e) {
-    S.key = ''; S.ffKey = ''; S.me = null;
+    S.key = ''; S.ffKey = ''; S.me = null; S.keyType = '';
     btn.disabled = false; btn.textContent = 'Connect';
     keyMsg(silent ? 'Your saved key did not work. ' + e.message : e.message);
     return;
@@ -874,7 +899,7 @@ async function checkFF() {
 
 function disconnect() {
   stop(true);
-  S.key = ''; S.ffKey = ''; S.me = null; S.ffState = 'off';
+  S.key = ''; S.ffKey = ''; S.me = null; S.ffState = 'off'; S.keyType = '';
   S.ff = new Map();
   store.del('key'); store.del('ffkey'); store.del('ff');
   renderKey();
@@ -890,12 +915,12 @@ function renderKey() {
   $('meName').innerHTML = S.demo
     ? 'Demo hunter<span class="tag">Demo</span>'
     : `<a href="https://www.torn.com/profiles.php?XID=${S.me.id}" target="_blank" rel="noopener">${esc(S.me.name)}</a> <span class="faint">[${S.me.id}]</span>`;
-  $('meFF').innerHTML = S.demo ? 'Made-up players. No API calls.' : {
-    off: 'Fair fight off',
-    checking: 'Checking FFScouter',
-    on: 'Fair fight on, from FFScouter',
-    unregistered: 'Fair fight off: key not on <a href="https://ffscouter.com" target="_blank" rel="noopener">FFScouter</a>',
-    error: 'Fair fight off: ' + esc(S.ffNote || 'FFScouter did not answer'),
+  $('meFF').innerHTML = S.demo ? 'Made-up players. No API calls.' : esc(keyLabel().replace(/^\w/, c => c.toUpperCase())) + ', ' + {
+    off: 'fair fight off',
+    checking: 'checking FFScouter',
+    on: 'fair fight on',
+    unregistered: 'fair fight off (key not on <a href="https://ffscouter.com" target="_blank" rel="noopener">FFScouter</a>)',
+    error: 'fair fight off (' + esc(S.ffNote || 'FFScouter did not answer') + ')',
   }[S.ffState];
   $('disconnectBtn').textContent = S.demo ? 'Leave the demo' : 'Disconnect';
 }
@@ -933,10 +958,20 @@ function leaveDemo(quiet) {
 /* ------------------------------------------------------------------ *
  *  The hunt
  * ------------------------------------------------------------------ */
-function say(text, kind) {
+function say(text, kind, offerKeyChange) {
   const el = $('huntMsg');
   el.textContent = text || '';
   el.className = 'msg' + (kind === 'error' ? ' error' : '');
+  if (offerKeyChange && !S.demo) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'link'; b.textContent = 'Change key';
+    b.addEventListener('click', () => {
+      disconnect();
+      keyMsg(`Paste a Public Only key, or a Custom key with ${NEEDS}.`, 'info');
+      $('tornKey').focus();
+    });
+    el.append(' ', b);
+  }
 }
 
 function readSpec() {
@@ -1062,9 +1097,14 @@ function stop(silent) {
 
 function halt(e, stepName) {
   stop(true);
-  const msg = e && e.message ? e.message : 'Something went wrong.';
+  let msg = e && e.message ? e.message : 'Something went wrong.';
   const keyProblem = e && e.src === 'torn' && FATAL.has(e.code);
-  say(msg + (keyProblem ? ' Everything is stopped until this is fixed.' : ''), 'error');
+  if (e && e.code === 16) {
+    // Say which read was refused and what kind of key asked, so the fix is obvious.
+    const what = stepName === 'list' ? 'the bounty board' : stepName === 'status' ? 'player status' : 'that';
+    msg = `Torn says this ${keyLabel()} can't read ${what}.` + (S.keyType === 'Custom' ? ` A Custom key needs ${NEEDS}.` : '');
+  }
+  say(msg + (keyProblem ? ' Everything is stopped until this is fixed.' : ''), 'error', keyProblem);
   if (stepName) setStep(stepName, 'error', 'stopped', 0);
 }
 
@@ -1742,6 +1782,7 @@ const Demo = (() => {
     reset() { board = null; people = new Map(); st = new Map(); seed = 20261101; },
     async torn(path, p) {
       await sleep(60 + rnd() * 140);
+      if (path === '/key/info') return { info: { access: { level: 1, type: 'Public Only' }, selections: {}, user: { id: 0 } } };
       if (path === '/user/basic') return { profile: { id: 0, name: 'Demo hunter', level: 42, status: okay() } };
       if (path === '/torn/bounties') {
         if (!board) build();
