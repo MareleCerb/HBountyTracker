@@ -2,17 +2,34 @@
 
 Finds Torn bounty targets you can hit right now. One static page, no build step, no server. Everything runs in the visitor's browser on their own API key.
 
-A Great Stag project.
+A freebie by [The Great Stag](https://www.thegreatstag.com). Open source, so anyone can check exactly what happens to their key.
 
 ## What it does
 
 1. **Bounty list.** Pulls the whole board from `GET /v2/torn/bounties`, 100 per page. Stacks multiple bounties on one head into a single row. Torn serves one shared snapshot, so if `bounties_timestamp` hasn't moved since the last search, the saved copy is reused and the sweep costs one call.
-2. **Your filters.** The board shows unfiltered while it loads, then snaps to the search limits (max level, min reward, max fair fight). Everything stays editable on the board.
-3. **Fair fight.** One FFScouter call per 205 targets (`/api/v1/get-stats`). Optional. Needs a key registered on ffscouter.com.
-4. **Live status.** One `GET /v2/user/{id}/basic` per target, in the board's current sort order. Timers (hospital, jail, bounty expiry) count down locally from the last call. With live checks on, ready targets get re-checked every 90 seconds, and anyone whose timer runs out gets checked again.
-5. **Out of hospital next.** The five matches leaving hospital soonest sit above the board with big countdowns.
+2. **Your filters.** The board shows unfiltered while it loads, then snaps to the search limits (max level, min reward, max fair fight). Everything stays editable on the board, plus name, level range and minimum account age.
+3. **Fair fight.** One FFScouter call per 205 targets (`/api/v1/get-stats`). Optional, and only runs if you give it the key you registered on ffscouter.com.
+4. **Live status.** One `GET /v2/user/{id}/profile` per target, in the board's current sort order. Timers (hospital, jail, protection, bounty expiry) count down locally from the last call. With live checks on, okay targets get re-checked every 90 seconds, and anyone whose timer runs out gets checked again.
+5. **Ready.** The five highest rewards you can hit right now.
+6. **Out of hospital next.** The five matches leaving hospital soonest, with big countdowns.
 
 Each row links to the target's profile and attack page. Nothing is automated on torn.com.
+
+## New player protection
+
+Torn protects every account for its first 14 days, and the protection ends the moment the account turns 14 days old. Other players can't attack it in that window, unless it joins a faction war. There's no level rule: it's purely account age.
+
+The status check uses the profile endpoint rather than basic because profile carries `age` and `signed_up` for the same single call. Protected targets get a teal "Protected" block counting down to sign-up plus 14 days, a "New player" tag, and no place in the Ready strip. The "Min account age" filter set to 14 hides them. If you're under 14 days yourself, other protected players older than a day count as fair game, which matches Torn's rule.
+
+The API doesn't say who is in a faction war, so a protected player who is fighting one still shows as protected.
+
+## Which key works
+
+A dedicated **Public Only** key. That's all the tool needs: `/key/info`, `/user/profile`, `/user/{id}/profile` and `/torn/bounties` are all public.
+
+Connect calls `GET /v2/key/info` first. It answers for any key, so the page can name the key type and stop a key that can't do the job before anything else runs. A Custom key would need **User → Profile** and **Torn → Bounties**.
+
+The key you registered on FFScouter is a Custom key built from FFScouter's own list (battle stats, attacks, profile and so on). Torn → Bounties isn't on it, so Torn refuses the bounty board with "access level too low". It belongs in the FFScouter field, with a Public Only key in the Torn field.
 
 ## Files
 
@@ -52,15 +69,7 @@ The page posts its content height to the parent whenever it changes, so the ifra
 
 ## Demo mode
 
-Add `?demo` to the URL, or press **Try the demo**. Made-up players and bounties, statuses that move, no API calls. Good for the project page and for testing.
-
-## Which key works
-
-Torn offers Public Only, Minimal Access, Limited Access, Full Access and Custom keys. Any of the first four works. A Custom key only reads what was ticked when it was made, so it needs **User → Basic** and **Torn → Bounties**.
-
-Connect calls `GET /v2/key/info` first. It answers for any key, so the page can name the key type and stop a Custom key that's missing either selection before anything else runs.
-
-The key you registered on FFScouter is a Custom key built from FFScouter's own list (battle stats, attacks, profile and so on). Torn → Bounties isn't on it, so Torn refuses the bounty board with "access level too low". It belongs in the FFScouter field, with a Public Only key in the Torn field.
+Add `?demo` to the URL, or press **Try the demo**. Made-up players and bounties, statuses that move, new accounts under protection, no API calls. Good for the project page and for testing.
 
 ## Limits worth knowing
 
@@ -74,10 +83,10 @@ The key you registered on FFScouter is a Custom key built from FFScouter's own l
 | | |
 | --- | --- |
 | Data storage | Only in the visitor's browser. Nothing on a server. |
-| Data sharing | Nobody. The Torn key goes only to api.torn.com, in a header. The FFScouter key (or the Torn key, if that field is empty) goes only to ffscouter.com. |
+| Data sharing | Nobody. The Torn key goes only to api.torn.com, in a header. The FFScouter key, if one is added, goes only to ffscouter.com. |
 | Purpose of use | Finding bounty targets and showing their live status. |
 | Key storage and sharing | Local storage, only if "Remember on this device" is ticked. Never sent to The Great Stag. Disconnect wipes it. |
-| Key access level | Public Only. A Custom key with User → Basic and Torn → Bounties also works. |
+| Key access level | Public Only. |
 
 ## Local preview
 

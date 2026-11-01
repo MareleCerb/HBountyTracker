@@ -25,6 +25,7 @@
   --status-ready:#5BC383;--status-ready-ink:#0B1A10;
   --status-hospital:#E5594F;--status-soon:#F0913A;
   --status-travel:#5DA4EA;--status-jail:#A98AE6;--status-federal:#8467D2;
+  --status-protected:#4CC3B5;
   --display:"Big Shoulders Display","Arial Narrow",sans-serif;
   --text:"Atkinson Hyperlegible Next",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
@@ -119,6 +120,9 @@ summary:hover{color:var(--bone)}
 /* Connect: the one real box on the page, because it is one thing. */
 .connect{margin-top:28px;padding:20px;border:1px solid var(--ash);border-radius:6px;background:var(--carbon)}
 @media(min-width:720px){.connect{padding:22px 24px}}
+.keynotes{margin:-6px 0 18px;padding:0 0 0 18px;display:grid;gap:4px;font-size:.92rem;color:var(--mist);max-width:84ch}
+.keynotes li::marker{color:var(--mist-faint)}
+.keynotes b{color:var(--bone-soft)}
 .krow{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
 .kbtns{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
 @media(min-width:860px){.krow{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) auto;align-items:end}}
@@ -177,8 +181,11 @@ input[type=range]{width:100%;max-width:420px;accent-color:var(--bone-dim);height
 .meta b{color:var(--bone);font-weight:700;font-variant-numeric:tabular-nums}
 .meta .ready b{color:var(--status-ready)}
 
-/* Out of hospital next */
+/* Ready, then out of hospital next */
 .soon{margin-top:38px}
+.ready-strip+.soon{margin-top:30px}
+.ready-strip .soon-t{color:var(--status-ready)}
+.soon-k{color:var(--mist-dim)}
 .soon-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-top:1px solid var(--ash);border-bottom:1px solid var(--ash)}
 .soon-list li{padding:14px 16px 16px;min-width:0}
 .soon-list li:first-child{padding-left:0}
@@ -215,7 +222,7 @@ input[type=range]{width:100%;max-width:420px;accent-color:var(--bone-dim);height
 .filters .field{font-size:.8rem}
 .freset{display:flex;align-items:flex-end;justify-content:flex-end;min-height:20px}
 @media(min-width:880px){
-  .filters{grid-template-columns:minmax(0,2fr) repeat(4,minmax(0,1fr)) minmax(0,1.7fr) auto}
+  .filters{grid-template-columns:minmax(0,1.7fr) repeat(5,minmax(0,1fr)) minmax(0,1.6fr) auto}
   .filters .q,.filters .sort,.filters .freset{grid-column:auto}
   .freset{min-height:44px;align-items:center}
 }
@@ -258,6 +265,8 @@ tbody.t:hover>tr.main{background:var(--obsidian-soft)}
 .sb.travel .st{font-size:1.05rem;color:var(--bone-dim)}
 .sb.jail{--c:var(--status-jail)}
 .sb.fed{--c:var(--status-federal)}
+.sb.prot{--c:var(--status-protected)}
+.newb{display:inline-block;margin-left:8px;font-size:.72rem;font-weight:700;color:var(--status-protected);border:1px solid color-mix(in srgb,var(--status-protected) 50%,transparent);border-radius:3px;padding:0 5px;vertical-align:1px;white-space:nowrap}
 .sb.other{--c:var(--mist-dim)}
 .sb.unchecked{background:transparent;border:1px dashed var(--ash-light);color:var(--mist-dim)}
 .sb.flip{animation:flip .42s cubic-bezier(.2,.7,.3,1)}
@@ -334,7 +343,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
 <header class="mast">
   <div class="brand">
     <h1>HBountyTracker</h1>
-    <span class="by">A freebie by <a href="https://thegreatstag.com" target="_blank" rel="noopener">TGS</a></span>
+    <span class="by">A freebie by <a href="https://www.thegreatstag.com" target="_blank" rel="noopener">TGS</a></span>
   </div>
   <div class="conn" id="conn" hidden>
     <div class="who"><span id="meName"></span><span id="meFF"></span></div>
@@ -344,16 +353,21 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
 
 <section class="connect" id="connect" aria-labelledby="keyTitle">
   <h2 id="keyTitle">Your Torn key</h2>
-  <p class="sub">A <b>Public Only</b> key is enough. Minimal, Limited and Full Access keys work too. A <b>Custom</b> key needs User → Basic and Torn → Bounties ticked: <a href="https://www.torn.com/preferences.php#tab=api?step=addNewKey&amp;title=HBountyTracker&amp;user=basic&amp;torn=bounties" target="_blank" rel="noopener">create one with just those</a>. Your key never leaves this browser except to talk to Torn and FFScouter.</p>
+  <p class="sub">HBountyTracker needs its own <b>Public Only</b> key. Make one in <a href="https://www.torn.com/preferences.php#tab=api" target="_blank" rel="noopener">Torn's API key settings</a>, pick Public Only, and name it HBountyTracker so you can spot it in your key log.</p>
+  <ul class="keynotes">
+    <li>Your <b>FFScouter key</b> is optional. It goes in its own field and adds fair fight estimates.</li>
+    <li>Don't use your FFScouter key as the Torn key. It's a Custom key that can't read the bounty board, so it won't work.</li>
+    <li>Both keys stay in this browser and only ever go to Torn and FFScouter. The tool is open source, so you can read every line that touches them on <a href="https://github.com/MareleCerb/HBountyTracker" target="_blank" rel="noopener">GitHub</a>.</li>
+  </ul>
   <div class="krow">
     <label class="field" for="tornKey"><span>Torn API key</span>
       <span class="keywrap">
-        <input id="tornKey" type="password" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="16" placeholder="Public Only is enough">
+        <input id="tornKey" type="password" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="16" placeholder="Your Public Only key">
         <button type="button" class="reveal" id="revealKey" aria-pressed="false" aria-label="Show key">Show</button>
       </span>
     </label>
     <label class="field" for="ffKey"><span>FFScouter key <em>optional</em></span>
-      <input id="ffKey" type="password" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="16" placeholder="Empty means use your Torn key">
+      <input id="ffKey" type="password" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="16" placeholder="The key you registered on FFScouter">
     </label>
     <div class="kbtns">
       <button class="btn gold" id="connectBtn" type="button">Connect</button>
@@ -362,17 +376,16 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
   </div>
   <div class="kfoot">
     <label class="check"><input type="checkbox" id="remember" checked><span>Remember on this device</span></label>
-    <p class="hint">Fair fight needs the key you registered on <a href="https://ffscouter.com" target="_blank" rel="noopener">FFScouter</a>. That one is a Custom key without Torn → Bounties, so it goes in the FFScouter field, not the Torn one.</p>
   </div>
   <p class="msg" id="keyMsg" role="alert"></p>
   <details class="privacy">
     <summary>How your key is used</summary>
     <table class="tos">
       <tr><th scope="row">Data storage</th><td>Only in your browser, on this device. Nothing is stored on a server.</td></tr>
-      <tr><th scope="row">Data sharing</th><td>Nobody. Your Torn key goes only to the Torn API. Your FFScouter key (or your Torn key, if that field is empty) goes only to FFScouter, to fetch fair fight.</td></tr>
+      <tr><th scope="row">Data sharing</th><td>Nobody. Your Torn key goes only to the Torn API. Your FFScouter key, if you add one, goes only to FFScouter, to fetch fair fight.</td></tr>
       <tr><th scope="row">Purpose of use</th><td>Finding bounty targets and showing their live status.</td></tr>
       <tr><th scope="row">Key storage and sharing</th><td>Saved in this browser's local storage only if you tick "Remember on this device". Never sent to The Great Stag. Disconnect wipes it.</td></tr>
-      <tr><th scope="row">Key access level</th><td>Public Only. A Custom key with User → Basic and Torn → Bounties also works.</td></tr>
+      <tr><th scope="row">Key access level</th><td>Public Only.</td></tr>
     </table>
   </details>
 </section>
@@ -396,7 +409,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
         <input id="pace" type="range" min="20" max="90" step="5" value="60"></label>
       <p class="hint" style="margin-top:-4px">Torn allows 100 a minute across every tool and script you run. Leave room for the rest.</p>
       <label class="check"><input type="checkbox" id="live" checked><span>Keep checking while this page is open</span></label>
-      <p class="hint" style="margin-top:-4px">Ready targets get re-checked every 90 seconds. Anyone whose timer runs out gets checked again. Re-checks pause while this tab is in the background.</p>
+      <p class="hint" style="margin-top:-4px">Okay targets get re-checked every 90 seconds. Anyone whose timer runs out gets checked again. Re-checks pause while this tab is in the background.</p>
     </div>
   </details>
   <p class="msg" id="huntMsg" role="status" aria-live="polite"></p>
@@ -416,6 +429,14 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
   </div>
 </section>
 
+<section class="soon ready-strip" id="ready" hidden aria-labelledby="readyTitle">
+  <div class="sec-head">
+    <h2 id="readyTitle">Ready</h2>
+    <p class="meta" id="readySub"></p>
+  </div>
+  <ol class="soon-list" id="readyList"></ol>
+</section>
+
 <section class="soon" id="soon" hidden aria-labelledby="soonTitle">
   <div class="sec-head">
     <h2 id="soonTitle">Out of hospital next</h2>
@@ -433,7 +454,8 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
   <p class="note" id="searchNote" hidden></p>
 
   <div class="chips" id="chips" role="group" aria-label="Show by status">
-    <button class="chip" type="button" data-s="ready" aria-pressed="false"><span class="sw" style="--c:var(--status-ready)" aria-hidden="true"></span>Ready <span class="c"></span></button>
+    <button class="chip" type="button" data-s="okay" aria-pressed="false"><span class="sw" style="--c:var(--status-ready)" aria-hidden="true"></span>Okay <span class="c"></span></button>
+    <button class="chip" type="button" data-s="protected" aria-pressed="false"><span class="sw" style="--c:var(--status-protected)" aria-hidden="true"></span>Protected <span class="c"></span></button>
     <button class="chip" type="button" data-s="hospital" aria-pressed="false"><span class="sw" style="--c:var(--status-hospital)" aria-hidden="true"></span>Hospital <span class="c"></span></button>
     <button class="chip" type="button" data-s="travel" aria-pressed="false"><span class="sw" style="--c:var(--status-travel)" aria-hidden="true"></span>Flying or abroad <span class="c"></span></button>
     <button class="chip" type="button" data-s="jail" aria-pressed="false"><span class="sw" style="--c:var(--status-jail)" aria-hidden="true"></span>Jail <span class="c"></span></button>
@@ -448,11 +470,12 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
     <label class="field" for="fLvlMax"><span>Level to</span><input id="fLvlMax" type="number" min="1" max="100" inputmode="numeric" placeholder="100"></label>
     <label class="field" for="fReward"><span>Min reward</span><input id="fReward" type="text" autocomplete="off" placeholder="Any"></label>
     <label class="field" for="fFF"><span>Max fair fight</span><input id="fFF" type="text" inputmode="decimal" autocomplete="off" placeholder="Any"></label>
+    <label class="field" for="fAge"><span>Min account age</span><input id="fAge" type="number" min="0" inputmode="numeric" placeholder="Days" title="14 or more hides new players under Torn's New Player Protection"></label>
     <label class="field sort" for="sortSel"><span>Sort by</span>
       <select id="sortSel">
         <option value="reward_desc">Highest reward</option>
         <option value="reward_asc">Lowest reward</option>
-        <option value="ready">Ready first</option>
+        <option value="ready">Okay first</option>
         <option value="level_asc">Lowest level</option>
         <option value="level_desc">Highest level</option>
         <option value="ff_asc">Lowest fair fight</option>
@@ -479,7 +502,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
 </section>
 
 <footer class="foot">
-  <p>Made by <a href="https://thegreatstag.com" target="_blank" rel="noopener">The Great Stag</a>. Data from the Torn API and FFScouter. Not affiliated with either.</p>
+  <p>Made by <a href="https://www.thegreatstag.com" target="_blank" rel="noopener">The Great Stag</a>. Open source on <a href="https://github.com/MareleCerb/HBountyTracker" target="_blank" rel="noopener">GitHub</a>. Data from the Torn API and FFScouter. Not affiliated with either.</p>
 </footer>
 </div>
 
@@ -562,6 +585,8 @@ const IDLE_RECHECK = 10 * 60e3;   // everything else
 const FF_BATCH = 205;             // FFScouter max targets per call
 const FF_TTL = 6 * 3600e3;
 const STATUS_TTL = 10 * 60e3;     // how long a saved status survives a reload
+const PROTECT_DAYS = 14;          // Torn's New Player Protection: an account's first 14 days
+const READY_SHOWN = 5;            // targets in the "Ready" strip
 const HOLD_MSG = 'Torn says too many requests. Your other tools share the same limit, so this waits 30 seconds.';
 const FATAL = new Set([1, 2, 8, 9, 10, 13, 14, 16, 18, 24]);
 const RETRY = new Set([-1, -2, 5, 15, 17]);
@@ -586,8 +611,9 @@ const TORN_MSG = {
 /* ------------------------------------------------------------------ *
  *  State
  * ------------------------------------------------------------------ */
-const blankFilters = () => ({ q: '', lvlMin: 0, lvlMax: 0, rewardMin: 0, ffMax: 0, states: new Set() });
+const blankFilters = () => ({ q: '', lvlMin: 0, lvlMax: 0, rewardMin: 0, ffMax: 0, ageMin: 0, states: new Set() });
 const savedF = store.get('filters', null);
+if (savedF && Array.isArray(savedF.states)) savedF.states = savedF.states.map(s => (s === 'ready' ? 'okay' : s));
 
 const S = {
   key: '', ffKey: '', demo: false, me: null,
@@ -675,7 +701,7 @@ async function ffs(path, params = {}) {
   ffLast = Date.now();
   if (S.demo) return Demo.ffs(path, params);
   const u = new URL('https://ffscouter.com/api/v1/' + path);
-  u.searchParams.set('key', S.ffKey || S.key);     // FFScouter only takes the key as a query param
+  u.searchParams.set('key', S.ffKey);              // FFScouter only takes the key as a query param
   for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
   let r, j;
   try { r = await fetch(u, { cache: 'no-store', referrerPolicy: 'no-referrer' }); }
@@ -690,7 +716,25 @@ async function ffs(path, params = {}) {
 
 function normProfile(j) {
   const p = (j && (j.profile ?? j)) || {};
-  return { id: Number(p.id ?? p.player_id) || 0, name: String(p.name ?? ''), level: Number(p.level) || 0, status: p.status || {} };
+  return {
+    id: Number(p.id ?? p.player_id) || 0, name: String(p.name ?? ''), level: Number(p.level) || 0, status: p.status || {},
+    age: p.age == null ? null : Number(p.age), signed: Number(p.signed_up) || 0,
+  };
+}
+
+// When New Player Protection ends: 14 days after sign-up, or from the age in days if Torn leaves sign-up out.
+function protectionEnd(p, at) {
+  if (p.age == null || p.age >= PROTECT_DAYS) return 0;
+  return p.signed ? p.signed + PROTECT_DAYS * 86400 : Math.floor(at / 1000) + (PROTECT_DAYS - p.age) * 86400;
+}
+
+// Protected accounts can't be hit by anyone outside protection. If you're under 14 days yourself,
+// you can hit other protected players once they're a day old. A faction war lifts protection too,
+// but the API doesn't say who is in one, so those still show as protected.
+function isProt(st) {
+  if (!st || !st.pe || st.pe <= nowS()) return false;
+  const meYoung = S.me && S.me.age != null && S.me.age < PROTECT_DAYS;
+  return !(meYoung && st.age >= 1);
 }
 
 /* ------------------------------------------------------------------ *
@@ -789,14 +833,14 @@ function saveStatusSoon() {
   statusSaveT = setTimeout(() => {
     statusSaveT = 0;
     const c = Date.now() - STATUS_TTL, rows = [];
-    for (const [id, s] of S.status) if (s.at > c && s.state !== 'Error') rows.push([id, s.state, s.until, s.desc, s.details, s.at]);
+    for (const [id, s] of S.status) if (s.at > c && s.state !== 'Error') rows.push([id, s.state, s.until, s.desc, s.details, s.at, s.age, s.pe]);
     store.set('status', rows);
   }, 5000);
 }
 function loadStatus() {
   const rows = store.get('status', []), c = Date.now() - STATUS_TTL;
   if (!Array.isArray(rows)) return;
-  for (const r of rows) if (r[5] > c) S.status.set(r[0], { state: r[1], until: r[2], desc: r[3], details: r[4], at: r[5] });
+  for (const r of rows) if (r[5] > c) S.status.set(r[0], { state: r[1], until: r[2], desc: r[3], details: r[4], at: r[5], age: r[6] ?? null, pe: r[7] || 0 });
 }
 
 let ffSaveT = 0;
@@ -821,7 +865,7 @@ function loadFF() {
  *  Key handling
  * ------------------------------------------------------------------ */
 const KEY_RE = /^[A-Za-z0-9]{16}$/;
-const NEEDS = 'User → Basic and Torn → Bounties';
+const NEEDS = 'User → Profile and Torn → Bounties';
 const keyLabel = () => (S.keyType ? S.keyType + ' key' : 'key');
 
 // /key/info answers for any key, so it tells us what the key is before we ask it for anything.
@@ -832,7 +876,7 @@ function keyCheck(j) {
   const has = (cat, name) => Array.isArray(sel[cat]) && sel[cat].includes(name);
   const missing = [];
   if (type === 'Custom') {
-    if (!has('user', 'basic')) missing.push('User → Basic');
+    if (!has('user', 'profile')) missing.push('User → Profile');
     if (!has('torn', 'bounties')) missing.push('Torn → Bounties');
   }
   return { type, missing, looksFFS: type === 'Custom' && has('user', 'battlestats') };
@@ -858,12 +902,12 @@ async function connect(silent) {
     const k = keyCheck(await tornTry('/key/info'));
     S.keyType = k.type;
     if (k.missing.length) {
-      throw new ApiError('torn', 16, `This is a Custom key and it doesn't have ${k.missing.join(' or ')} ticked, so it can't read the bounty board.`
-        + (k.looksFFS ? ' It looks like your FFScouter key: put that one in the FFScouter field, and use a Public Only key for Torn.' : ` Use a Public Only key, or a Custom key with ${NEEDS}.`));
+      throw new ApiError('torn', 16, `This is a Custom key without ${k.missing.join(' or ')}, so it can't read what this tool needs.`
+        + (k.looksFFS ? ' It looks like your FFScouter key: put that one in the FFScouter field, and make a Public Only key for Torn.' : ' Make a dedicated Public Only key instead.'));
     }
     let me;
-    try { me = normProfile(await tornTry('/user/basic')); }
-    catch (e) { if (e.code === 16) e.message = `Torn says this ${keyLabel()} can't read your basic profile.`; throw e; }
+    try { me = normProfile(await tornTry('/user/profile')); }
+    catch (e) { if (e.code === 16) e.message = `Torn says this ${keyLabel()} can't read your profile.`; throw e; }
     if (!me.id) throw new ApiError('torn', -2, 'Torn did not return a player for this key.');
     S.me = me;
   } catch (e) {
@@ -877,8 +921,8 @@ async function connect(silent) {
   store.set('remember', remember);
   $('tornKey').value = ''; $('ffKey').value = '';
   loadFF();
-  renderKey();
-  checkFF();
+  // Nothing goes to FFScouter unless you gave it a key of its own.
+  if (S.ffKey) checkFF(); else { S.ffState = 'off'; renderKey(); }
   if (!silent) say('Connected. Set your limits and start the hunt.');
   render();
 }
@@ -916,7 +960,7 @@ function renderKey() {
     ? 'Demo hunter<span class="tag">Demo</span>'
     : `<a href="https://www.torn.com/profiles.php?XID=${S.me.id}" target="_blank" rel="noopener">${esc(S.me.name)}</a> <span class="faint">[${S.me.id}]</span>`;
   $('meFF').innerHTML = S.demo ? 'Made-up players. No API calls.' : esc(keyLabel().replace(/^\w/, c => c.toUpperCase())) + ', ' + {
-    off: 'fair fight off',
+    off: 'fair fight off (no FFScouter key)',
     checking: 'checking FFScouter',
     on: 'fair fight on',
     unregistered: 'fair fight off (key not on <a href="https://ffscouter.com" target="_blank" rel="noopener">FFScouter</a>)',
@@ -931,7 +975,7 @@ function renderKey() {
 function enterDemo() {
   stop(true);
   S.demo = true; S.key = ''; S.ffKey = '';
-  S.me = { id: 0, name: 'Demo hunter', level: 42 };
+  S.me = { id: 0, name: 'Demo hunter', level: 42, age: 900 };
   S.targets = new Map(); S.status = new Map(); S.ff = new Map(); S.snap = 0; S.listCount = 0;
   S.phase = 'idle';
   Demo.reset();
@@ -967,7 +1011,7 @@ function say(text, kind, offerKeyChange) {
     b.type = 'button'; b.className = 'link'; b.textContent = 'Change key';
     b.addEventListener('click', () => {
       disconnect();
-      keyMsg(`Paste a Public Only key, or a Custom key with ${NEEDS}.`, 'info');
+      keyMsg('Paste a dedicated Public Only key.', 'info');
       $('tornKey').focus();
     });
     el.append(' ', b);
@@ -1153,7 +1197,8 @@ function nextTarget() {
     const st = S.status.get(t.id);
     if (!st) continue;
     let due;
-    switch (st.state) {
+    if (isProt(st)) due = st.at + IDLE_RECHECK * 3;   // can't be hit for days, so barely worth a call
+    else switch (st.state) {
       case 'Okay': due = st.at + OKAY_RECHECK; break;
       case 'Hospital': case 'Jail': case 'Federal':
         due = st.until && st.until <= ns ? Math.max(st.until * 1000, st.at + 5000) : st.at + IDLE_RECHECK; break;
@@ -1169,9 +1214,10 @@ async function checkStatus(id) {
   S.inflight.add(id);
   dirty();
   try {
-    const p = normProfile(await tornTry('/user/' + id + '/basic'));
-    const st = p.status || {};
-    setStatus(id, { state: String(st.state || 'Unknown'), until: Number(st.until) || 0, desc: plain(st.description), details: plain(st.details), at: Date.now() });
+    // Profile rather than basic: same single call, and it carries the account age for New Player Protection.
+    const p = normProfile(await tornTry('/user/' + id + '/profile'));
+    const st = p.status || {}, at = Date.now();
+    setStatus(id, { state: String(st.state || 'Unknown'), until: Number(st.until) || 0, desc: plain(st.description), details: plain(st.details), at, age: p.age, pe: protectionEnd(p, at) });
     const t = S.targets.get(id);
     if (t) {
       if (p.level) t.liveLevel = p.level;
@@ -1242,8 +1288,9 @@ async function scheduleFF() {
  * ------------------------------------------------------------------ */
 function bucket(st) {
   if (!st) return 'unchecked';
+  if (isProt(st)) return 'protected';
   switch (st.state) {
-    case 'Okay': return 'ready';
+    case 'Okay': return 'okay';
     case 'Hospital': return 'hospital';
     case 'Traveling': case 'Abroad': return 'travel';
     case 'Jail': case 'Federal': return 'jail';
@@ -1255,6 +1302,7 @@ const ffOf = (t, miss) => { const x = S.ff.get(t.id); return x && x.ff != null ?
 function outAt(t) {
   const st = S.status.get(t.id);
   if (!st) return FAR;
+  if (isProt(st)) return FAR - 0.5;
   if (st.state === 'Okay') return 0;
   if ((st.state === 'Hospital' || st.state === 'Jail' || st.state === 'Federal') && st.until) return st.until;
   if (st.state === 'Traveling' || st.state === 'Abroad') return FAR - 2;
@@ -1273,17 +1321,19 @@ const SORTS = {
 
 function computeView() {
   const f = S.f, q = f.q.trim().toLowerCase();
-  const counts = { ready: 0, hospital: 0, travel: 0, jail: 0, other: 0, unchecked: 0 };
+  const counts = { okay: 0, protected: 0, hospital: 0, travel: 0, jail: 0, other: 0, unchecked: 0 };
   const matched = [];
   for (const t of S.targets.values()) {
     if (!t.count) continue;
-    const lvl = lvlOf(t);
+    const lvl = lvlOf(t), st = S.status.get(t.id);
     if (q && !t.nameLc.includes(q) && String(t.id) !== q) continue;
     if (f.lvlMin && lvl < f.lvlMin) continue;
     if (f.lvlMax && lvl > f.lvlMax) continue;
     if (f.rewardMin && t.reward < f.rewardMin) continue;
     if (f.ffMax) { const x = S.ff.get(t.id); if (x && x.ff != null && x.ff > f.ffMax) continue; }
-    counts[bucket(S.status.get(t.id))]++;
+    // Age is only known once a target has been checked; until then it stays in.
+    if (f.ageMin && st && st.age != null && st.age < f.ageMin) continue;
+    counts[bucket(st)]++;
     matched.push(t);
   }
   matched.sort(SORTS[S.sort] || SORTS.reward_desc);
@@ -1318,13 +1368,18 @@ function statusHTML(st, busy) {
     `<span class="sb ${cls}">${spin}<span class="sl">${label}</span>${big ? `<b class="st"${until ? ` data-until="${until}" data-slots` : ''}>${until ? slots(big) : big}</b>` : ''}</span>`;
   if (!st) return block('unchecked', busy ? 'Checking' : 'Not checked');
   const ns = nowS(), left = st.until - ns;
+  if (isProt(st)) {
+    const also = { Hospital: ', in hospital too', Jail: ', in jail too', Federal: ', in federal jail too', Traveling: ', flying too', Abroad: ', abroad too' }[st.state] || '';
+    return block('prot', 'Protected', fmtLeft(st.pe - ns), st.pe)
+      + `<span class="why" title="Torn protects accounts for their first ${PROTECT_DAYS} days, unless they join a faction war. Ends about ${esc(fmtClock(st.pe))}.">New account, ${st.age} ${st.age === 1 ? 'day' : 'days'} old${also}</span>`;
+  }
   const why = st.details ? `<span class="why" title="${esc(st.details)}">${esc(st.details)}</span>` : '';
   // Red or purple while locked up, orange for the last few minutes and once the timer has run out.
   const timed = (cls, label) => left > 0
     ? block(left < SOON_SECS ? 'soon' : cls, label, fmtLeft(left), st.until) + why
     : block('soon', label, 'any moment') + why;
   switch (st.state) {
-    case 'Okay': return block('ready', 'Ready');
+    case 'Okay': return block('ready', 'Okay');
     case 'Hospital': return timed('hosp', 'Hospital');
     case 'Jail': return timed('jail', 'Jail');
     case 'Federal': return block('fed', 'Federal jail', left > 0 ? fmtLeft(left) : '', left > 0 ? st.until : 0);
@@ -1345,11 +1400,12 @@ function ffHTML(t) {
 }
 
 function rowHTML(t) {
-  const st = S.status.get(t.id), busy = S.inflight.has(t.id), ready = st && st.state === 'Okay', ns = nowS();
+  const st = S.status.get(t.id), busy = S.inflight.has(t.id), prot = isProt(st), ready = st && st.state === 'Okay' && !prot, ns = nowS();
   const open = S.open.has(t.id);
+  const tag = prot ? `<span class="newb" title="Under Torn's New Player Protection">New player</span>` : '';
   const ends = t.ends < FAR ? `<span class="ends" title="${esc(fmtClock(t.ends))}">${t.listings.length > 1 ? 'next ' : ''}ends in <span data-until="${t.ends}">${fmtLeft(t.ends - ns)}</span></span>` : '';
   let html = `<tr class="main">
-<td class="c-name"><a class="tname" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}</a><span class="tid">[${t.id}]</span></td>
+<td class="c-name"><a class="tname" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}</a>${tag}<span class="tid">[${t.id}]</span></td>
 <td class="c-lvl"><span class="lv"><span class="lvk">Level </span>${lvlOf(t)}</span></td>
 <td class="c-status">${statusHTML(st, busy)}</td>
 <td class="c-reward"><span class="money big" title="${fmtFull(t.reward)}">${fmtMoney(t.reward)}</span></td>
@@ -1372,7 +1428,7 @@ function rowHTML(t) {
 function sigOf(t) {
   const st = S.status.get(t.id), x = S.ff.get(t.id), ns = nowS();
   return [t.name, lvlOf(t), t.reward, t.count, t.ends < ns,
-    st ? st.at + st.state + (st.until > ns) + (st.until - ns < SOON_SECS) : '', x ? x.at : S.ffState,
+    st ? st.at + st.state + (st.until > ns) + (st.until - ns < SOON_SECS) + isProt(st) : '', x ? x.at : S.ffState,
     S.inflight.has(t.id), S.open.has(t.id)].join('|');
 }
 
@@ -1383,7 +1439,7 @@ const rowCache = new Map();   // id -> { el, sig, state }
 function paint(r, t) {
   const sig = sigOf(t);
   if (sig === r.sig) return;
-  const st = S.status.get(t.id), state = st ? st.state : '';
+  const st = S.status.get(t.id), state = st ? (isProt(st) ? 'Protected' : st.state) : '';
   r.el.innerHTML = rowHTML(t);
   r.el.classList.toggle('ready', state === 'Okay');
   if (r.state !== undefined && r.state !== state) {
@@ -1445,13 +1501,35 @@ function renderRows() {
   $('moreBtn').textContent = `Show ${fmtInt(Math.min(SHOW_STEP, left))} more (${fmtInt(left)} left)`;
 }
 
+// Ready: the highest rewards you can hit right now, protected new players left out.
+let readySig = '';
+function renderReady() {
+  const list = S.phase === 'idle' || S.phase === 'list' ? [] : S.matched.filter(t => bucket(S.status.get(t.id)) === 'okay');
+  list.sort((a, b) => b.reward - a.reward);
+  const top = list.slice(0, READY_SHOWN);
+  $('ready').hidden = !top.length;
+  if (!top.length) { readySig = ''; return; }
+  $('readySub').textContent = `${fmtInt(list.length)} of your matches are okay to hit`;
+  const sig = top.map(t => t.id + ':' + t.reward + ':' + (S.ff.get(t.id)?.at || 0)).join(',');
+  if (sig === readySig) return;
+  readySig = sig;
+  $('readyList').innerHTML = top.map(t => {
+    const x = S.ff.get(t.id), ff = x && x.ff != null ? `, FF ${x.ff.toFixed(2)}` : '';
+    return `<li>
+<span class="soon-t" title="${fmtFull(t.reward)}">${fmtMoney(t.reward)}</span>
+<a class="soon-n" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}</a>
+<span class="soon-m"><span class="soon-k">Lvl ${lvlOf(t)}${ff}</span><a href="${attackUrl(t.id)}" target="_blank" rel="noopener">Attack</a></span>
+</li>`;
+  }).join('');
+}
+
 let soonSig = '';
 function renderSoon() {
   const ns = nowS(), list = [];
   if (S.phase !== 'idle' && S.phase !== 'list') {
     for (const t of S.matched) {
       const st = S.status.get(t.id);
-      if (st && st.state === 'Hospital' && st.until) list.push([t, st]);
+      if (st && st.state === 'Hospital' && st.until && !isProt(st)) list.push([t, st]);
     }
   }
   list.sort((a, b) => a[1].until - b[1].until || b[0].reward - a[0].reward);
@@ -1475,7 +1553,7 @@ function renderSoon() {
 function renderHead() {
   const c = S.counts, n = S.matched.length, parts = [];
   if (S.targets.size) {
-    parts.push(`<span class="ready"><b>${fmtInt(c.ready || 0)}</b> ready</span>`);
+    parts.push(`<span class="ready"><b>${fmtInt(c.okay || 0)}</b> ready</span>`);
     parts.push(`<span><b>${fmtInt(n)}</b> of ${fmtInt(S.targets.size)} match</span>`);
     if (S.demo) parts.push('<span>made-up data</span>');
     else if (S.snap) parts.push(`<span>list from ${fmtAgo(S.snap * 1000)}</span>`);
@@ -1491,7 +1569,7 @@ function renderHead() {
     b.setAttribute('aria-pressed', S.f.states.has(b.dataset.s) ? 'true' : 'false');
     b.querySelector('.c').textContent = fmtInt(c[b.dataset.s] || 0);
   }
-  const active = (S.f.q ? 1 : 0) + (S.f.lvlMin ? 1 : 0) + (S.f.lvlMax ? 1 : 0) + (S.f.rewardMin ? 1 : 0) + (S.f.ffMax ? 1 : 0);
+  const active = (S.f.q ? 1 : 0) + (S.f.lvlMin ? 1 : 0) + (S.f.lvlMax ? 1 : 0) + (S.f.rewardMin ? 1 : 0) + (S.f.ffMax ? 1 : 0) + (S.f.ageMin ? 1 : 0);
   $('ftoggle').textContent = 'Filters and sort' + (active ? ` (${active} on)` : '');
   const key = S.sort.replace(/_(asc|desc)$/, '');
   for (const th of document.querySelectorAll('#thead th[data-col]')) {
@@ -1518,11 +1596,11 @@ function renderSteps() {
   if (S.ffState === 'checking') setStep('ff', 'active', 'checking your key', 0);
   else if (S.ffState === 'unregistered') setStep('ff', 'skip', 'off, key not on FFScouter', 0);
   else if (S.ffState === 'error') setStep('ff', 'error', 'off, FFScouter did not answer', 0);
-  else if (S.ffState === 'off') setStep('ff', 'skip', 'off', 0);
+  else if (S.ffState === 'off') setStep('ff', 'skip', 'off, no FFScouter key', 0);
 
   const m = S.matched;
   let checked = 0, ready = 0;
-  for (const t of m) { const st = S.status.get(t.id); if (st) { checked++; if (st.state === 'Okay') ready++; } }
+  for (const t of m) { const st = S.status.get(t.id); if (st) { checked++; if (bucket(st) === 'okay') ready++; } }
   const left = m.length - checked, ratio = m.length ? checked / m.length : 1;
   const tally = `${fmtInt(checked)} of ${fmtInt(m.length)} checked, ${fmtInt(ready)} ready`;
   let state, text;
@@ -1563,6 +1641,7 @@ function render() {
   computeView();
   if (S.targets.size || S.phase !== 'idle') $('board').hidden = false;
   renderHead();
+  renderReady();
   renderSoon();
   renderRows();
   renderSteps();
@@ -1591,8 +1670,9 @@ function syncFilters() {
   $('fLvlMax').value = S.f.lvlMax || '';
   $('fReward').value = S.f.rewardMin ? shortNum(S.f.rewardMin) : '';
   $('fFF').value = S.f.ffMax || '';
+  $('fAge').value = S.f.ageMin || '';
   $('sortSel').value = S.sort;
-  for (const id of ['fLvlMin', 'fLvlMax', 'fReward', 'fFF']) $(id).removeAttribute('aria-invalid');
+  for (const id of ['fLvlMin', 'fLvlMax', 'fReward', 'fFF', 'fAge']) $(id).removeAttribute('aria-invalid');
 }
 
 let saveFT = 0;
@@ -1606,6 +1686,7 @@ function readFilter(id) {
   let n = 0, bad = false;
   if (id === 'fReward') { n = parseMoney(v); bad = Number.isNaN(n); }
   else if (id === 'fFF') { n = v ? Number(v.replace(',', '.')) : 0; bad = !Number.isFinite(n) || (v && n < 1); }
+  else if (id === 'fAge') { n = v ? Number(v) : 0; bad = !Number.isFinite(n) || n < 0; }
   else { n = v ? Number(v) : 0; bad = !Number.isFinite(n) || n < 0 || n > 100; }
   el.setAttribute('aria-invalid', bad ? 'true' : 'false');
   return bad ? null : n;
@@ -1621,6 +1702,7 @@ function onFilterInput(e) {
     if (id === 'fLvlMax') S.f.lvlMax = Math.round(n);
     if (id === 'fReward') S.f.rewardMin = n;
     if (id === 'fFF') S.f.ffMax = n;
+    if (id === 'fAge') S.f.ageMin = Math.round(n);
   }
   S.shown = SHOW_STEP;
   saveFilters();
@@ -1668,7 +1750,7 @@ $('live').addEventListener('change', e => { S.live = e.target.checked; store.set
 $('pauseBtn').addEventListener('click', togglePause);
 $('refreshBtn').addEventListener('click', refreshList);
 
-for (const id of ['fQ', 'fLvlMin', 'fLvlMax', 'fReward', 'fFF']) $(id).addEventListener('input', onFilterInput);
+for (const id of ['fQ', 'fLvlMin', 'fLvlMax', 'fReward', 'fFF', 'fAge']) $(id).addEventListener('input', onFilterInput);
 $('sortSel').addEventListener('change', e => setSort(e.target.value));
 $('clearBtn').addEventListener('click', clearFilters);
 $('ftoggle').addEventListener('click', e => {
@@ -1739,7 +1821,9 @@ const Demo = (() => {
       if (people.has(id)) continue;
       const level = clamp(Math.round(1 + 99 * Math.pow(rnd(), 2.1)), 1, 100);
       const nm = name();
-      people.set(id, { name: nm, level });
+      // Plenty of low levels are brand new accounts, which is the whole point of the protection check.
+      const age = level <= 6 && rnd() < .4 ? Math.floor(rnd() * PROTECT_DAYS) : 20 + Math.floor(rnd() * 3000);
+      people.set(id, { name: nm, level, age, signed: now - age * 86400 - Math.floor(rnd() * 86400) });
       const n = rnd() < .72 ? 1 : rnd() < .7 ? 2 : 3 + Math.floor(rnd() * 3);
       for (let k = 0; k < n; k++) {
         const anon = rnd() < .3;
@@ -1783,17 +1867,17 @@ const Demo = (() => {
     async torn(path, p) {
       await sleep(60 + rnd() * 140);
       if (path === '/key/info') return { info: { access: { level: 1, type: 'Public Only' }, selections: {}, user: { id: 0 } } };
-      if (path === '/user/basic') return { profile: { id: 0, name: 'Demo hunter', level: 42, status: okay() } };
+      if (path === '/user/profile') return { profile: { id: 0, name: 'Demo hunter', level: 42, age: 900, status: okay() } };
       if (path === '/torn/bounties') {
         if (!board) build();
         const off = Number(p.offset) || 0, lim = Number(p.limit) || 100;
         return { bounties: board.list.slice(off, off + lim), bounties_timestamp: board.ts, _metadata: { total: board.list.length, links: { next: off + lim < board.list.length ? 'demo' : null, prev: null } } };
       }
-      const m = path.match(/^\/user\/(\d+)\/basic$/);
+      const m = path.match(/^\/user\/(\d+)\/profile$/);
       if (m) {
         const id = Number(m[1]), who = people.get(id);
         if (!who) throw new ApiError('torn', 6, TORN_MSG[6]);
-        return { profile: { id, name: who.name, level: who.level, status: next(id) } };
+        return { profile: { id, name: who.name, level: who.level, age: who.age, signed_up: who.signed, status: next(id) } };
       }
       throw new ApiError('torn', 4, 'Wrong fields.');
     },
