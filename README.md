@@ -10,6 +10,7 @@ A Great Stag project.
 2. **Your filters.** The board shows unfiltered while it loads, then snaps to the search limits (max level, min reward, max fair fight). Everything stays editable on the board.
 3. **Fair fight.** One FFScouter call per 205 targets (`/api/v1/get-stats`). Optional. Needs a key registered on ffscouter.com.
 4. **Live status.** One `GET /v2/user/{id}/basic` per target, in the board's current sort order. Timers (hospital, jail, bounty expiry) count down locally from the last call. With live checks on, ready targets get re-checked every 90 seconds, and anyone whose timer runs out gets checked again.
+5. **Out of hospital next.** The five matches leaving hospital soonest sit above the board with big countdowns.
 
 Each row links to the target's profile and attack page. Nothing is automated on torn.com.
 
