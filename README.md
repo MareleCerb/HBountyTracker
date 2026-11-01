@@ -38,40 +38,6 @@ The key you registered on FFScouter is a Custom key built from FFScouter's own l
 | `index.html` | The whole app: markup, styles, script. |
 | `_headers` | Cloudflare Pages security headers (CSP, framing, referrer). |
 
-## Where it lives
-
-| | |
-| --- | --- |
-| The tool | https://hbountytracker.marelecerb.workers.dev, a Cloudflare Worker serving this repo as static assets. No build step. |
-| The project page | https://www.thegreatstag.com/projects/hbountytracker, a Webflow page that embeds the tool in an iframe. |
-
-Cloudflare applies `_headers` on the Worker too, so the CSP, framing and referrer rules hold there.
-
-If the tool ever moves to a subdomain of thegreatstag.com, the iframe becomes same-site with the Webflow page. That matters for Safari, which partitions storage in cross-site iframes, so "Remember on this device" and the cached board are less reliable on workers.dev there.
-
-## Show it on Webflow
-
-This sits in a Code Embed element in the tracker section of the project page. If the host changes, update `src` and `ORIGIN` together.
-
-```html
-<iframe id="hbt-frame" src="https://hbountytracker.marelecerb.workers.dev/" title="HBountyTracker, a free Torn bounty tracker"
-  style="display:block;width:100%;height:1100px;border:0;background:#0D0D0D"></iframe>
-<script>
-(function () {
-  var ORIGIN = 'https://hbountytracker.marelecerb.workers.dev';
-  var frame = document.getElementById('hbt-frame');
-  window.addEventListener('message', function (e) {
-    if (e.origin !== ORIGIN || !e.data || e.data.type !== 'hbt:height') return;
-    frame.style.height = e.data.height + 'px';
-  });
-})();
-</script>
-```
-
-The tool posts its content height to the parent whenever it changes, so the iframe grows and shrinks with the board and never shows an inner scrollbar.
-
-`_headers` only allows framing from thegreatstag.com, www.thegreatstag.com and `*.webflow.io` (staging). If the site lives somewhere else, add that origin to `frame-ancestors`.
-
 ## Demo mode
 
 Add `?demo` to the URL, or press **Try the demo**. Made-up players and bounties, statuses that move, new accounts under protection, no API calls. Good for the project page and for testing.
@@ -92,13 +58,3 @@ Add `?demo` to the URL, or press **Try the demo**. Made-up players and bounties,
 | Purpose of use | Finding bounty targets and showing their live status. |
 | Key storage and sharing | Local storage, only if "Remember on this device" is ticked. Never sent to The Great Stag. Disconnect wipes it. |
 | Key access level | Public Only. |
-
-## Local preview
-
-Any static server works:
-
-```bash
-python -m http.server 8766
-```
-
-Then open http://localhost:8766/?demo
