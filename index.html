@@ -261,6 +261,7 @@ tbody.t:hover>tr.main{background:var(--obsidian-soft)}
 .sb.ready .sl{font:800 1.45rem/1 var(--display)}
 .sb.fresh{--c:var(--status-ready);box-shadow:inset 0 0 0 1px var(--status-ready)}
 .hitq{margin-left:10px;color:var(--gold-light);font-weight:700}
+.newb.hitb{color:var(--gold-light);border-color:color-mix(in srgb,var(--gold) 50%,transparent)}
 .sb.hosp{--c:var(--status-hospital)}
 .sb.soon{--c:var(--status-soon)}
 .sb.travel{--c:var(--status-travel)}
@@ -463,6 +464,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
     <button class="chip" type="button" data-s="jail" aria-pressed="false"><span class="sw" style="--c:var(--status-jail)" aria-hidden="true"></span>Jail <span class="c"></span></button>
     <button class="chip" type="button" data-s="other" aria-pressed="false"><span class="sw" style="--c:var(--mist-dim)" aria-hidden="true"></span>Other <span class="c"></span></button>
     <button class="chip" type="button" data-s="unchecked" aria-pressed="false"><span class="sw ring" aria-hidden="true"></span>Not checked <span class="c"></span></button>
+    <button class="chip" type="button" data-s="hit" aria-pressed="false"><span class="sw" style="--c:var(--gold)" aria-hidden="true"></span>Hit <span class="c"></span></button>
   </div>
 
   <button class="btn ghost sm ftoggle" id="ftoggle" type="button" aria-expanded="false" aria-controls="filters">Filters and sort</button>
@@ -878,7 +880,22 @@ function setStatus(id, s) { S.status.set(id, s); }
 const isFresh = st => !!(st && st.state === 'Hospital' && st.until && st.until <= nowS() && st.until + FRESH_MS / 1000 > nowS() && !isProt(st));
 function saveHits() { if (!S.demo) store.set('hit', [...S.hit]); }
 // The hover freeze holds rows still so links don't jump; a hit should leave at once, so it skips the freeze.
-function markHit(id) { S.hit.set(id, Date.now()); S.clicked.delete(id); saveHits(); if (S.hover) S.freezeAt = 1; render(); }
+function markHit(id) {
+  S.hit.set(id, Date.now()); S.clicked.delete(id); saveHits();
+  if (S.hover) S.freezeAt = 1;
+  // One check a few seconds later picks up the new hospital timer, so Fresh can fire on time.
+  setTimeout(() => { if (S.hit.has(id) && S.phase === 'hunting') checkNow(id); }, 5000);
+  render();
+}
+// A hit loses its tag once that target leaves hospital after the hit, the moment it turns Fresh.
+function clearFreshHits() {
+  let changed = false;
+  for (const [id, at] of S.hit) {
+    const st = S.status.get(id);
+    if (isFresh(st) && st.until * 1000 > at) { S.hit.delete(id); changed = true; }
+  }
+  if (changed) saveHits();
+}
 function unhitAll() { S.hit.clear(); saveHits(); render(); }
 // A hit stays hidden until its bounty is gone from Torn's board.
 function pruneHits() {
@@ -1386,12 +1403,11 @@ const SORTS = {
 
 function computeView() {
   const f = S.f, q = f.q.trim().toLowerCase();
-  const counts = { okay: 0, protected: 0, hospital: 0, travel: 0, jail: 0, other: 0, unchecked: 0 };
+  const counts = { okay: 0, protected: 0, hospital: 0, travel: 0, jail: 0, other: 0, unchecked: 0, hit: 0 };
   const matched = [];
   let hitHidden = 0;
   for (const t of S.targets.values()) {
     if (!t.count) continue;
-    if (S.hit.has(t.id)) { hitHidden++; continue; }
     const lvl = lvlOf(t), st = S.status.get(t.id);
     if (q && !t.nameLc.includes(q) && String(t.id) !== q) continue;
     if (f.lvlMin && lvl < f.lvlMin) continue;
@@ -1400,14 +1416,17 @@ function computeView() {
     if (f.ffMax) { const x = S.ff.get(t.id); if (x && x.ff != null && x.ff > f.ffMax) continue; }
     // Age is only known once a target has been checked; until then it stays in.
     if (f.ageMin && st && st.age != null && st.age < f.ageMin) continue;
-    counts[bucket(st)]++;
+    // Hits stay in matched so they keep getting checked; that's how the tag clears when they turn Fresh.
+    if (S.hit.has(t.id)) { counts.hit++; hitHidden++; } else counts[bucket(st)]++;
     matched.push(t);
   }
   matched.sort(SORTS[S.sort] || SORTS.reward_desc);
   S.matched = matched;
   S.counts = counts;
   S.hitHidden = hitHidden;
-  S.view = f.states.size ? matched.filter(t => f.states.has(bucket(S.status.get(t.id)))) : matched;
+  // Hit targets only show when the Hit chip is on. Everyone else follows their status chip.
+  const want = t => S.hit.has(t.id) ? f.states.has('hit') : (!f.states.size || f.states.has(bucket(S.status.get(t.id))));
+  S.view = f.states.size || hitHidden ? matched.filter(want) : matched;
 }
 
 /* ------------------------------------------------------------------ *
@@ -1474,7 +1493,8 @@ function ffHTML(t) {
 function rowHTML(t) {
   const st = S.status.get(t.id), busy = S.inflight.has(t.id), prot = isProt(st), ready = (st && st.state === 'Okay' && !prot) || isFresh(st), ns = nowS();
   const open = S.open.has(t.id);
-  const tag = prot ? `<span class="newb" title="Under Torn's New Player Protection">New player</span>` : '';
+  const tag = (prot ? `<span class="newb" title="Under Torn's New Player Protection">New player</span>` : '')
+    + (S.hit.has(t.id) ? '<span class="newb hitb" title="You marked this target hit. Clears when they leave hospital.">Hit</span>' : '');
   const ends = t.ends < FAR ? `<span class="ends" title="${esc(fmtClock(t.ends))}">${t.listings.length > 1 ? 'next ' : ''}ends in <span data-until="${t.ends}">${fmtLeft(t.ends - ns)}</span></span>` : '';
   let html = `<tr class="main">
 <td class="c-name"><a class="tname" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}</a>${tag}<span class="tid">[${t.id}]</span></td>
@@ -1501,7 +1521,7 @@ function sigOf(t) {
   const st = S.status.get(t.id), x = S.ff.get(t.id), ns = nowS();
   return [t.name, lvlOf(t), t.reward, t.count, t.ends < ns,
     st ? st.at + st.state + (st.until > ns) + (st.until - ns < SOON_SECS) + (st.until + FRESH_MS / 1000 > ns) + isProt(st) : '', x ? x.at : S.ffState,
-    S.inflight.has(t.id), S.open.has(t.id), S.clicked.has(t.id)].join('|');
+    S.inflight.has(t.id), S.open.has(t.id), S.clicked.has(t.id), S.hit.has(t.id)].join('|');
 }
 
 const rowCache = new Map();   // id -> { el, sig, state }
@@ -1576,7 +1596,7 @@ function renderRows() {
 // Ready: the highest rewards you can hit right now, protected new players left out.
 let readySig = '';
 function renderReady() {
-  const list = S.phase === 'idle' || S.phase === 'list' ? [] : S.matched.filter(t => bucket(S.status.get(t.id)) === 'okay');
+  const list = S.phase === 'idle' || S.phase === 'list' ? [] : S.matched.filter(t => !S.hit.has(t.id) && bucket(S.status.get(t.id)) === 'okay');
   list.sort((a, b) => b.reward - a.reward);
   const top = list.slice(0, READY_SHOWN);
   $('ready').hidden = !top.length;
@@ -1600,6 +1620,7 @@ function renderSoon() {
   const ns = nowS(), list = [];
   if (S.phase !== 'idle' && S.phase !== 'list') {
     for (const t of S.matched) {
+      if (S.hit.has(t.id)) continue;
       const st = S.status.get(t.id);
       if (st && st.state === 'Hospital' && st.until && !isProt(st)) list.push([t, st]);
     }
@@ -1627,7 +1648,7 @@ function renderHead() {
   if (S.targets.size) {
     parts.push(`<span class="ready"><b>${fmtInt(c.okay || 0)}</b> ready</span>`);
     parts.push(`<span><b>${fmtInt(n)}</b> of ${fmtInt(S.targets.size)} match</span>`);
-    if (S.hitHidden) parts.push(`<span>${fmtInt(S.hitHidden)} marked hit, hidden <button class="link" type="button" data-act="unhit">Bring back</button></span>`);
+    if (S.hitHidden) parts.push(`<span>${fmtInt(S.hitHidden)} marked hit${S.f.states.has('hit') ? '' : ', hidden'} <button class="link" type="button" data-act="unhit">Bring back</button></span>`);
     if (S.demo) parts.push('<span>made-up data</span>');
     else if (S.snap) parts.push(`<span>list from ${fmtAgo(S.snap * 1000)}</span>`);
   }
@@ -1673,7 +1694,7 @@ function renderSteps() {
 
   const m = S.matched;
   let checked = 0, ready = 0;
-  for (const t of m) { const st = S.status.get(t.id); if (st) { checked++; if (bucket(st) === 'okay') ready++; } }
+  for (const t of m) { const st = S.status.get(t.id); if (st) { checked++; if (bucket(st) === 'okay' && !S.hit.has(t.id)) ready++; } }
   const left = m.length - checked, ratio = m.length ? checked / m.length : 1;
   const tally = `${fmtInt(checked)} of ${fmtInt(m.length)} checked, ${fmtInt(ready)} ready`;
   let state, text;
@@ -1711,6 +1732,7 @@ function dirty() { if (!renderT) renderT = setTimeout(() => { renderT = 0; rende
 
 function render() {
   pruneExpired(nowS());
+  clearFreshHits();
   computeView();
   if (S.targets.size || S.phase !== 'idle') $('board').hidden = false;
   renderHead();

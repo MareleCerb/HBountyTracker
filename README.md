@@ -13,7 +13,7 @@ A freebie by [The Great Stag](https://www.thegreatstag.com). Open source, so any
 5. **Ready.** The five highest rewards you can hit right now.
 6. **Out of hospital next.** The five matches leaving hospital soonest, with big countdowns.
 
-Each row links to the target's profile and attack page. Once you open Attack, a **Hit?** button appears. Press it and the target is hidden until its bounty leaves Torn's board. "Bring back" in the board header unhides them. Nothing is automated on torn.com.
+Each row links to the target's profile and attack page. Once you open Attack, a **Hit?** button appears. Press it and the target gets a Hit tag and drops off the board. The **Hit** chip shows them again. The tag clears by itself the moment that target leaves hospital and turns Fresh, or when its bounty leaves Torn's board. "Bring back" in the board header clears every tag. Nothing is automated on torn.com.
 
 ## New player protection
 
