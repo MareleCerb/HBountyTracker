@@ -502,7 +502,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
 </section>
 
 <footer class="foot">
-  <p>Made by <a href="https://www.thegreatstag.com" target="_blank" rel="noopener">The Great Stag</a>. Open source on <a href="https://github.com/MareleCerb/HBountyTracker" target="_blank" rel="noopener">GitHub</a>. Data from the Torn API and FFScouter. Not affiliated with either.</p>
+  <p>Made by <a href="https://www.thegreatstag.com" target="_blank" rel="noopener">The Great Stag</a>. Open source (MIT) on <a href="https://github.com/MareleCerb/HBountyTracker" target="_blank" rel="noopener">GitHub</a>. Data from the Torn API and FFScouter. Not affiliated with either.</p>
 </footer>
 </div>
 
@@ -1347,7 +1347,7 @@ function computeView() {
  * ------------------------------------------------------------------ */
 const ICON_RECHECK = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9"/><path d="M13.5 2.5v3h-3"/></svg>';
 const profileUrl = id => 'https://www.torn.com/profiles.php?XID=' + id;
-const attackUrl = id => 'https://www.torn.com/loader.php?sid=attack&amp;user2ID=' + id;
+const attackUrl = id => 'https://www.torn.com/page.php?sid=attack&amp;user2ID=' + id;
 
 // "Traveling to Japan" -> "to Japan", "Returning to Torn from Japan" -> "back from Japan", "In Japan" -> "in Japan"
 function place(desc) {

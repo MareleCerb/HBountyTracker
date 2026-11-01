@@ -58,3 +58,7 @@ Add `?demo` to the URL, or press **Try the demo**. Made-up players and bounties,
 | Purpose of use | Finding bounty targets and showing their live status. |
 | Key storage and sharing | Local storage, only if "Remember on this device" is ticked. Never sent to The Great Stag. Disconnect wipes it. |
 | Key access level | Public Only. |
+
+## License
+
+MIT. Open Source - TGS 2026. See [LICENSE](LICENSE).
