@@ -259,6 +259,8 @@ tbody.t:hover>tr.main{background:var(--obsidian-soft)}
 .st i,.soon-t i{display:inline-block;width:.4em;text-align:center;font-style:normal}
 .sb.ready{background:var(--status-ready);color:var(--status-ready-ink)}
 .sb.ready .sl{font:800 1.45rem/1 var(--display)}
+.sb.fresh{--c:var(--status-ready);box-shadow:inset 0 0 0 1px var(--status-ready)}
+.hitq{margin-left:10px;color:var(--gold-light);font-weight:700}
 .sb.hosp{--c:var(--status-hospital)}
 .sb.soon{--c:var(--status-soon)}
 .sb.travel{--c:var(--status-travel)}
@@ -578,7 +580,8 @@ const PAGE_SIZE = 100;            // Torn hard cap per bounty page
 const MAX_PAGES = 150;            // ~65 pages normally, headroom for war spikes
 const SHOW_STEP = 50;             // rows added per "Show more"
 const SOON_SECS = 180;            // hospital or jail turns "almost out" for the last 3 minutes
-const SOON_SHOWN = 5;             // targets in the "out of hospital next" strip
+const FRESH_MS = 10e3;            // just out of hospital: shown as Fresh, re-checked when this runs out
+const SOON_SHOWN = 5;            // targets in the "out of hospital next" strip
 const OKAY_RECHECK = 90e3;        // ready targets
 const TRAVEL_RECHECK = 5 * 60e3;
 const IDLE_RECHECK = 10 * 60e3;   // everything else
@@ -631,25 +634,71 @@ const S = {
   phase: 'idle',                              // idle | list | hunting | paused | stopped
   runId: 0, sweepRun: 0, pumping: false, searchNote: '',
   hover: false, freezeAt: 0,
+  clicked: new Set(),                         // Attack opened this session, so offer "Hit?"
+  hit: new Map(store.get('hit', [])),         // id -> when it was marked hit. Hidden until its bounty leaves the board
+  hitHidden: 0,
 };
 
 /* ------------------------------------------------------------------ *
  *  Pacing. One gate for every Torn call, so the sweep, the status
  *  loop and manual re-checks can never stack up past the limit.
  * ------------------------------------------------------------------ */
+// Torn counts 100 calls a minute per player, across every key, tab and tool. So the
+// call log is shared between tabs and survives a reload: a reload or a second tab
+// can't start a fresh minute while Torn is still counting the last one.
 const Pacer = {
   last: 0, hold: 0, log: [],
+  WINDOW: 60000, MARGIN: 1000,                // a second of slack for clock drift with Torn
   gap() { return S.demo ? 110 : Math.ceil(60000 / S.pace); },
-  wait() { return Math.max(this.last + this.gap() - Date.now(), this.hold - Date.now(), 0); },
-  async ready() { let w; while ((w = this.wait()) > 0) await sleep(Math.min(w, 500)); },
-  async take() {
-    // The check and the claim run in the same tick, so two waiters can't both win.
-    while (this.wait() > 0) await sleep(Math.min(this.wait(), 500));
+  sync() {
+    if (S.demo) return;
+    const c = Date.now() - this.WINDOW - this.MARGIN;
+    const shared = store.get('pacer', null);
+    const theirs = shared && Array.isArray(shared.log) ? shared.log.filter(Number.isFinite) : [];
+    this.log = [...new Set([...this.log, ...theirs])].filter(t => t > c).sort((a, b) => a - b);
+    if (this.log.length) this.last = Math.max(this.last, this.log[this.log.length - 1]);
+    if (shared && Number(shared.hold) > this.hold) this.hold = Number(shared.hold);
+  },
+  save() { if (!S.demo) store.set('pacer', { log: this.log, hold: this.hold }); },
+  wait() {
+    const now = Date.now();
+    let w = Math.max(this.last + this.gap() - now, this.hold - now, 0);
+    if (!S.demo) {
+      // Hard cap: never more than S.pace calls in any rolling minute, whatever the spacing says.
+      const inWin = this.log.filter(t => t > now - this.WINDOW - this.MARGIN);
+      if (inWin.length >= S.pace) w = Math.max(w, inWin[inWin.length - S.pace] + this.WINDOW + this.MARGIN - now);
+    }
+    return w;
+  },
+  async ready() { let w; this.sync(); while ((w = this.wait()) > 0) { await sleep(Math.min(w, 500)); this.sync(); } },
+  claim() {
     this.last = Date.now();
     this.log.push(this.last);
     if (this.log.length > 240) this.log.splice(0, this.log.length - 240);
+    this.save();
   },
-  recent() { const c = Date.now() - 60000; return this.log.filter(t => t > c).length; },
+  async take() {
+    for (;;) {
+      await this.ready();
+      // A browser-wide lock makes the last check and the claim one step, across every tab.
+      if (!S.demo && navigator.locks) {
+        const won = await navigator.locks.request('hbt-pacer', () => {
+          this.sync();
+          if (this.wait() > 0) return false;
+          this.claim();
+          return true;
+        });
+        if (won) return;
+      } else {
+        // No lock support: the check and the claim run in the same tick, so two waiters in this tab can't both win.
+        if (this.wait() > 0) continue;
+        this.claim();
+        return;
+      }
+    }
+  },
+  pause(ms) { this.hold = Math.max(this.hold, Date.now() + ms); this.save(); },
+  recent() { this.sync(); const c = Date.now() - 60000; return this.log.filter(t => t > c).length; },
 };
 
 /* ------------------------------------------------------------------ *
@@ -684,7 +733,7 @@ async function tornTry(path, params) {
     catch (e) {
       if (!RETRY.has(e.code) || i >= 3) throw e;
       if (e.code === 5) {
-        Pacer.hold = Date.now() + 30000;
+        Pacer.pause(30000);
         say(HOLD_MSG);
         setTimeout(() => { if ($('huntMsg').textContent === HOLD_MSG) say(''); }, 31000);
       } else {
@@ -826,6 +875,17 @@ function loadBoard() {
 }
 
 function setStatus(id, s) { S.status.set(id, s); }
+const isFresh = st => !!(st && st.state === 'Hospital' && st.until && st.until <= nowS() && st.until + FRESH_MS / 1000 > nowS() && !isProt(st));
+function saveHits() { if (!S.demo) store.set('hit', [...S.hit]); }
+// The hover freeze holds rows still so links don't jump; a hit should leave at once, so it skips the freeze.
+function markHit(id) { S.hit.set(id, Date.now()); S.clicked.delete(id); saveHits(); if (S.hover) S.freezeAt = 1; render(); }
+function unhitAll() { S.hit.clear(); saveHits(); render(); }
+// A hit stays hidden until its bounty is gone from Torn's board.
+function pruneHits() {
+  let changed = false;
+  for (const id of S.hit.keys()) { const t = S.targets.get(id); if (!t || !t.count) { S.hit.delete(id); changed = true; } }
+  if (changed) saveHits();
+}
 
 let statusSaveT = 0;
 function saveStatusSoon() {
@@ -1109,6 +1169,7 @@ async function sweep(force, run, progressive) {
     if (!progressive) apply();
     S.snap = snap || Math.floor(nowS());
     S.fetchedAt = Date.now();
+    pruneHits();
     saveBoard();
     setStep('list', 'done', listLine(), 1);
     return true;
@@ -1200,7 +1261,10 @@ function nextTarget() {
     if (isProt(st)) due = st.at + IDLE_RECHECK * 3;   // can't be hit for days, so barely worth a call
     else switch (st.state) {
       case 'Okay': due = st.at + OKAY_RECHECK; break;
-      case 'Hospital': case 'Jail': case 'Federal':
+      case 'Hospital':
+        // Out of hospital: Fresh for 10 seconds, then one check. Most get hit again in that window.
+        due = st.until && st.until <= ns ? Math.max(st.until * 1000 + FRESH_MS, st.at + 5000) : st.at + IDLE_RECHECK; break;
+      case 'Jail': case 'Federal':
         due = st.until && st.until <= ns ? Math.max(st.until * 1000, st.at + 5000) : st.at + IDLE_RECHECK; break;
       case 'Traveling': case 'Abroad': due = st.at + TRAVEL_RECHECK; break;
       default: due = st.at + IDLE_RECHECK;
@@ -1215,7 +1279,8 @@ async function checkStatus(id) {
   dirty();
   try {
     // Profile rather than basic: same single call, and it carries the account age for New Player Protection.
-    const p = normProfile(await tornTry('/user/' + id + '/profile'));
+    // timestamp busts Torn's 30-second service cache, so a re-check never gets an old answer back.
+    const p = normProfile(await tornTry('/user/' + id + '/profile', { timestamp: Math.floor(Date.now() / 1000) }));
     const st = p.status || {}, at = Date.now();
     setStatus(id, { state: String(st.state || 'Unknown'), until: Number(st.until) || 0, desc: plain(st.description), details: plain(st.details), at, age: p.age, pe: protectionEnd(p, at) });
     const t = S.targets.get(id);
@@ -1323,8 +1388,10 @@ function computeView() {
   const f = S.f, q = f.q.trim().toLowerCase();
   const counts = { okay: 0, protected: 0, hospital: 0, travel: 0, jail: 0, other: 0, unchecked: 0 };
   const matched = [];
+  let hitHidden = 0;
   for (const t of S.targets.values()) {
     if (!t.count) continue;
+    if (S.hit.has(t.id)) { hitHidden++; continue; }
     const lvl = lvlOf(t), st = S.status.get(t.id);
     if (q && !t.nameLc.includes(q) && String(t.id) !== q) continue;
     if (f.lvlMin && lvl < f.lvlMin) continue;
@@ -1339,6 +1406,7 @@ function computeView() {
   matched.sort(SORTS[S.sort] || SORTS.reward_desc);
   S.matched = matched;
   S.counts = counts;
+  S.hitHidden = hitHidden;
   S.view = f.states.size ? matched.filter(t => f.states.has(bucket(S.status.get(t.id)))) : matched;
 }
 
@@ -1348,6 +1416,8 @@ function computeView() {
 const ICON_RECHECK = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9"/><path d="M13.5 2.5v3h-3"/></svg>';
 const profileUrl = id => 'https://www.torn.com/profiles.php?XID=' + id;
 const attackUrl = id => 'https://www.torn.com/page.php?sid=attack&amp;user2ID=' + id;
+const attackA = (t, cls) => `<a${cls ? ` class="${cls}"` : ''} href="${attackUrl(t.id)}" target="_blank" rel="noopener" data-act="attack" data-id="${t.id}">Attack</a>`;
+const hitBtn = (t, cls) => S.clicked.has(t.id) ? `<button class="${cls}" type="button" data-act="hit" data-id="${t.id}" title="Hide ${esc(t.name)} from the board">Hit?</button>` : '';
 
 // "Traveling to Japan" -> "to Japan", "Returning to Torn from Japan" -> "back from Japan", "In Japan" -> "in Japan"
 function place(desc) {
@@ -1380,7 +1450,9 @@ function statusHTML(st, busy) {
     : block('soon', label, 'any moment') + why;
   switch (st.state) {
     case 'Okay': return block('ready', 'Okay');
-    case 'Hospital': return timed('hosp', 'Hospital');
+    case 'Hospital':
+      if (st.until && left <= 0 && left > -FRESH_MS / 1000) return block('fresh', 'Fresh', fmtLeft(st.until + FRESH_MS / 1000 - ns), st.until + FRESH_MS / 1000) + why;
+      return timed('hosp', 'Hospital');
     case 'Jail': return timed('jail', 'Jail');
     case 'Federal': return block('fed', 'Federal jail', left > 0 ? fmtLeft(left) : '', left > 0 ? st.until : 0);
     case 'Traveling': return block('travel', 'Flying', esc(place(st.desc) || 'in the air'));
@@ -1400,7 +1472,7 @@ function ffHTML(t) {
 }
 
 function rowHTML(t) {
-  const st = S.status.get(t.id), busy = S.inflight.has(t.id), prot = isProt(st), ready = st && st.state === 'Okay' && !prot, ns = nowS();
+  const st = S.status.get(t.id), busy = S.inflight.has(t.id), prot = isProt(st), ready = (st && st.state === 'Okay' && !prot) || isFresh(st), ns = nowS();
   const open = S.open.has(t.id);
   const tag = prot ? `<span class="newb" title="Under Torn's New Player Protection">New player</span>` : '';
   const ends = t.ends < FAR ? `<span class="ends" title="${esc(fmtClock(t.ends))}">${t.listings.length > 1 ? 'next ' : ''}ends in <span data-until="${t.ends}">${fmtLeft(t.ends - ns)}</span></span>` : '';
@@ -1412,7 +1484,7 @@ function rowHTML(t) {
 <td class="c-bounties"><button class="bt" type="button" data-act="toggle" aria-expanded="${open}"><span class="lab">${t.count} ${t.count === 1 ? 'bounty' : 'bounties'}</span><span class="car" aria-hidden="true"></span></button>${ends}</td>
 <td class="c-ff">${ffHTML(t)}</td>
 <td class="c-checked">${st ? `<span data-ago="${st.at}">${fmtAgo(st.at)}</span>` : '<span class="faint">not yet</span>'}<button class="icon" type="button" data-act="check" title="Check now" aria-label="Check ${esc(t.name)} now">${ICON_RECHECK}</button></td>
-<td class="c-act"><a class="btn sm ghost" href="${profileUrl(t.id)}" target="_blank" rel="noopener">Profile</a><a class="btn sm ${ready ? 'go' : 'ghost'}" href="${attackUrl(t.id)}" target="_blank" rel="noopener">Attack</a></td>
+<td class="c-act"><a class="btn sm ghost" href="${profileUrl(t.id)}" target="_blank" rel="noopener">Profile</a>${attackA(t, 'btn sm ' + (ready ? 'go' : 'ghost'))}${hitBtn(t, 'btn sm gold')}</td>
 </tr>`;
   if (open) {
     html += `<tr class="detail"><td colspan="8"><ul class="listings">${t.listings.map(l => `<li>
@@ -1428,8 +1500,8 @@ function rowHTML(t) {
 function sigOf(t) {
   const st = S.status.get(t.id), x = S.ff.get(t.id), ns = nowS();
   return [t.name, lvlOf(t), t.reward, t.count, t.ends < ns,
-    st ? st.at + st.state + (st.until > ns) + (st.until - ns < SOON_SECS) + isProt(st) : '', x ? x.at : S.ffState,
-    S.inflight.has(t.id), S.open.has(t.id)].join('|');
+    st ? st.at + st.state + (st.until > ns) + (st.until - ns < SOON_SECS) + (st.until + FRESH_MS / 1000 > ns) + isProt(st) : '', x ? x.at : S.ffState,
+    S.inflight.has(t.id), S.open.has(t.id), S.clicked.has(t.id)].join('|');
 }
 
 const rowCache = new Map();   // id -> { el, sig, state }
@@ -1510,7 +1582,7 @@ function renderReady() {
   $('ready').hidden = !top.length;
   if (!top.length) { readySig = ''; return; }
   $('readySub').textContent = `${fmtInt(list.length)} of your matches are okay to hit`;
-  const sig = top.map(t => t.id + ':' + t.reward + ':' + (S.ff.get(t.id)?.at || 0)).join(',');
+  const sig = top.map(t => t.id + ':' + t.reward + ':' + (S.ff.get(t.id)?.at || 0) + ':' + S.clicked.has(t.id)).join(',');
   if (sig === readySig) return;
   readySig = sig;
   $('readyList').innerHTML = top.map(t => {
@@ -1518,7 +1590,7 @@ function renderReady() {
     return `<li>
 <span class="soon-t" title="${fmtFull(t.reward)}">${fmtMoney(t.reward)}</span>
 <a class="soon-n" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}</a>
-<span class="soon-m"><span class="soon-k">Lvl ${lvlOf(t)}${ff}</span><a href="${attackUrl(t.id)}" target="_blank" rel="noopener">Attack</a></span>
+<span class="soon-m"><span class="soon-k">Lvl ${lvlOf(t)}${ff}</span><span>${attackA(t)}${hitBtn(t, 'link hitq')}</span></span>
 </li>`;
   }).join('');
 }
@@ -1537,15 +1609,15 @@ function renderSoon() {
   $('soon').hidden = !top.length;
   if (!top.length) { soonSig = ''; return; }
   $('soonSub').textContent = `${fmtInt(list.length)} of your matches are in hospital`;
-  const sig = top.map(([t, st]) => t.id + ':' + st.until + ':' + (st.until - ns < SOON_SECS) + ':' + (st.until <= ns)).join(',');
+  const sig = top.map(([t, st]) => t.id + ':' + st.until + ':' + (st.until - ns < SOON_SECS) + ':' + (st.until <= ns) + ':' + isFresh(st) + ':' + S.clicked.has(t.id)).join(',');
   if (sig === soonSig) return;
   soonSig = sig;
   $('soonList').innerHTML = top.map(([t, st]) => {
     const left = st.until - ns;
     return `<li>
-<span class="soon-t${left < SOON_SECS ? ' near' : ''}"${left > 0 ? ` data-until="${st.until}" data-slots` : ''}>${left > 0 ? slots(fmtLeft(left)) : 'now'}</span>
+<span class="soon-t${left < SOON_SECS ? ' near' : ''}"${left > 0 ? ` data-until="${st.until}" data-slots` : ''}>${left > 0 ? slots(fmtLeft(left)) : isFresh(st) ? 'fresh' : 'now'}</span>
 <a class="soon-n" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}</a>
-<span class="soon-m"><span class="money" title="${fmtFull(t.reward)}">${fmtMoney(t.reward)}</span><a href="${attackUrl(t.id)}" target="_blank" rel="noopener">Attack</a></span>
+<span class="soon-m"><span class="money" title="${fmtFull(t.reward)}">${fmtMoney(t.reward)}</span><span>${attackA(t)}${hitBtn(t, 'link hitq')}</span></span>
 </li>`;
   }).join('');
 }
@@ -1555,6 +1627,7 @@ function renderHead() {
   if (S.targets.size) {
     parts.push(`<span class="ready"><b>${fmtInt(c.okay || 0)}</b> ready</span>`);
     parts.push(`<span><b>${fmtInt(n)}</b> of ${fmtInt(S.targets.size)} match</span>`);
+    if (S.hitHidden) parts.push(`<span>${fmtInt(S.hitHidden)} marked hit, hidden <button class="link" type="button" data-act="unhit">Bring back</button></span>`);
     if (S.demo) parts.push('<span>made-up data</span>');
     else if (S.snap) parts.push(`<span>list from ${fmtAgo(S.snap * 1000)}</span>`);
   }
@@ -1630,7 +1703,7 @@ function renderControls() {
   $('huntBtn').classList.toggle('ghost', !(S.key || S.demo));
   $('paceInfo').textContent = S.demo
     ? 'Demo pace. Nothing leaves your browser.'
-    : `${S.pace} Torn calls a minute allowed, ${Pacer.recent()} used in the last minute`;
+    : `${Pacer.recent()} of ${S.pace} Torn calls used in the last minute, all tabs. Torn's cap is 100, shared with your other Torn tools`;
 }
 
 let renderT = 0;
@@ -1771,6 +1844,7 @@ $('moreBtn').addEventListener('click', () => { S.shown += SHOW_STEP; render(); }
 $('board').addEventListener('click', e => {
   const btn = e.target.closest('[data-act]');
   if (btn && btn.dataset.act === 'clear') return clearFilters();
+  if (btn && btn.dataset.act === 'unhit') return unhitAll();
   const sorter = e.target.closest('.sorter');
   if (sorter) {
     const k = sorter.dataset.sort;
@@ -1782,6 +1856,15 @@ $('board').addEventListener('click', e => {
   if (!id) return;
   if (btn.dataset.act === 'toggle') { if (S.open.has(id)) S.open.delete(id); else S.open.add(id); render(); }
   if (btn.dataset.act === 'check') checkNow(id);
+});
+// Attack and Hit? live in the board and both strips, so one listener covers all three.
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act="attack"], [data-act="hit"]');
+  if (!el) return;
+  const id = Number(el.dataset.id);
+  if (!id) return;
+  if (el.dataset.act === 'attack') { S.clicked.add(id); dirty(); }   // the link still opens Torn
+  else markHit(id);
 });
 const tbl = $('tbl');
 tbl.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') S.hover = true; });
