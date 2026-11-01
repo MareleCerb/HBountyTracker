@@ -22,6 +22,9 @@
   --gold-lightest:#F2D98A;--gold-light:#E8C96A;--gold:#C9A84C;--gold-rich:#B8963F;--gold-dark:#8A6F2E;--gold-deep:#5F4B1F;
   --bronze-ash:#3A3326;--muted-gold:#7A6A3A;--dust-gold:#A08F5A;
   --steel-dark:#1A1D20;--steel:#23272B;--steel-light:#2F343A;
+  --status-ready:#5BC383;--status-ready-ink:#0B1A10;
+  --status-hospital:#E5594F;--status-soon:#F0913A;
+  --status-travel:#5DA4EA;--status-jail:#A98AE6;--status-federal:#8467D2;
   --serif:"Playfair Display",Georgia,"Times New Roman",serif;
   --sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --r:14px;
@@ -153,6 +156,8 @@ input[type=range]{width:100%;accent-color:var(--bone-dim);height:32px;margin:0}
 .chip{font:inherit;font-size:.86rem;font-weight:500;min-height:36px;padding:6px 13px;border-radius:999px;border:1px solid var(--ash-light);background:transparent;color:var(--mist-light);cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:background .15s,color .15s,border-color .15s}
 .chip:hover{background:var(--graphite);color:var(--bone)}
 .chip .c{font-variant-numeric:tabular-nums;color:var(--mist-dim);font-weight:500}
+.chip .sw{width:8px;height:8px;border-radius:50%;background:var(--c);flex:none}
+.chip .sw.ring{background:transparent;border:1px dashed var(--mist-dim)}
 .chip[aria-pressed=true]{background:var(--bone);border-color:var(--bone);color:var(--obsidian)}
 .chip[aria-pressed=true] .c{color:#3a3a3a}
 .ftoggle{display:none;margin-bottom:12px}
@@ -183,7 +188,6 @@ th[aria-sort=ascending] .sorter::after{border-top:0;border-bottom:5px solid var(
 tbody.t>tr.main>td{padding:12px 14px;border-bottom:1px solid var(--ash-deep);vertical-align:middle}
 tbody.t:last-of-type>tr:last-child>td{border-bottom:0}
 tbody.t:hover>tr.main{background:var(--graphite-deep)}
-tbody.t.ready>tr.main>td:first-child{box-shadow:inset 2px 0 0 var(--bone-dim)}
 .c-name{min-width:0}
 .tname{color:var(--bone);font-weight:600;text-decoration:none;overflow-wrap:anywhere}
 .tname:hover{text-decoration:underline}
@@ -191,14 +195,18 @@ tbody.t.ready>tr.main>td:first-child{box-shadow:inset 2px 0 0 var(--bone-dim)}
 .lvl{display:inline-block;font-size:.78rem;font-weight:600;color:var(--bone-dim);background:var(--obsidian-deep);border:1px solid var(--ash);border-radius:6px;padding:2px 8px;white-space:nowrap}
 .money{color:var(--gold);font-weight:600;white-space:nowrap}
 .c-reward .money{font-size:1rem}
-.pill{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:600;line-height:1.3;padding:3px 10px;border-radius:999px;border:1px solid var(--ash-light);color:var(--mist-light);background:var(--graphite-soft);white-space:nowrap}
+.pill{--c:var(--mist-light);display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:600;line-height:1.3;padding:3px 10px;border-radius:999px;white-space:nowrap;
+  color:var(--c);border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 14%,transparent)}
 .pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
-.pill.ready{background:var(--bone);border-color:var(--bone);color:var(--obsidian)}
-.pill.travel{background:var(--steel);border-color:var(--steel-light);color:var(--bone-dim)}
-.pill.jail{background:var(--graphite);color:var(--mist)}
-.pill.jail::before{border-radius:1px}
-.pill.other{background:transparent;color:var(--mist-dim)}
-.pill.unchecked{background:transparent;border-style:dashed;color:var(--mist-dim)}
+.pill.ready{--c:var(--status-ready);background:var(--status-ready);border-color:var(--status-ready);color:var(--status-ready-ink)}
+.pill.hosp{--c:var(--status-hospital)}
+.pill.soon{--c:var(--status-soon)}
+.pill.travel{--c:var(--status-travel)}
+.pill.jail{--c:var(--status-jail)}
+.pill.fed{--c:var(--status-federal)}
+.pill.jail::before,.pill.fed::before{border-radius:1px}
+.pill.other{--c:var(--mist-dim);background:transparent}
+.pill.unchecked{--c:var(--mist-dim);background:transparent;border-style:dashed}
 .pill.unchecked::before{background:transparent;border:1px solid currentColor}
 .cd{display:block;margin-top:4px;font-size:.82rem;color:var(--mist)}
 .cd b{color:var(--bone-soft);font-weight:600}
@@ -237,8 +245,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
   #tbl,#tbl>tbody{display:block}
   tbody.t{background:var(--carbon);border:1px solid var(--ash);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
   tbody.t:hover>tr.main{background:transparent}
-  tbody.t.ready{border-color:#5a5a5a}
-  tbody.t.ready>tr.main>td:first-child{box-shadow:none}
+  tbody.t.ready{border-color:color-mix(in srgb,var(--status-ready) 40%,var(--ash))}
   tbody.t>tr.main{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name lvl" "status checked" "reward ff" "bounties ff" "act act";gap:10px 14px;padding:15px}
   tbody.t>tr.main>td{display:block;padding:0;border:0!important}
   .c-name{grid-area:name}.c-lvl{grid-area:lvl;justify-self:end}
@@ -272,9 +279,8 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
 <div class="app" id="app">
 
 <header class="hero">
-  <p class="eyebrow"><span class="mark" aria-hidden="true"></span>A Great Stag project</p>
+  <p class="eyebrow"><span class="mark" aria-hidden="true"></span>HBountyTracker - A freebie by TGS</p>
   <h1>HBountyTracker</h1>
-  <p class="lede">Scans the Torn bounty board, filters it your way, then checks who is out of hospital and ready to hit. It runs in your browser, on your own API key.</p>
 </header>
 
 <div class="top">
@@ -376,12 +382,12 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
   <p class="note" id="searchNote" hidden></p>
 
   <div class="chips" id="chips" role="group" aria-label="Show by status">
-    <button class="chip" type="button" data-s="ready" aria-pressed="false">Ready <span class="c"></span></button>
-    <button class="chip" type="button" data-s="hospital" aria-pressed="false">Hospital <span class="c"></span></button>
-    <button class="chip" type="button" data-s="travel" aria-pressed="false">Traveling <span class="c"></span></button>
-    <button class="chip" type="button" data-s="jail" aria-pressed="false">Jail <span class="c"></span></button>
-    <button class="chip" type="button" data-s="other" aria-pressed="false">Other <span class="c"></span></button>
-    <button class="chip" type="button" data-s="unchecked" aria-pressed="false">Not checked <span class="c"></span></button>
+    <button class="chip" type="button" data-s="ready" aria-pressed="false"><span class="sw" style="--c:var(--status-ready)" aria-hidden="true"></span>Ready <span class="c"></span></button>
+    <button class="chip" type="button" data-s="hospital" aria-pressed="false"><span class="sw" style="--c:var(--status-hospital)" aria-hidden="true"></span>Hospital <span class="c"></span></button>
+    <button class="chip" type="button" data-s="travel" aria-pressed="false"><span class="sw" style="--c:var(--status-travel)" aria-hidden="true"></span>Traveling <span class="c"></span></button>
+    <button class="chip" type="button" data-s="jail" aria-pressed="false"><span class="sw" style="--c:var(--status-jail)" aria-hidden="true"></span>Jail <span class="c"></span></button>
+    <button class="chip" type="button" data-s="other" aria-pressed="false"><span class="sw" style="--c:var(--mist-dim)" aria-hidden="true"></span>Other <span class="c"></span></button>
+    <button class="chip" type="button" data-s="unchecked" aria-pressed="false"><span class="sw ring" aria-hidden="true"></span>Not checked <span class="c"></span></button>
   </div>
 
   <button class="btn ghost sm ftoggle" id="ftoggle" type="button" aria-expanded="false" aria-controls="filters">Filters and sort</button>
@@ -497,6 +503,7 @@ const fmtClock = sec => new Date(sec * 1000).toLocaleString([], { weekday: 'shor
 const PAGE_SIZE = 100;            // Torn hard cap per bounty page
 const MAX_PAGES = 150;            // ~65 pages normally, headroom for war spikes
 const SHOW_STEP = 50;             // rows added per "Show more"
+const SOON_SECS = 180;            // hospital or jail turns "almost out" for the last 3 minutes
 const OKAY_RECHECK = 90e3;        // ready targets
 const TRAVEL_RECHECK = 5 * 60e3;
 const IDLE_RECHECK = 10 * 60e3;   // everything else
@@ -1206,14 +1213,18 @@ function statusHTML(st, busy) {
   const spin = busy ? '<span class="spin" aria-label="Checking"></span>' : '';
   if (!st) return `<span class="pill unchecked">${busy ? 'Checking' : 'Not checked'}</span>${spin}`;
   const ns = nowS(), why = st.details ? `<span class="why" title="${esc(st.details)}">${esc(st.details)}</span>` : '';
-  const timed = (cls, label) => st.until > ns
-    ? `<span class="pill ${cls}">${label}</span>${spin}<span class="cd">out in <b data-until="${st.until}">${fmtLeft(st.until - ns)}</b></span>${why}`
-    : `<span class="pill ${cls}">${label}</span>${spin}<span class="cd">should be out now</span>${why}`;
+  // Red or purple while locked up, orange for the last few minutes and once the timer has run out.
+  const timed = (cls, label) => {
+    const left = st.until - ns, c = left < SOON_SECS ? 'soon' : cls;
+    return left > 0
+      ? `<span class="pill ${c}">${label}</span>${spin}<span class="cd">out in <b data-until="${st.until}">${fmtLeft(left)}</b></span>${why}`
+      : `<span class="pill soon">${label}</span>${spin}<span class="cd">should be out now</span>${why}`;
+  };
   switch (st.state) {
     case 'Okay': return `<span class="pill ready">Ready</span>${spin}`;
     case 'Hospital': return timed('hosp', 'Hospital');
     case 'Jail': return timed('jail', 'Jail');
-    case 'Federal': return `<span class="pill jail">Federal jail</span>${spin}` + (st.until > ns ? `<span class="cd">out in <b data-until="${st.until}">${fmtLeft(st.until - ns)}</b></span>` : '');
+    case 'Federal': return `<span class="pill fed">Federal jail</span>${spin}` + (st.until > ns ? `<span class="cd">out in <b data-until="${st.until}">${fmtLeft(st.until - ns)}</b></span>` : '');
     case 'Traveling': return `<span class="pill travel">Traveling</span>${spin}<span class="cd">${esc(st.desc || 'In the air')}</span>`;
     case 'Abroad': return `<span class="pill travel">Abroad</span>${spin}<span class="cd">${esc(st.desc || 'Out of the country')}</span>`;
     case 'Fallen': return `<span class="pill other">Fallen</span>${spin}`;
@@ -1260,7 +1271,7 @@ function rowHTML(t) {
 function sigOf(t) {
   const st = S.status.get(t.id), x = S.ff.get(t.id), ns = nowS();
   return [t.name, lvlOf(t), t.reward, t.count, t.ends < ns,
-    st ? st.at + st.state + (st.until > ns) : '', x ? x.at : S.ffState,
+    st ? st.at + st.state + (st.until > ns) + (st.until - ns < SOON_SECS) : '', x ? x.at : S.ffState,
     S.inflight.has(t.id), S.open.has(t.id)].join('|');
 }
 
