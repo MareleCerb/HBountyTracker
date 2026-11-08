@@ -7,12 +7,15 @@ A freebie by [The Great Stag](https://www.thegreatstag.com). Open source, so any
 ## What it does
 
 1. **Bounty list.** Pulls the whole board from `GET /v2/torn/bounties`, 100 per page. Stacks multiple bounties on one head into a single row. Torn serves one shared snapshot, so if `bounties_timestamp` hasn't moved since the last search, the saved copy is reused and the sweep costs one call.
-2. **Your filters.** The board shows unfiltered while it loads, then snaps to the search limits (max level, min reward, max fair fight). Everything stays editable on the board, plus name, level range and minimum account age.
-3. **Fair fight.** One FFScouter call per 205 targets (`/api/v1/get-stats`). Optional, and only runs if you give it the key you registered on ffscouter.com.
-4. **Live status.** One `GET /v2/user/{id}/profile` per target, in the board's current sort order. Timers (hospital, jail, protection, bounty expiry) count down locally from the last call. With live checks on, okay targets get re-checked every 90 seconds. Every status check carries a `timestamp` parameter, so Torn's 30-second service cache never hands back an old answer.
-5. **Fresh.** Fresh isn't a status of its own. It's how the first 10 seconds of Okay look once a hospital timer runs out. After those 10 seconds the target gets one check, since someone may have hit them in the window. Until that check lands, they show as **Okay** with a small "confirming" dot. Same for jail, without the 10 seconds.
-6. **Ready.** The five highest values you can hit right now, Fresh included.
-7. **Available soon.** The five matches whose hospital timer ends soonest, with big countdowns. Once a timer ends they move to Ready.
+2. **Your filters.** The board shows unfiltered while it loads, then snaps to the search limits (max level, min reward, Fair Fight Score as the fair fight cap). Everything stays editable on the board, plus name, level range and minimum account age.
+3. **Fair fight.** One FFScouter call per 205 targets (`/api/v1/get-stats`). Optional, and only runs if you give it the key you registered on ffscouter.com. Rows FFScouter has no estimate for get a slight gray border.
+4. **Live status.** One `GET /v2/user/{id}/profile` per target, in the board's current sort order. Timers (hospital, jail, protection, bounty expiry) count down locally from the last call. With live checks on, okay targets get re-checked every 90 seconds, stretched on a long list (see Limits). Every status check carries a `timestamp` parameter, so Torn's 30-second service cache never hands back an old answer.
+5. **Fresh.** Fresh isn't a status of its own. It's how the first 10 seconds of Okay look once a hospital timer runs out. After those 10 seconds the target gets one check, since someone may have hit them in the window. That check jumps to the front of the queue, ahead of the first pass, and runs in a background tab too (not with live checks off). Until it lands, they show as **Okay** with a small "confirming" dot. Same for jail, without the 10 seconds.
+6. **Perfect match.** Every Okay target, closest to your **Fair Fight Score** first, on either side of it. At the same distance, the one under your score wins, then the bigger bounty. This strip looks past the board's fair fight filter on purpose. With an FFScouter key, targets FFScouter has no estimate for stay out. Without one, it's simply the highest bounties you can hit.
+7. **Fresh out of the hospital.** The last 10 matches to leave hospital, newest first: the strip that tells you what the Fresh sound was about. Once a check moves their status on (Okay confirmed, or back in hospital), they stay 30 seconds with that status, then drop. A target in both Perfect match and this strip gets a green border in both.
+8. **Available soon.** Every match whose hospital timer is still running, soonest out first, with big countdowns.
+
+All three strips are carousels with every qualifying target: swipe on touch, drag with a mouse, or use the arrows.
 
 ## Current value
 
@@ -32,8 +35,9 @@ Highest or lowest value, Okay first, lowest or highest level, lowest or highest 
 
 **Inspect calls** (next to the pace line, or "Watch every API call live" under the key) opens a live view of every call the tool makes. For everyone, not only devmode: transparency is the point.
 
-- **Live log.** Newest on top. Each call expands to the full request (URL, headers), the full JSON answer, timing, size, and why the engine made it right then ("First pass, never checked", "Fresh is over, confirming Okay", "Board page 12 of 69"...). Filter by service or call type, pause the stream, clear, export as JSON.
+- **Live log.** Newest on top, with a divider every time the engine changes job: board sweep, fair fight, first pass, re-checks, manual checks (a divider opens and closes the block), and confirm checks after a timer ends. Each call expands to the full request (URL, headers), the full JSON answer, timing, size, and why the engine made it right then ("First pass, never checked", "Fresh is over, confirming Okay", "Board page 12 of 69"...). Filter by service or call type, pause the stream, clear, export as JSON.
 - **Queue.** What's waiting at the pacer, and the next 10 status checks with their reason and when they're due.
+- **Calls left.** The summary line says how many calls the first pass still needs and how long that takes at your pace. Once it's done: how many re-checks are due now.
 - **Every call explained.** The catalog of all six calls: service, endpoint, when it runs, what it's for, the fields the tool reads, and how many ran this session.
 - **Learn mode.** Adds a plain-English card to every call and view.
 
@@ -54,14 +58,14 @@ Google Fonts loads the two typefaces. That's a font file, not an API call. Nothi
 
 The **Devmode** button in the header opens a panel for the engine's internals. The choice is remembered.
 
-- **Engine.** Run each part on its own: refetch the board, re-check every match, re-check stale only (older than 2, 5, 10 or 30 minutes), pause or resume the status loop, clear the hand-picked queue, refetch fair fight, freeze all calls, start over. Each shows its live cost in calls, and the time at your pace, before you press.
+- **Engine.** Run each part on its own: refetch the board, re-check every match, re-check stale only (older than 2, 5, 10 or 30 minutes), pause or resume the status loop, clear the hand-picked queue, refetch fair fight, freeze all calls, start over. Each shows its live cost in calls, and the time at your pace, before you press. Plus **Never stop for inactivity**, remembered on the device: the tool then keeps calling at your pace for as long as the tab is open. Leave it off unless you're testing.
 - **Board.** Sliders for max level, max fair fight, and a value range (from / up to, on a log scale from $1k to $1b). They filter the board you already have and cost no calls. Column toggles for every column, plus an Account age column that's off by default.
 - **Storage.** Everything the tool keeps in your browser, with its size and a Clear button. Keys are never shown. "Wipe everything" takes two presses and disconnects. The rate-limit log can't be cleared, because it keeps you under Torn's cap.
 
 ## Alerts
 
-- **Sound** when a matching target turns Fresh (two rising notes) or comes back Okay after a check (one note). At most one sound every 2 seconds. The **Sound** button in the header turns all sound off.
-- **Browser notification**, opt-in under "Pace and live checks", for the same moments, only while the tab is in the background.
+- **Sound** when a matching target turns Fresh: two rising notes. That's the only sound. At most one every 2 seconds. The **Sound** button in the header turns it off. The target shows up in Fresh out of the hospital.
+- **Browser notification**, opt-in under "Pace and live checks", for the same moment, only while the tab is in the background.
 - Hit-tagged and protected targets never alert.
 - Browsers block notifications inside a cross-site iframe, which is how the tool sits on thegreatstag.com. There, the setting links to the tool on its own page. Sound works in both.
 
@@ -97,7 +101,9 @@ Add `?demo` to the URL, or press **Try the demo**. Made-up players and bounties,
 - Torn allows 100 calls per minute per player, shared across every tool and script they run. The default pace is 60. It's adjustable from 20 to 90 under "Pace and live checks". The pace line shows both numbers apart: what you used out of your pace, and what your pace leaves for your other tools.
 - The pace is a hard cap on any rolling minute, shared by every open tab of the tool and kept across reloads. The tool can't see calls from your other Torn tools, so leave them room.
 - A status check is one call per target. Checking 200 targets takes about 3 to 4 minutes at 60 per minute. Narrow filters go faster.
-- Re-checks pause while the tab is in the background. The first pass keeps going.
+- Okay re-checks never ask for more than 70% of your pace. The gap is 90 seconds, or `Okay targets / (0.7 × pace)` minutes on a long list: 100 Okay targets at a pace of 60 are re-checked about every 2m 23s, 200 about every 4m 46s. Confirm checks and Check now skip the line.
+- Re-checks pause while the tab is in the background. The first pass and confirm checks keep going.
+- **Inactivity stop.** After 10 minutes with no click, key press, scroll or touch, every call stops and a banner says so. Timers keep counting. Press Resume to carry on. The first pass is exempt: you pressed Start to get the whole list. Mouse movement doesn't count, since a bumped mouse isn't someone using the tool.
 - If Torn answers "too many requests", everything waits 30 seconds, then carries on.
 - Torn warns that repeated requests with invalid keys can get an IP banned for a while. So a key Torn refuses (wrong key, owner in federal jail, inactive, paused) is never sent again: it's dropped from storage, and only a fingerprint is kept so the tool recognises it. A saved key that was refused is not sent on the next visit either. Paste a different key to carry on. If a paused or inactive key works again, clear "Refused keys" in devmode Storage.
 - If Torn blocks your IP (error 8), nothing goes to Torn for 10 minutes, in every tab. Torn doesn't say how long a block lasts, so the tool waits on the safe side.
