@@ -186,10 +186,11 @@ input[type=range]{width:100%;max-width:420px;accent-color:var(--bone-dim);height
 .meta b{color:var(--bone);font-weight:700;font-variant-numeric:tabular-nums}
 .meta .ready b{color:var(--status-ready)}
 
-/* Perfect match, Fresh out of the hospital, then available soon. Each strip is a carousel. */
+/* High value, Easy fights, Fresh out of the hospital, then Available soon. Each strip is a carousel. */
 .soon{margin-top:38px}
 .soon+.soon{margin-top:30px}
-.ready-strip .soon-t{color:var(--status-ready)}
+.ready-strip .soon-t,.hv-strip .soon-t{color:var(--status-ready)}
+.soon-list li.empty{flex:1 1 100%;color:var(--mist-dim);font-size:.92rem;cursor:default}
 .fresh-strip .soon-t{color:var(--bone)}
 .soon-k{color:var(--mist-dim)}
 .soon-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--ash);border-bottom:1px solid var(--ash)}
@@ -201,8 +202,15 @@ input[type=range]{width:100%;max-width:420px;accent-color:var(--bone-dim);height
 .car-nav{display:inline-flex;gap:6px}
 .car-nav .btn{min-width:36px;padding-left:8px;padding-right:8px}
 .car-nav .btn:disabled{opacity:.35;cursor:default}
-/* In both Perfect match and Fresh out of the hospital */
-.soon-list li.both{box-shadow:inset 0 0 0 2px var(--status-ready);background:color-mix(in srgb,var(--status-ready) 8%,transparent)}
+/* Value borders. One scale for the High value strip and the board:
+   under $10k grey, $10k to $500k dark green to gold (log scale), $500k to $1m gold,
+   $1m to $2m gold to purple, $2m and up a color cycle with a golden glow.
+   With reduce motion on, the cycle stops on plain gold. */
+@property --vb{syntax:'<color>';inherits:true;initial-value:transparent}
+@keyframes chroma{0%{--vb:#ff4d4d}16%{--vb:#ffad33}33%{--vb:#f2e94e}50%{--vb:#4ee06b}66%{--vb:#45c8ff}83%{--vb:#a55bff}100%{--vb:#ff4d4d}}
+.vb4{--vb:var(--gold-light);animation:chroma 6s linear infinite}
+.soon-list li.vb{box-shadow:inset 0 0 0 2px var(--vb)}
+.soon-list li.vb4{box-shadow:inset 0 0 0 2px var(--vb),inset 0 0 22px -6px var(--gold);background:color-mix(in srgb,var(--gold) 6%,transparent)}
 .soon-st{display:block;margin-top:4px;font-size:.84rem;color:var(--mist)}
 .soon-st b{color:var(--status-ready);font-weight:700}
 .soon-st b.hosp{color:var(--status-hospital)}
@@ -224,8 +232,41 @@ input[type=range]{width:100%;max-width:420px;accent-color:var(--bone-dim);height
 }
 @media(max-width:560px){.car>li{flex-basis:72%}}
 
-/* The board. A slight gray border marks a target FFScouter has no estimate for. */
-tbody.t.noff>tr.main{outline:1px solid var(--mist-faint);outline-offset:-1px}
+/* The board. Every row gets its value border. Neighbors in the same tier merge into one shape,
+   each row keeping its own shade. A target FFScouter has no estimate for gets a gray background. */
+@media(min-width:880px){
+  #tbl tbody.vb>tr>td{box-shadow:inset var(--bl,0px) 0 0 0 var(--vb),inset calc(-1 * var(--br,0px)) 0 0 0 var(--vb),inset 0 var(--bt,0px) 0 0 var(--vb),inset 0 calc(-1 * var(--bb,0px)) 0 0 var(--vb)}
+  #tbl tbody.vb>tr>td:first-child{--bl:2px}
+  #tbl tbody.vb>tr.detail>td{--br:2px}
+  #board[data-last=lvl] tbody.vb>tr.main>td.c-lvl,#board[data-last=status] tbody.vb>tr.main>td.c-status,#board[data-last=reward] tbody.vb>tr.main>td.c-reward,
+  #board[data-last=bounties] tbody.vb>tr.main>td.c-bounties,#board[data-last=ff] tbody.vb>tr.main>td.c-ff,#board[data-last=age] tbody.vb>tr.main>td.c-age,
+  #board[data-last=checked] tbody.vb>tr.main>td.c-checked,#board[data-last=act] tbody.vb>tr.main>td.c-act{--br:2px}
+  #tbl tbody.vb.gs>tr.main>td{--bt:2px}
+  #tbl tbody.vb.ge>tr:last-child>td{--bb:2px}
+  #tbl tbody.vb4>tr>td{background:color-mix(in srgb,var(--gold) 6%,transparent)}
+  #tbl tbody.noff>tr>td{background:color-mix(in srgb,var(--mist-faint) 16%,transparent)}
+}
+/* Resizable columns, desktop only. Widths are saved on this device. */
+.tblwrap{overflow-x:auto}
+.tblbar{display:flex;justify-content:flex-end;margin:-4px 0 6px}
+#tbl thead th{position:relative}
+.rz{position:absolute;top:0;right:-4px;width:9px;height:100%;cursor:col-resize;z-index:2;touch-action:none}
+.rz::after{content:"";position:absolute;top:25%;bottom:25%;left:4px;width:1px;background:var(--ash-light);opacity:0;transition:opacity .12s}
+#tbl thead th:hover .rz::after,.rz.on::after{opacity:1}
+#tbl.fixed{table-layout:fixed}
+#tbl.fixed td{overflow:hidden;text-overflow:ellipsis}
+body.rzing{cursor:col-resize;user-select:none}
+@media(max-width:879px){.rz,.tblbar{display:none}#tbl{width:100%!important;min-width:0!important;table-layout:auto!important}}
+/* Gained and Times hit only show while the Hit chip is on. */
+#board:not(.hitview) .h-gained,#board:not(.hitview) .c-gained,#board:not(.hitview) .h-times,#board:not(.hitview) .c-times{display:none}
+.c-gained .money{font-size:1.05rem}
+.c-times{white-space:nowrap;font-weight:700;color:var(--bone-soft)}
+@media(min-width:880px){#board.hitview .c-act{white-space:normal}#board.hitview .c-act .btn{margin:3px 0 3px 6px}#board.hitview .c-act .btn+.btn{margin-left:6px}}
+.hitnote{margin:-4px 0 14px;font-size:.92rem;color:var(--mist-light)}
+.hitnote b{color:var(--gold-light)}
+.gains{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-top:14px;padding:12px 14px;border:1px solid var(--gold-dark);border-radius:6px;background:var(--bronze-ash)}
+.gains b{color:var(--gold-light);font-size:1.02rem}
+.gains .hint{margin:0}
 /* The board */
 .board{margin-top:44px}
 .note{margin:-4px 0 14px;font-size:.9rem;color:var(--mist-light)}
@@ -254,7 +295,7 @@ tbody.t.noff>tr.main{outline:1px solid var(--mist-faint);outline-offset:-1px}
 
 #tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
 #tbl thead th{font-size:.8rem;font-weight:700;color:var(--mist-dim);text-align:left;padding:10px 12px;border-top:1px solid var(--ash);border-bottom:1px solid var(--ash);white-space:nowrap}
-#tbl thead th:first-child{padding-left:0}
+#tbl thead th:first-child{padding-left:12px}
 .sorter{font:inherit;color:inherit;background:none;border:0;padding:2px 0;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
 .sorter:hover{color:var(--bone)}
 .sorter::after{content:"";width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--ash-light)}
@@ -262,7 +303,7 @@ th[aria-sort] .sorter{color:var(--bone-soft)}
 th[aria-sort=descending] .sorter::after{border-top-color:var(--bone-dim)}
 th[aria-sort=ascending] .sorter::after{border-top:0;border-bottom:5px solid var(--bone-dim)}
 tbody.t>tr.main>td{padding:11px 12px;border-bottom:1px solid var(--ash-deep);vertical-align:middle}
-tbody.t>tr.main>td:first-child{padding-left:0}
+tbody.t>tr.main>td:first-child{padding-left:12px}
 tbody.t:hover>tr.main{background:var(--obsidian-soft)}
 .tname{color:var(--bone);font-weight:700;text-decoration:none;overflow-wrap:anywhere}
 .tname:hover{text-decoration:underline}
@@ -330,10 +371,17 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
   #tbl thead{display:none}
   #tbl,#tbl>tbody{display:block}
   tbody.t{border:1px solid var(--ash);border-radius:4px;background:var(--carbon);margin-bottom:8px}
-  tbody.t.noff{border-color:var(--mist-faint);outline:0}
   tbody.t:hover>tr.main{background:transparent}
-  tbody.t.ready{border-color:color-mix(in srgb,var(--status-ready) 45%,var(--ash))}
+  tbody.t.vb{border:2px solid var(--vb)}
+  tbody.t.vb4{background:color-mix(in srgb,var(--gold) 6%,var(--carbon))}
+  tbody.t.noff{background:color-mix(in srgb,var(--mist-faint) 16%,var(--carbon))}
+  /* Same tier, glued: no gap, no rounded corners where they touch, a thin line between them. */
+  tbody.t.vb:not(.ge){margin-bottom:0;border-bottom-width:0;border-bottom-left-radius:0;border-bottom-right-radius:0}
+  tbody.t.vb:not(.gs){border-top:1px solid var(--ash-deep);border-top-left-radius:0;border-top-right-radius:0}
   tbody.t>tr.main{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name lvl" "status reward" "status ff" "bounties checked" "act act";gap:8px 14px;padding:14px}
+  #board.hitview tbody.t>tr.main{grid-template-areas:"name lvl" "status reward" "status ff" "bounties checked" "gained times" "act act"}
+  .c-gained{grid-area:gained}
+  .c-times{grid-area:times;justify-self:end}
   tbody.t>tr.main>td{display:block;padding:0!important;border:0!important}
   .c-name{grid-area:name}
   .c-lvl{grid-area:lvl;justify-self:end}
@@ -573,7 +621,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
       <input id="specFF" type="text" inputmode="decimal" autocomplete="off" placeholder="2.5"></label>
     <div class="go-wrap"><button class="btn gold" id="huntBtn" type="button">Start the hunt</button></div>
   </div>
-  <p class="hint">Rewards take 250k or 1.5m, and count per hit: one attack claims one bounty, the biggest on that target. Fair Fight Score is the fight you want: Perfect match puts the targets closest to it first. It also caps the board, which you can change there.</p>
+  <p class="hint">Rewards take 250k or 1.5m, and count per hit: one attack claims one bounty, the biggest on that target. Fair Fight Score is the fight you want: Easy fights puts the targets closest to it first, and High value shows the biggest bounties within 1.5 of it. It also caps the board, which you can change there.</p>
   <details class="adv">
     <summary>Pace and live checks</summary>
     <div class="fields">
@@ -581,11 +629,12 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
         <input id="pace" type="range" min="20" max="90" step="5" value="60"></label>
       <p class="hint" style="margin-top:-4px">Torn allows 100 a minute across every tool and script you run. Leave room for the rest.</p>
       <label class="check"><input type="checkbox" id="live" checked><span>Keep checking while this page is open</span></label>
-      <p class="hint" style="margin-top:-4px">Okay targets get re-checked every 90 seconds, or slower on a long list so re-checks never use more than 70% of your pace. Anyone whose timer runs out gets checked first, even in a background tab. Other re-checks pause while this tab is in the background. After 10 minutes with no click, key press, scroll or touch, every call stops until you resume.</p>
+      <p class="hint" style="margin-top:-4px">Okay targets at the top of High value and Easy fights get re-checked every 90 seconds. Other Okay targets get re-checked every 10 to 30 minutes, slower the longer they have been offline. Re-checks never use more than 25% of your pace. Hospital timers are never re-checked: the target gets one check when the timer ends, even in a background tab. Other re-checks pause while this tab is in the background. After 10 minutes with no click, key press, scroll or touch, every call stops until you resume.</p>
       <label class="check"><input type="checkbox" id="notify"><span>Browser notification when a target turns Fresh</span></label>
       <p class="hint" style="margin-top:-4px" id="notifyHint">Sound plays for the same moments. The Sound button at the top turns all sound off.</p>
     </div>
   </details>
+  <div class="gains" id="gains" hidden><b id="gainsText"></b><span class="hint">based on your Hit marks</span></div>
   <p class="msg" id="huntMsg" role="status" aria-live="polite"></p>
 </section>
 
@@ -610,11 +659,20 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
   <button class="btn gold sm" id="idleResume" type="button">Resume</button>
 </div>
 
+<section class="soon hv-strip" id="hv" hidden aria-labelledby="hvTitle">
+  <div class="sec-head">
+    <h2 id="hvTitle">High value</h2>
+    <p class="meta grow" id="hvSub"></p>
+    <span class="car-nav"><button class="btn ghost sm" type="button" data-car="hvList" data-dir="-1" aria-label="Scroll High value left"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg></button><button class="btn ghost sm" type="button" data-car="hvList" data-dir="1" aria-label="Scroll High value right"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 3 5 5-5 5"/></svg></button></span>
+  </div>
+  <ol class="soon-list car" id="hvList"></ol>
+</section>
+
 <section class="soon ready-strip" id="ready" hidden aria-labelledby="readyTitle">
   <div class="sec-head">
-    <h2 id="readyTitle">Perfect match</h2>
+    <h2 id="readyTitle">Easy fights</h2>
     <p class="meta grow" id="readySub"></p>
-    <span class="car-nav"><button class="btn ghost sm" type="button" data-car="readyList" data-dir="-1" aria-label="Scroll Perfect match left"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg></button><button class="btn ghost sm" type="button" data-car="readyList" data-dir="1" aria-label="Scroll Perfect match right"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 3 5 5-5 5"/></svg></button></span>
+    <span class="car-nav"><button class="btn ghost sm" type="button" data-car="readyList" data-dir="-1" aria-label="Scroll Easy fights left"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg></button><button class="btn ghost sm" type="button" data-car="readyList" data-dir="1" aria-label="Scroll Easy fights right"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 3 5 5-5 5"/></svg></button></span>
   </div>
   <ol class="soon-list car" id="readyList"></ol>
 </section>
@@ -641,9 +699,11 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
   <div class="sec-head">
     <h2 id="boardTitle">The board</h2>
     <p class="meta grow" id="boardMeta" aria-live="off"></p>
+    <button class="btn ghost sm" id="boardBtn" type="button" title="Reads the bounty board again. Costs 1 call if Torn's board hasn't changed.">Refetch board</button>
     <button class="btn ghost sm" id="refreshBtn" type="button">Refresh list</button>
   </div>
   <p class="note" id="searchNote" hidden></p>
+  <p class="hitnote" id="hitNote" hidden></p>
 
   <div class="chips" id="chips" role="group" aria-label="Show by status">
     <button class="chip" type="button" data-s="okay" aria-pressed="false"><span class="sw" style="--c:var(--status-ready)" aria-hidden="true"></span>Okay <span class="c"></span></button>
@@ -682,20 +742,23 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
     <div class="freset"><button class="link" id="clearBtn" type="button">Clear filters</button></div>
   </div>
 
-  <table id="tbl">
+  <div class="tblbar"><button class="link" id="colReset" type="button">Reset columns</button></div>
+  <div class="tblwrap"><table id="tbl">
     <thead id="thead"><tr>
       <th scope="col" class="h-name" data-col="name"><button class="sorter" type="button" data-sort="name">Target</button></th>
       <th scope="col" class="h-lvl" data-col="level"><button class="sorter" type="button" data-sort="level">Level</button></th>
       <th scope="col" class="h-status" data-col="ready"><button class="sorter" type="button" data-sort="ready">Status</button></th>
       <th scope="col" class="h-reward" data-col="reward"><button class="sorter" type="button" data-sort="reward" title="Current value: what your next hit pays">Value</button></th>
+      <th scope="col" class="h-gained">Gained</th>
+      <th scope="col" class="h-times">Times hit</th>
       <th scope="col" class="h-bounties" data-col="ends"><button class="sorter" type="button" data-sort="ends">Bounties</button></th>
       <th scope="col" class="h-ff" data-col="ff"><button class="sorter" type="button" data-sort="ff">Fair fight</button></th>
       <th scope="col" class="h-age">Account age</th>
       <th scope="col" class="h-checked" data-col="checked"><button class="sorter" type="button" data-sort="checked">Checked</button></th>
       <th scope="col" class="h-act"><span class="sr">Links</span></th>
     </tr></thead>
-    <tbody id="empty" hidden><tr><td colspan="9" class="emptycell" id="emptyText"></td></tr></tbody>
-  </table>
+    <tbody id="empty" hidden><tr><td colspan="11" class="emptycell" id="emptyText"></td></tr></tbody>
+  </table></div>
   <div class="more" id="moreWrap" hidden><button class="btn ghost" id="moreBtn" type="button">Show more</button></div>
 </section>
 
@@ -808,11 +871,16 @@ const MAX_PAGES = 150;            // ~65 pages normally, headroom for war spikes
 const SHOW_STEP = 50;             // rows added per "Show more"
 const SOON_SECS = 180;            // hospital or jail turns "almost out" for the last 3 minutes
 const FRESH_MS = 10e3;            // just out of hospital: shown as Fresh, re-checked when this runs out
-const OKAY_RECHECK = 90e3;        // Okay targets: the shortest gap between two checks
-const OKAY_SHARE = 0.7;           // Okay re-checks never ask for more than 70% of your pace; the rest stays free
+const OKAY_RECHECK = 90e3;        // Okay targets at the top of High value and Easy fights: the shortest gap between two checks
+const HOT_TOP = 10;               // how many cards of each of those two strips count as "the top"
+const OKAY_ACTIVE = 10 * 60e3;    // any other Okay target, active in the last hour
+const OKAY_AWAY = 20 * 60e3;      // offline for an hour or more
+const OKAY_GONE = 30 * 60e3;      // offline for a day or more
+const RECHECK_SHARE = 0.25;       // re-checks never use more than 25% of your pace in any minute
 const IDLE_STOP = 10 * 60e3;      // no click, key, scroll or touch for this long: every call stops
-const FRESH_KEEP = 10;            // "Fresh out of the hospital" keeps the last 10 who left
-const FRESH_LINGER = 30e3;        // once their status moves on, they stay this long with the new status
+const FRESH_HOLD = 5 * 60e3;      // "Fresh out of the hospital" keeps everyone for 5 minutes after they turn Fresh
+const BAND = 1.5;                 // High value and the first checks look this far on either side of your score
+const UNDO_MS = 60e3;             // a Hit mark can be undone for this long
 const TRAVEL_RECHECK = 5 * 60e3;
 const IDLE_RECHECK = 10 * 60e3;   // everything else
 const FF_BATCH = 205;             // FFScouter max targets per call
@@ -859,18 +927,26 @@ const S = {
   f: savedF ? Object.assign(blankFilters(), savedF, { states: new Set(savedF.states || []) }) : blankFilters(),
   sort: store.get('sort', 'reward_desc'),
   shown: SHOW_STEP,
-  matched: [], matchedIds: new Set(), view: [], counts: {},
-  pool: [],                                   // every filter except the fair fight one: Perfect match looks both sides of your score
-  okayAll: 0,                                 // Okay matches, hits included, for the re-check stretch
+  matched: [], matchedIds: new Set(), view: [], counts: {}, poolIds: new Set(),
+  pool: [],                                   // every filter except the fair fight one: High value, Easy fights and the scan look both sides of your score
+  scan: [],                                   // what the status loop walks, in order: your band, then under, then over
+  hot: new Set(), hotAt: 0,                   // the top of High value and Easy fights: re-checked the fastest
   ffScore: 0,                                 // your Fair Fight Score: the fight you want
-  freshList: [],                              // { id, until, endAt }: the last targets out of hospital, newest first
+  freshList: [],                              // { id, until, at }: everyone out of hospital in the last 5 minutes, newest first
   phase: 'idle',                              // idle | list | hunting | paused | stopped
   runId: 0, sweepRun: 0, pumping: false, searchNote: '',
   hover: false, freezeAt: 0,
   clicked: new Set(),                         // Attack opened this session, so offer "Hit?"
-  hit: new Map(store.get('hit', [])),         // id -> when it was marked hit. Hidden until its bounty leaves the board
-  hitHidden: 0,
+  hit: new Map(store.get('hit', [])),         // id -> when it was marked hit. Hidden, and never checked, until the hospital timer from that hit ends
+  ledger: loadLedger(),                       // id -> { n: name, h: [[when, value], ...] }: every hit you marked, for the gains
+  rmArm: null,                                // { id, at }: Remove pressed once in the Hit view, waiting for the second press
+  rcLog: [],                                  // when the last re-checks went out, for the 25% cap
 };
+function loadLedger() {
+  const m = new Map(), raw = store.get('ledger', []);
+  if (Array.isArray(raw)) for (const r of raw) if (Array.isArray(r) && r[1] && Array.isArray(r[1].h)) m.set(Number(r[0]), { n: String(r[1].n || ''), h: r[1].h.filter(x => Array.isArray(x)) });
+  return m;
+}
 
 /* ------------------------------------------------------------------ *
  *  Pacing. One gate for every Torn call, so the sweep, the status
@@ -968,8 +1044,8 @@ const CATALOG = {
   target_profile: {
     svc: 'torn', path: '/v2/user/{id}/profile', label: 'Target status', when: 'Status loop, Check now',
     why: "One target's live status. One call per target.",
-    fields: 'profile.status.state, status.until, status.description, status.details, age, signed_up, level, name',
-    learn: "This is the call the whole tool is built on. status.state says Okay, Hospital, Jail, Traveling and so on. status.until is when a timer ends, so the countdowns tick in your browser without more calls. age and signed_up give New Player Protection. The timestamp parameter makes Torn skip its 30-second cache, so a re-check never hands back an old answer.",
+    fields: 'profile.status.state, status.until, status.description, status.details, last_action.timestamp, age, signed_up, level, name',
+    learn: "This is the call the whole tool is built on. status.state says Okay, Hospital, Jail, Traveling and so on. status.until is when a timer ends, so the countdowns tick in your browser without more calls. age and signed_up give New Player Protection. last_action says when the target last did anything in Torn: an Okay target that has been offline for hours gets re-checked less often. The timestamp parameter makes Torn skip its 30-second cache, so a re-check never hands back an old answer.",
   },
   ffs_check: {
     svc: 'ffs', path: '/api/v1/check-key', label: 'FFScouter key check', when: 'Connect, only with an FFScouter key',
@@ -1142,6 +1218,7 @@ function normProfile(j) {
   return {
     id: Number(p.id ?? p.player_id) || 0, name: String(p.name ?? ''), level: Number(p.level) || 0, status: p.status || {},
     age: p.age == null ? null : Number(p.age), signed: Number(p.signed_up) || 0,
+    la: Number(p.last_action?.timestamp) || 0,       // last action: when the target last did anything in Torn
   };
 }
 
@@ -1262,25 +1339,65 @@ const isPresumed = st => !!(st && st.until && !isProt(st) && (
 // What the board treats the target as right now.
 const effState = st => !st ? '' : isProt(st) ? 'Protected' : (isFresh(st) || isPresumed(st)) ? 'Okay' : st.state;
 function saveHits() { if (!S.demo) store.set('hit', [...S.hit]); }
-// The hover freeze holds rows still so links don't jump; a hit should leave at once, so it skips the freeze.
+function saveLedger() { if (!S.demo) store.set('ledger', [...S.ledger].map(([id, e]) => [id, { n: e.n, h: e.h }])); }
+// The last hit you marked on a target, if it can still be undone.
+function undoable(id) {
+  const e = S.ledger.get(id), last = e && e.h[e.h.length - 1];
+  return last && Date.now() - last[0] < UNDO_MS ? last : null;
+}
+// Hidden: marked hit, and the minute to undo it is over. Hidden targets only show in the Hit view.
+const isHidden = id => S.hit.has(id) && !undoable(id);
+const gainOf = id => { const e = S.ledger.get(id); return e ? e.h.reduce((a, x) => a + (Number(x[1]) || 0), 0) : 0; };
+const timesOf = id => { const e = S.ledger.get(id); return e ? e.h.length : 0; };
+function gainsTotal() { let v = 0, n = 0; for (const e of S.ledger.values()) for (const x of e.h) { v += Number(x[1]) || 0; n++; } return { v, n, people: S.ledger.size }; }
+
+// A hit goes in the ledger at the value shown when you pressed it: what that hit paid, as far as the tool can know.
+// The target hides once the minute to undo is over, and gets no status checks until the hospital timer from the hit ends.
+// One check about 5 seconds after the mark picks up that timer.
 function markHit(id) {
-  S.hit.set(id, Date.now()); S.clicked.delete(id); saveHits();
-  if (S.hover) S.freezeAt = 1;
-  // One check a few seconds later picks up the new hospital timer, so Fresh can fire on time.
-  setTimeout(() => { if (S.hit.has(id) && S.phase === 'hunting') checkNow(id, 'You marked a hit, picking up the new hospital timer'); }, 5000);
+  const t = S.targets.get(id);
+  if (!t) return;
+  const at = Date.now();
+  S.hit.set(id, at); S.clicked.delete(id);
+  const e = S.ledger.get(id) || { n: t.name, h: [] };
+  e.n = t.name; e.h.push([at, t.reward]);
+  S.ledger.set(id, e);
+  saveHits(); saveLedger();
+  if (S.demo) Demo.hit(id);
+  setTimeout(() => { if (S.hit.get(id) === at) { if (!S.priority.includes(id)) S.priority.push(id); S.pwhy.set(id, 'You marked a hit, picking up the new hospital timer'); S.pph.set(id, 'manual'); pump(); } }, 5000);
   render();
 }
-// A hit loses its tag once that target leaves hospital after the hit, the moment it turns Fresh.
-function clearFreshHits() {
+function undoHit(id) {
+  const last = undoable(id);
+  if (!last) return;
+  const e = S.ledger.get(id);
+  e.h.pop();
+  if (!e.h.length) S.ledger.delete(id);
+  if (S.hit.get(id) === last[0]) S.hit.delete(id);
+  S.clicked.add(id);
+  saveHits(); saveLedger();
+  render();
+}
+// Remove, from the Hit view: the target leaves the ledger and the gains, and comes back everywhere.
+function removeHit(id) {
+  S.ledger.delete(id); S.hit.delete(id); S.rmArm = null;
+  saveHits(); saveLedger();
+  render();
+}
+// A hit tag ends when the hospital timer from that hit runs out (the target turns Fresh and gets its confirming check),
+// or when the first check after the hit shows they never went to hospital.
+function clearHits() {
   let changed = false;
   for (const [id, at] of S.hit) {
     const st = S.status.get(id);
-    if (isFresh(st) && st.until * 1000 > at) { S.hit.delete(id); changed = true; }
+    if (!st || st.at <= at) continue;
+    if (st.state !== 'Hospital' || (st.until && st.until <= nowS())) { S.hit.delete(id); changed = true; }
   }
   if (changed) saveHits();
 }
 function unhitAll() { S.hit.clear(); saveHits(); render(); }
-// A hit stays hidden until its bounty is gone from Torn's board.
+function eraseGains() { S.ledger.clear(); S.hit.clear(); saveHits(); store.del('ledger'); render(); }
+// A tag goes once the target's bounty is gone from Torn's board. The ledger stays.
 function pruneHits() {
   let changed = false;
   for (const id of S.hit.keys()) { const t = S.targets.get(id); if (!t || !t.count) { S.hit.delete(id); changed = true; } }
@@ -1294,14 +1411,14 @@ function saveStatusSoon() {
     statusSaveT = 0;
     if (S.demo) return;   // demo may have started since the timer was set
     const c = Date.now() - STATUS_TTL, rows = [];
-    for (const [id, s] of S.status) if (s.at > c && s.state !== 'Error') rows.push([id, s.state, s.until, s.desc, s.details, s.at, s.age, s.pe]);
+    for (const [id, s] of S.status) if (s.at > c && s.state !== 'Error') rows.push([id, s.state, s.until, s.desc, s.details, s.at, s.age, s.pe, s.la || 0]);
     store.set('status', rows);
   }, 5000);
 }
 function loadStatus() {
   const rows = store.get('status', []), c = Date.now() - STATUS_TTL;
   if (!Array.isArray(rows)) return;
-  for (const r of rows) if (r[5] > c) S.status.set(r[0], { state: r[1], until: r[2], desc: r[3], details: r[4], at: r[5], age: r[6] ?? null, pe: r[7] || 0 });
+  for (const r of rows) if (r[5] > c) S.status.set(r[0], { state: r[1], until: r[2], desc: r[3], details: r[4], at: r[5], age: r[6] ?? null, pe: r[7] || 0, la: r[8] || 0 });
 }
 
 let ffSaveT = 0;
@@ -1442,6 +1559,7 @@ function enterDemo() {
   S.demo = true; S.key = ''; S.ffKey = '';
   S.me = { id: 0, name: 'Demo hunter', level: 42, age: 900 };
   S.targets = new Map(); S.status = new Map(); S.ff = new Map(); S.snap = 0; S.listCount = 0; S.freshList = [];
+  S.hit = new Map(); S.ledger = new Map();   // demo hits live in memory only, apart from your real ones
   S.phase = 'idle';
   Demo.reset();
   S.ffState = 'on';
@@ -1457,6 +1575,7 @@ function leaveDemo(quiet) {
   stop(true);
   S.demo = false; S.me = null; S.ffState = 'off';
   S.targets = new Map(); S.status = new Map(); S.ff = new Map(); S.snap = 0; S.listCount = 0; S.freshList = [];
+  S.hit = new Map(store.get('hit', [])); S.ledger = loadLedger();
   S.phase = 'idle';
   loadBoard(); loadStatus();
   renderKey();
@@ -1593,14 +1712,37 @@ function listLine() {
   return `${fmtInt(S.targets.size)} targets`;
 }
 
-async function refreshList() {
+// Refetch board: reads the board again. Page 1 says if Torn's board changed; if not, that one call is all it costs.
+// Devmode's "Refetch the board" forces every page.
+async function refetchBoard(force) {
   if (!S.key && !S.demo) { keyMsg('Connect your key first, or try the demo.'); return; }
   if (S.sweepRun) return;
   $('progress').hidden = false;
   const run = S.runId;
-  try { await sweep(true, run, false); }
+  try { await sweep(!!force, run, false); }
   catch (e) { if (run === S.runId) halt(e, 'list'); }
   render();
+}
+
+// Refresh list: status checks only, the board stays as it is. High value first, then Easy fights,
+// then everyone else the status loop walks. Hits waiting on their hospital timer are left alone.
+function refreshPlan() {
+  const out = [], seen = new Set();
+  const add = (list, why) => { for (const t of list) if (!seen.has(t.id) && !S.hit.has(t.id)) { seen.add(t.id); out.push([t.id, why]); } };
+  add(highList(), 'Refresh list: High value');
+  add(perfectList(), 'Refresh list: Easy fights');
+  add(S.scan, 'Refresh list: everyone else');
+  return out;
+}
+function refreshList() {
+  if (!S.key && !S.demo) { keyMsg('Connect your key first, or try the demo.'); return; }
+  const plan = refreshPlan();
+  // Replace any earlier refresh still in the queue, so pressing twice doesn't queue everyone twice.
+  S.priority = S.priority.filter(id => S.pph.get(id) !== 'refresh');
+  for (const [id, why] of plan) { S.priority.push(id); S.pwhy.set(id, why); S.pph.set(id, 'refresh'); }
+  if (S.phase === 'stopped' || S.phase === 'paused') { Idle.clear(); S.phase = 'hunting'; }
+  say(`Refreshing ${fmtInt(plan.length)} statuses: High value first, then Easy fights, then everyone else.`);
+  pump(); render();
 }
 
 function stop(silent) {
@@ -1654,24 +1796,53 @@ async function pump() {
 }
 
 // When a checked target is due for its next check, and why. One place, so the loop and the queue view agree.
-// Okay re-checks stretch as the list grows, so they never ask for more than 70% of your pace.
-// 30 Okay targets: every 90s. 200 at a pace of 60: every 4m 46s. Confirms and Check now skip the line.
-function okayGap() {
-  return Math.max(OKAY_RECHECK, Math.ceil(S.okayAll / (OKAY_SHARE * S.pace) * 60e3));
+// Okay at the top of High value or Easy fights: every 90 seconds, stretched so those alone never pass 25% of your pace.
+// Any other Okay target: by its last action. Active in the last hour every 10 min, offline an hour or more every 20,
+// offline a day or more every 30. A hospital timer is never re-checked: one check when it ends. Hits: none at all.
+function hotGap() {
+  return Math.max(OKAY_RECHECK, Math.ceil(S.hot.size / (RECHECK_SHARE * S.pace) * 60e3));
 }
-function dueOf(st, now) {
+function dueOf(st, now, id) {
   const ns = now / 1000;
+  if (id && S.hit.has(id) && st.at > S.hit.get(id)) {
+    return st.until > ns ? [st.until * 1000 + FRESH_MS, 'Marked hit, no checks until the hospital timer ends'] : [FAR, 'Marked hit'];
+  }
   if (isProt(st)) return [st.at + IDLE_RECHECK * 3, 'New player protection, slow re-check'];   // can't be hit for days
   switch (st.state) {
-    case 'Okay': { const g = okayGap(); return [st.at + g, `Okay re-check, every ${fmtLeft(g / 1000)}`]; }
+    case 'Okay': {
+      if (id && S.hot.has(id)) { const g = hotGap(); return [st.at + g, `Top of High value or Easy fights, every ${fmtLeft(g / 1000)}`]; }
+      const away = st.la ? ns - st.la : 0;
+      if (st.la && away >= 86400) return [st.at + OKAY_GONE, 'Okay, offline a day or more, every 30 min'];
+      if (st.la && away >= 3600) return [st.at + OKAY_AWAY, 'Okay, offline an hour or more, every 20 min'];
+      return [st.at + OKAY_ACTIVE, 'Okay, every 10 min'];
+    }
     case 'Hospital':
       // Out of hospital: Fresh for 10 seconds, then one check. Most get hit again in that window.
-      return st.until && st.until <= ns ? [Math.max(st.until * 1000 + FRESH_MS, st.at + 5000), 'Fresh is over, confirming Okay'] : [st.at + IDLE_RECHECK, 'Hospital, slow re-check'];
+      if (st.until) return [Math.max(st.until * 1000 + FRESH_MS, st.at + 5000), 'Fresh is over, confirming Okay'];
+      return [st.at + IDLE_RECHECK, 'Hospital, no timer given, slow re-check'];
     case 'Jail': case 'Federal':
       return st.until && st.until <= ns ? [Math.max(st.until * 1000, st.at + 5000), 'Out of jail, confirming Okay'] : [st.at + IDLE_RECHECK, 'Jail, slow re-check'];
     case 'Traveling': case 'Abroad': return [st.at + TRAVEL_RECHECK, 'Traveling, re-check every 5 min'];
     default: return [st.at + IDLE_RECHECK, 'Slow re-check, every 10 min'];
   }
+}
+// The 25% cap: re-checks in the last minute, against a quarter of your pace.
+function recheckRoom() {
+  const c = Date.now() - 60e3;
+  S.rcLog = S.rcLog.filter(t => t > c);
+  return S.rcLog.length < Math.max(1, Math.floor(RECHECK_SHARE * S.pace));
+}
+// The top of High value and Easy fights, refreshed at most once a second.
+function hotIds() {
+  if (Date.now() - S.hotAt < 1000) return S.hot;
+  S.hotAt = Date.now();
+  S.hot = new Set([...highList().slice(0, HOT_TOP), ...perfectList().slice(0, HOT_TOP)].map(t => t.id));
+  return S.hot;
+}
+// A hit with no check since the mark: the one check that picks up the new hospital timer.
+function hitNeedsTimer(id, now) {
+  const at = S.hit.get(id), st = S.status.get(id);
+  return at != null && now - at >= 5000 && (!st || st.at <= at);
 }
 
 function nextTarget() {
@@ -1679,23 +1850,32 @@ function nextTarget() {
     const id = S.priority.shift();
     const why = S.pwhy.get(id) || 'Asked for by hand', phase = S.pph.get(id) || 'manual';
     S.pwhy.delete(id); S.pph.delete(id);
-    if (S.targets.has(id) && !S.inflight.has(id)) return { id, why, phase };
+    if (!S.targets.has(id) || S.inflight.has(id)) continue;
+    // A hit waiting on its hospital timer gets no checks, even asked for in bulk. Check now by hand still goes.
+    const st = S.status.get(id), hat = S.hit.get(id);
+    if (hat != null && st && st.at > hat && st.until > nowS() && phase !== 'manual') continue;
+    return { id, why, phase };
   }
   if (S.phase !== 'hunting') return null;
-  for (const t of S.matched) if (!S.status.has(t.id) && !S.inflight.has(t.id)) return { id: t.id, why: 'First pass, never checked', phase: 'first' };
-  if (!S.live || document.hidden) return null;
+  const now = Date.now();
+  for (const id of S.hit.keys()) if (S.targets.has(id) && !S.inflight.has(id) && hitNeedsTimer(id, now)) return { id, why: 'You marked a hit, picking up the new hospital timer', phase: 'manual' };
+  for (const t of S.scan) if (!S.status.has(t.id) && !S.inflight.has(t.id) && !S.hit.has(t.id)) return { id: t.id, why: 'First pass, never checked', phase: 'first' };
+  if (!S.live || document.hidden || !recheckRoom()) return null;
 
   // Everyone has been checked once. Re-check whoever has been due the longest.
-  const now = Date.now();
+  hotIds();
   let best = 0, bestDue = Infinity, bestWhy = '';
-  for (const t of S.matched) {
+  for (const t of S.scan) {
     if (S.inflight.has(t.id)) continue;
     const st = S.status.get(t.id);
     if (!st) continue;
-    const [due, why] = dueOf(st, now);
+    const [due, why] = dueOf(st, now, t.id);
     if (due <= now && due < bestDue) { best = t.id; bestDue = due; bestWhy = why; }
   }
-  return best ? { id: best, why: bestWhy, phase: /confirming/.test(bestWhy) ? 'fresh' : 'recheck' } : null;
+  if (!best) return null;
+  const fresh = /confirming/.test(bestWhy);
+  if (!fresh) S.rcLog.push(now);
+  return { id: best, why: bestWhy, phase: fresh ? 'fresh' : 'recheck' };
 }
 
 // The moment a timer ends (and Fresh is over, for hospital), the confirming check jumps to the
@@ -1704,10 +1884,10 @@ const confirmAt = st => st.state === 'Hospital' ? st.until * 1000 + FRESH_MS : s
 function queueConfirms() {
   if (!S.live || S.phase !== 'hunting' || Idle.stopped) return;
   let added = false;
-  for (const t of S.matched) {
+  for (const t of S.scan) {
     const st = S.status.get(t.id);
     if (!isPresumed(st) || st.at >= confirmAt(st)) continue;
-    if (S.inflight.has(t.id) || S.pwhy.has(t.id)) continue;
+    if (S.inflight.has(t.id) || S.pwhy.has(t.id) || S.hit.has(t.id)) continue;
     S.priority.unshift(t.id);
     S.pwhy.set(t.id, st.state === 'Hospital' ? 'Fresh is over, confirming Okay' : 'Out of jail, confirming Okay');
     S.pph.set(t.id, 'fresh');
@@ -1725,17 +1905,18 @@ function planNext(limit) {
     seen.add(id); out.push({ id, why: S.pwhy.get(id) || 'Asked for by hand', due: now });
   }
   const live = S.phase === 'hunting';
-  if (live) for (const t of S.matched) {
+  if (live) for (const t of S.scan) {
     if (out.length >= limit) return out;
-    if (!S.status.has(t.id) && !seen.has(t.id)) { seen.add(t.id); out.push({ id: t.id, why: 'First pass, never checked', due: now }); }
+    if (!S.status.has(t.id) && !seen.has(t.id) && !S.hit.has(t.id)) { seen.add(t.id); out.push({ id: t.id, why: 'First pass, never checked', due: now }); }
   }
   if (!live || !S.live) return out;
+  hotIds();
   const rest = [];
-  for (const t of S.matched) {
+  for (const t of S.scan) {
     const st = S.status.get(t.id);
     if (!st || seen.has(t.id)) continue;
-    const [due, why] = dueOf(st, now);
-    rest.push({ id: t.id, why, due });
+    const [due, why] = dueOf(st, now, t.id);
+    if (due < FAR) rest.push({ id: t.id, why, due });
   }
   rest.sort((a, b) => a.due - b.due);
   return out.concat(rest.slice(0, limit - out.length));
@@ -1749,7 +1930,7 @@ async function checkStatus(id, why, phase) {
     // timestamp busts Torn's 30-second service cache, so a re-check never gets an old answer back.
     const p = normProfile(await tornTry('/user/' + id + '/profile', { timestamp: Math.floor(Date.now() / 1000) }, { why: why || 'Status check', target: id, phase: phase || 'manual' }));
     const st = p.status || {}, at = Date.now();
-    setStatus(id, { state: String(st.state || 'Unknown'), until: Number(st.until) || 0, desc: plain(st.description), details: plain(st.details), at, age: p.age, pe: protectionEnd(p, at) });
+    setStatus(id, { state: String(st.state || 'Unknown'), until: Number(st.until) || 0, desc: plain(st.description), details: plain(st.details), at, age: p.age, pe: protectionEnd(p, at), la: p.la });
     const t = S.targets.get(id);
     if (t) {
       if (p.level) t.liveLevel = p.level;
@@ -1780,9 +1961,9 @@ async function scheduleFF() {
   try {
     for (;;) {
       if (S.ffState !== 'on' || S.phase === 'idle' || S.phase === 'list') break;
-      // Scout every match: 205 per call keeps even a full board to a handful of calls,
-      // and the fair fight sort and filter need complete data.
-      const scope = S.matched;
+      // Scout every target your search allows, past the fair fight cap too: 205 per call keeps even a
+      // full board to a handful of calls, and the band, the strips and the scan order need complete data.
+      const scope = S.pool;
       const need = [], c = Date.now() - FF_TTL;
       let have = 0;
       for (const t of scope) {
@@ -1858,11 +2039,22 @@ const SORTS = {
 };
 function checkedAt(t) { const st = S.status.get(t.id); return st ? st.at : 0; }
 
+// A target in your band: fair fight known and within 1.5 of your score.
+const inBand = t => { const f = ffOf(t, null); return f != null && Math.abs(f - S.ffScore) <= BAND + 1e-9; };
+const byFFScore = () => ffOn() && S.ffScore > 0;
+// What the alerts, Fresh and Available soon follow: the board's matches, plus your band above the board's fair fight cap.
+const inPlay = t => S.matchedIds.has(t.id) || (byFFScore() && S.poolIds.has(t.id) && inBand(t));
+
+// A row for a target in your ledger whose bounty has left Torn's board, so the Hit view can still show it.
+function ghostOf(id) {
+  const e = S.ledger.get(id);
+  return { id, name: e ? e.n || 'Player ' + id : 'Player ' + id, nameLc: (e ? e.n : '').toLowerCase(), level: 0, liveLevel: 0, listings: [], total: 0, count: 0, reward: 0, ends: FAR, ghost: true };
+}
+
 function computeView() {
   const f = S.f, q = f.q.trim().toLowerCase();
-  const counts = { okay: 0, protected: 0, hospital: 0, travel: 0, jail: 0, other: 0, unchecked: 0, hit: 0 };
+  const counts = { okay: 0, protected: 0, hospital: 0, travel: 0, jail: 0, other: 0, unchecked: 0, hit: S.ledger.size };
   const matched = [], pool = [];
-  let hitHidden = 0, okayAll = 0;
   for (const t of S.targets.values()) {
     if (!t.count) continue;
     const lvl = lvlOf(t), st = S.status.get(t.id);
@@ -1875,31 +2067,88 @@ function computeView() {
     if (f.ageMin && st && st.age != null && st.age < f.ageMin) continue;
     pool.push(t);
     if (f.ffMax) { const x = S.ff.get(t.id); if (x && x.ff != null && x.ff > f.ffMax) continue; }
-    if (bucket(st) === 'okay') okayAll++;
-    // Hits stay in matched so they keep getting checked; that's how the tag clears when they turn Fresh.
-    if (S.hit.has(t.id)) { counts.hit++; hitHidden++; } else counts[bucket(st)]++;
+    if (!isHidden(t.id)) counts[bucket(st)]++;
     matched.push(t);
   }
   matched.sort(SORTS[S.sort] || SORTS.reward_desc);
   S.matched = matched;
   S.matchedIds = new Set(matched.map(t => t.id));
   S.pool = pool;
-  S.okayAll = okayAll;
+  S.poolIds = new Set(pool.map(t => t.id));
   S.counts = counts;
-  S.hitHidden = hitHidden;
-  // Hit targets only show when the Hit chip is on. Everyone else follows their status chip.
-  const want = t => S.hit.has(t.id) ? f.states.has('hit') : (!f.states.size || f.states.has(bucket(S.status.get(t.id))));
-  S.view = f.states.size || hitHidden ? matched.filter(want) : matched;
+
+  // The order the status loop walks. With fair fight and a score: your band first, then everyone under it,
+  // then everyone over it, biggest bounty first in each. Targets with no fair fight yet go last.
+  // Without a score: the board, in its own sort.
+  if (byFFScore()) {
+    const band = [], under = [], over = [], none = [], score = S.ffScore;
+    for (const t of pool) {
+      const x = ffOf(t, null);
+      if (x == null) none.push(t);
+      else if (Math.abs(x - score) <= BAND + 1e-9) band.push(t);
+      else if (x < score) under.push(t);
+      else over.push(t);
+    }
+    const big = (a, b) => b.reward - a.reward || a.id - b.id;
+    S.scan = [...band.sort(big), ...under.sort(big), ...over.sort(big), ...none.sort(big)];
+  } else S.scan = matched;
+
+  // The Hit view: every target in your ledger, on the board or not. Other status chips add their own rows.
+  const hitView = f.states.has('hit');
+  const others = new Set([...f.states].filter(s => s !== 'hit'));
+  const view = [];
+  if (hitView) {
+    for (const id of S.ledger.keys()) {
+      const t = S.targets.get(id) || ghostOf(id);
+      if (q && !t.nameLc.includes(q) && String(id) !== q) continue;
+      view.push(t);
+    }
+  }
+  const seen = new Set(view.map(t => t.id));
+  if (!hitView || others.size) {
+    for (const t of matched) {
+      if (seen.has(t.id) || isHidden(t.id)) continue;
+      if (others.size && !others.has(bucket(S.status.get(t.id)))) continue;
+      view.push(t);
+    }
+  }
+  if (hitView) view.sort(SORTS[S.sort] || SORTS.reward_desc);
+  S.view = view;
 }
 
 /* ------------------------------------------------------------------ *
  *  Rendering
  * ------------------------------------------------------------------ */
+// The value scale, shared by the High value strip and the board. 0: under $10k, 1: $10k to $500k,
+// 2: $500k to $1m, 3: $1m to $2m, 4: $2m and up.
+const VB_GREEN = '#1d5c36', VB_PURPLE = '#6a35b0';
+const valTier = v => v < 1e4 ? 0 : v < 5e5 ? 1 : v < 1e6 ? 2 : v < 2e6 ? 3 : 4;
+function valColor(v) {
+  const t = valTier(v);
+  if (t === 0) return 'var(--mist-faint)';
+  // Log scale: $10k is the darkest green, $500k is gold. $1m to $2m goes from gold to purple the same way.
+  if (t === 1) return `color-mix(in oklab, var(--gold) ${Math.round(clamp(Math.log(v / 1e4) / Math.log(50), 0, 1) * 100)}%, ${VB_GREEN})`;
+  if (t === 2) return 'var(--gold)';
+  if (t === 3) return `color-mix(in oklab, ${VB_PURPLE} ${Math.round(clamp(Math.log2(v / 1e6), 0, 1) * 100)}%, var(--gold))`;
+  return '';   // the color cycle comes from CSS
+}
+// Every color cycle on the page runs on the same clock, so merged rows change color together.
+function syncChroma() {
+  for (const el of document.querySelectorAll('.vb4')) {
+    if (!el.getAnimations) return;
+    for (const a of el.getAnimations()) if (a.startTime !== 0) a.startTime = 0;
+  }
+}
+
 const ICON_RECHECK = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9"/><path d="M13.5 2.5v3h-3"/></svg>';
 const profileUrl = id => 'https://www.torn.com/profiles.php?XID=' + id;
 const attackUrl = id => 'https://www.torn.com/page.php?sid=attack&amp;user2ID=' + id;
 const attackA = (t, cls) => `<a${cls ? ` class="${cls}"` : ''} href="${attackUrl(t.id)}" target="_blank" rel="noopener" data-act="attack" data-id="${t.id}">Attack</a>`;
-const hitBtn = (t, cls) => S.clicked.has(t.id) ? `<button class="${cls}" type="button" data-act="hit" data-id="${t.id}" title="Hide ${esc(t.name)} from the board">Hit?</button>` : '';
+// Hit? once you opened Attack. For a minute after you press it, Undo instead.
+const hitBtn = (t, cls) => undoable(t.id)
+  ? `<button class="${cls}" type="button" data-act="undo" data-id="${t.id}" title="Take back this Hit mark and its value">Undo</button>`
+  : S.clicked.has(t.id) && !t.ghost ? `<button class="${cls}" type="button" data-act="hit" data-id="${t.id}" title="Mark ${esc(t.name)} hit: hidden until the hospital timer ends, and counted in your gains">Hit?</button>` : '';
+const rmBtn = t => `<button class="btn sm ghost" type="button" data-act="rmhit" data-id="${t.id}" title="Take ${esc(t.name)} out of your hits and your gains">${S.rmArm && S.rmArm.id === t.id && Date.now() - S.rmArm.at < 3000 ? 'Sure?' : 'Remove'}</button>`;
 
 // "Traveling to Japan" -> "to Japan", "Returning to Torn from Japan" -> "back from Japan", "In Japan" -> "in Japan"
 function place(desc) {
@@ -1958,22 +2207,27 @@ function ffHTML(t) {
 function rowHTML(t) {
   const st = S.status.get(t.id), busy = S.inflight.has(t.id), prot = isProt(st), ready = effState(st) === 'Okay', ns = nowS();
   const open = S.open.has(t.id);
+  const times = timesOf(t.id);
   const tag = (prot ? `<span class="newb" title="Under Torn's New Player Protection">New player</span>` : '')
-    + (S.hit.has(t.id) ? '<span class="newb hitb" title="You marked this target hit. Clears when they leave hospital.">Hit</span>' : '');
+    + (S.hit.has(t.id) ? '<span class="newb hitb" title="You just marked this target hit. Hidden, with no checks, until the hospital timer from that hit ends.">Just hit</span>'
+      : times ? `<span class="newb hitb" title="You marked this target hit ${times === 1 ? 'once' : times + ' times'}">Hit${times > 1 ? ' ×' + times : ''}</span>` : '');
+  const hitView = S.f.states.has('hit');
   const ends = t.ends < FAR ? `<span class="ends" title="${esc(fmtClock(t.ends))}">${t.listings.length > 1 ? 'next ' : ''}ends in <span data-until="${t.ends}">${fmtLeft(t.ends - ns)}</span></span>` : '';
   let html = `<tr class="main">
 <td class="c-name"><a class="tname" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}</a>${tag}<span class="tid">[${t.id}]</span></td>
 <td class="c-lvl"><span class="lv"><span class="lvk">Level </span>${lvlOf(t)}</span></td>
 <td class="c-status">${statusHTML(st, busy)}</td>
-<td class="c-reward"><span class="money big" title="Current value: ${fmtFull(t.reward)} for your next hit">${fmtMoney(t.reward)}</span></td>
-<td class="c-bounties"><button class="bt" type="button" data-act="toggle" aria-expanded="${open}"><span class="lab">${t.count} ${t.count === 1 ? 'bounty' : 'bounties'}</span><span class="car" aria-hidden="true"></span></button>${t.count > 1 ? `<span class="ends" title="Every bounty on this target added up. One hit claims one bounty.">+${t.count - 1} more, ${fmtMoney(t.total)} stacked</span>` : ''}${ends}</td>
+<td class="c-reward">${t.ghost ? '<span class="faint">none left</span>' : `<span class="money big" title="Current value: ${fmtFull(t.reward)} for your next hit">${fmtMoney(t.reward)}</span>`}</td>
+<td class="c-gained">${times ? `<span class="money" title="${fmtFull(gainOf(t.id))}, at the value shown when you marked each hit"><span class="lvk">Gained </span>${fmtMoney(gainOf(t.id))}</span>` : ''}</td>
+<td class="c-times">${times ? `<span class="lvk">Hit </span>${fmtInt(times)}${times === 1 ? ' time' : ' times'}` : ''}</td>
+<td class="c-bounties">${t.ghost ? '<span class="faint">Bounty gone from the board</span>' : `<button class="bt" type="button" data-act="toggle" aria-expanded="${open}"><span class="lab">${t.count} ${t.count === 1 ? 'bounty' : 'bounties'}</span><span class="car" aria-hidden="true"></span></button>${t.count > 1 ? `<span class="ends" title="Every bounty on this target added up. One hit claims one bounty.">+${t.count - 1} more, ${fmtMoney(t.total)} stacked</span>` : ''}${ends}`}</td>
 <td class="c-ff">${ffHTML(t)}</td>
 <td class="c-age">${st && st.age != null ? `${fmtInt(st.age)} ${st.age === 1 ? 'day' : 'days'}` : '<span class="faint">not yet</span>'}</td>
-<td class="c-checked">${st ? `<span data-ago="${st.at}">${fmtAgo(st.at)}</span>` : '<span class="faint">not yet</span>'}<button class="icon" type="button" data-act="check" title="Check now" aria-label="Check ${esc(t.name)} now">${ICON_RECHECK}</button></td>
-<td class="c-act"><a class="btn sm ghost" href="${profileUrl(t.id)}" target="_blank" rel="noopener">Profile</a>${attackA(t, 'btn sm ' + (ready ? 'go' : 'ghost'))}${hitBtn(t, 'btn sm gold')}</td>
+<td class="c-checked">${st ? `<span data-ago="${st.at}">${fmtAgo(st.at)}</span>` : '<span class="faint">not yet</span>'}${t.ghost ? '' : `<button class="icon" type="button" data-act="check" title="Check now" aria-label="Check ${esc(t.name)} now">${ICON_RECHECK}</button>`}</td>
+<td class="c-act"><a class="btn sm ghost" href="${profileUrl(t.id)}" target="_blank" rel="noopener">Profile</a>${t.ghost ? '' : attackA(t, 'btn sm ' + (ready ? 'go' : 'ghost'))}${hitBtn(t, 'btn sm gold')}${hitView && times ? rmBtn(t) : ''}</td>
 </tr>`;
-  if (open) {
-    html += `<tr class="detail"><td colspan="9"><ul class="listings">${t.listings.map(l => `<li>
+  if (open && !t.ghost) {
+    html += `<tr class="detail"><td colspan="11"><ul class="listings">${t.listings.map(l => `<li>
 <span class="who2">${l.anon || !l.lid ? '<span class="faint">Listed anonymously</span>' : `<span class="faint">Listed by</span> <a href="${profileUrl(l.lid)}" target="_blank" rel="noopener">${esc(l.lname || 'Player ' + l.lid)}</a>`}</span>
 <span><span class="money" title="${fmtFull(l.reward)}">${fmtMoney(l.reward)}</span>${l.qty > 1 ? `<span class="qty">× ${l.qty}</span>` : ''}</span>
 <span class="reason">${l.reason ? '“' + esc(l.reason) + '”' : '<span class="faint">No reason given</span>'}</span>
@@ -1987,7 +2241,8 @@ function sigOf(t) {
   const st = S.status.get(t.id), x = S.ff.get(t.id), ns = nowS();
   return [t.name, lvlOf(t), t.reward, t.total, t.count, t.ends < ns,
     st ? st.at + st.state + (st.until > ns) + (st.until - ns < SOON_SECS) + (st.until + FRESH_MS / 1000 > ns) + isProt(st) : '', x ? x.at : S.ffState,
-    S.inflight.has(t.id), S.open.has(t.id), S.clicked.has(t.id), S.hit.has(t.id)].join('|');
+    S.inflight.has(t.id), S.open.has(t.id), S.clicked.has(t.id), S.hit.has(t.id), timesOf(t.id), gainOf(t.id), !!undoable(t.id),
+    S.f.states.has('hit'), S.rmArm && S.rmArm.id === t.id && Date.now() - S.rmArm.at < 3000].join('|');
 }
 
 const rowCache = new Map();   // id -> { el, sig, state }
@@ -1999,7 +2254,6 @@ function paint(r, t) {
   if (sig === r.sig) return;
   const st = S.status.get(t.id), state = effState(st);
   r.el.innerHTML = rowHTML(t);
-  r.el.classList.toggle('ready', state === 'Okay');
   const fx = S.ff.get(t.id);
   r.el.classList.toggle('noff', S.ffState === 'on' && !!fx && fx.ff == null);
   if (r.state !== undefined && r.state !== state) {
@@ -2023,7 +2277,7 @@ function renderRows() {
     if (!S.freezeAt) S.freezeAt = Date.now();
     if (Date.now() - S.freezeAt < 4000) {
       for (const id of current) {
-        const r = rowCache.get(id), t = S.targets.get(id);
+        const r = rowCache.get(id), t = S.targets.get(id) || (S.ledger.has(id) ? ghostOf(id) : null);
         if (r && t) paint(r, t);
       }
       return;
@@ -2033,8 +2287,12 @@ function renderRows() {
 
   const want = new Set(page.map(t => t.id));
   for (const [id, r] of rowCache) if (!want.has(id)) { r.el.remove(); rowCache.delete(id); }
+  const hv = S.f.states.has('hit');
+  if ($('board').classList.contains('hitview') !== hv) { $('board').classList.toggle('hitview', hv); Cols.apply(); }
   let prev = thead;
-  for (const t of page) {
+  const tiers = page.map(t => valTier(t.reward));
+  for (let i = 0; i < page.length; i++) {
+    const t = page[i];
     let r = rowCache.get(t.id);
     if (!r) {
       const el = document.createElement('tbody');
@@ -2044,6 +2302,14 @@ function renderRows() {
       rowCache.set(t.id, r);
     }
     paint(r, t);
+    // Value border. Neighbors in the same tier merge: only the first draws a top, only the last a bottom.
+    const tier = tiers[i], cl = r.el.classList;
+    cl.add('vb');
+    for (let k = 0; k <= 4; k++) cl.toggle('vb' + k, k === tier);
+    cl.toggle('gs', i === 0 || tiers[i - 1] !== tier);
+    cl.toggle('ge', i === page.length - 1 || tiers[i + 1] !== tier);
+    const col = valColor(t.reward);
+    if (r.vb !== col) { r.vb = col; if (col) r.el.style.setProperty('--vb', col); else r.el.style.removeProperty('--vb'); }
     if (prev.nextElementSibling !== r.el) prev.after(r.el);
     prev = r.el;
   }
@@ -2051,7 +2317,9 @@ function renderRows() {
   const empty = $('empty');
   if (!page.length) {
     empty.hidden = false;
-    $('emptyText').innerHTML = S.targets.size
+    $('emptyText').innerHTML = S.f.states.has('hit') && !S.ledger.size
+      ? 'No hits marked yet. Open Attack on a target, then press Hit? once you hospitalize them.'
+      : S.targets.size
       ? 'No targets match these filters. <button class="link" type="button" data-act="clear">Clear filters</button>'
       : (S.phase === 'list' ? 'Loading the bounty list.' : 'Start a search to load the bounty board.');
   } else empty.hidden = true;
@@ -2061,42 +2329,46 @@ function renderRows() {
   $('moreBtn').textContent = `Show ${fmtInt(Math.min(SHOW_STEP, left))} more (${fmtInt(left)} left)`;
 }
 
-// Perfect match: Okay targets, closest to your Fair Fight Score first, on either side of it. At the same distance
+// Easy fights: Okay targets, closest to your Fair Fight Score first, on either side of it. At the same distance
 // the one under your score wins, then the bigger bounty. It looks past the board's fair fight filter on purpose.
 // With an FFScouter key, targets FFScouter has no estimate for stay out. Without one: highest bounty first.
 const ffOn = () => S.ffState === 'on';
-function perfectList() {
+function okayPool() {
   if (S.phase === 'idle' || S.phase === 'list') return [];
-  const score = S.ffScore, byFF = ffOn() && score > 0;
-  const list = S.pool.filter(t => {
-    if (S.hit.has(t.id) || bucket(S.status.get(t.id)) !== 'okay') return false;
+  return S.pool.filter(t => {
+    if (isHidden(t.id) || bucket(S.status.get(t.id)) !== 'okay') return false;
     if (ffOn()) { const x = S.ff.get(t.id); if (!x || x.ff == null) return false; }
     return true;
   });
-  if (byFF) {
+}
+function perfectList() {
+  const score = S.ffScore, list = okayPool();
+  if (byFFScore()) {
     const dist = t => Math.round(Math.abs(ffOf(t, 0) - score) * 100);
     list.sort((a, b) => dist(a) - dist(b) || (ffOf(a, 0) <= score ? 0 : 1) - (ffOf(b, 0) <= score ? 0 : 1) || b.reward - a.reward);
   } else list.sort((a, b) => b.reward - a.reward);
   return list;
 }
+// High value: Okay targets within 1.5 of your score, either side, biggest bounty first.
+// Needs fair fight and a score: without them there's no band to look in.
+function highList() {
+  if (!byFFScore()) return [];
+  return okayPool().filter(inBand).sort((a, b) => b.reward - a.reward || a.id - b.id);
+}
 
-// Fresh out of the hospital: the last 10 matches to leave hospital, newest first. Once a check moves
-// their status on (Okay confirmed, or back in hospital), they stay 30 seconds with that status, then drop.
+// Fresh out of the hospital: everyone who turned Fresh in the last 5 minutes, newest first.
+// They stay the whole 5 minutes, showing their latest status, even back in hospital.
 function trackFresh() {
   if (S.phase === 'idle' || S.phase === 'list') return;
   const now = Date.now();
-  for (const t of S.matched) {
+  for (const t of S.scan) {
+    if (!inPlay(t)) continue;
     const st = S.status.get(t.id);
     if (!isFresh(st) || S.freshList.some(e => e.id === t.id && e.until === st.until)) continue;
     S.freshList = S.freshList.filter(e => e.id !== t.id);
-    S.freshList.unshift({ id: t.id, until: st.until, endAt: 0 });
+    S.freshList.unshift({ id: t.id, until: st.until, at: now });
   }
-  for (const e of S.freshList) {
-    if (e.endAt) continue;
-    const st = S.status.get(e.id);
-    if (!st || st.state !== 'Hospital' || st.until !== e.until) e.endAt = now + FRESH_LINGER;
-  }
-  S.freshList = S.freshList.filter(e => (!e.endAt || e.endAt > now) && S.targets.has(e.id)).slice(0, FRESH_KEEP);
+  S.freshList = S.freshList.filter(e => now - e.at < FRESH_HOLD && S.targets.has(e.id));
 }
 
 // What a Fresh card says about the target right now.
@@ -2111,47 +2383,53 @@ function freshState(st) {
 }
 
 const sigs = {};
-function strip(sec, listId, sub, items, sig, card) {
-  $(sec).hidden = !items.length;
-  if (!items.length) { sigs[listId] = ''; Car.sync(listId); return; }
+// keep: the section stays on screen with an empty line when there's nothing in it.
+function strip(sec, listId, sub, items, sig, card, keep) {
+  const on = S.phase !== 'idle' && S.phase !== 'list';
+  $(sec).hidden = keep ? !on : !items.length;
+  if (!items.length) {
+    $(sub.id).textContent = keep ? sub.empty : '';
+    const html = keep ? `<li class="empty">${esc(keep)}</li>` : '';
+    if (sigs[listId] !== 'empty') { sigs[listId] = 'empty'; $(listId).innerHTML = html; }
+    Car.sync(listId); return;
+  }
   $(sub.id).textContent = sub.text;
   if (sig !== sigs[listId]) { sigs[listId] = sig; $(listId).innerHTML = items.map(card).join(''); }
   Car.sync(listId);
 }
+const ffLine = t => { const x = S.ff.get(t.id); return `Lvl ${lvlOf(t)}${x && x.ff != null ? `, FF ${x.ff.toFixed(2)}` : ''}`; };
 
 function renderStrips() {
-  const ns = nowS(), pm = perfectList(), pmIds = new Set(pm.map(t => t.id));
-  const fresh = S.freshList.map(e => S.targets.get(e.id)).filter(Boolean), freshIds = new Set(fresh.map(t => t.id));
-  const both = id => pmIds.has(id) && freshIds.has(id) ? ' class="both"' : '';
-
-  const byFF = ffOn() && S.ffScore > 0;
-  strip('ready', 'readyList', { id: 'readySub', text: `${fmtInt(pm.length)} okay to hit${byFF ? `, closest to your score of ${S.ffScore} first` : ', highest bounty first'}` }, pm,
-    pm.map(t => t.id + ':' + t.reward + ':' + (S.ff.get(t.id)?.at || 0) + ':' + S.clicked.has(t.id) + ':' + freshIds.has(t.id)).join(','),
-    t => {
-      const x = S.ff.get(t.id), ff = x && x.ff != null ? `, FF ${x.ff.toFixed(2)}` : '';
-      return `<li${both(t.id)}>
+  const ns = nowS(), hv = highList(), pm = perfectList();
+  const fresh = S.freshList.map(e => S.targets.get(e.id)).filter(Boolean);
+  const okayCard = (t, extra) => `<li${extra || ''}>
 <span class="soon-t" title="${fmtFull(t.reward)}">${fmtMoney(t.reward)}</span>
 <a class="soon-n" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}</a>
-<span class="soon-m"><span class="soon-k">Lvl ${lvlOf(t)}${ff}</span><span>${attackA(t)}${hitBtn(t, 'link hitq')}</span></span>
+<span class="soon-m"><span class="soon-k">${ffLine(t)}</span><span>${attackA(t)}${hitBtn(t, 'link hitq')}</span></span>
 </li>`;
-    });
+  const cardSig = list => list.map(t => t.id + ':' + t.reward + ':' + (S.ff.get(t.id)?.at || 0) + ':' + S.clicked.has(t.id) + ':' + !!undoable(t.id)).join(',');
 
-  strip('freshSec', 'freshList', { id: 'freshSub', text: `last ${fmtInt(fresh.length)} out of hospital, newest first` }, fresh,
-    fresh.map(t => { const st = S.status.get(t.id); return t.id + ':' + (st ? st.at + st.state + st.until + isFresh(st) + isPresumed(st) : '') + ':' + pmIds.has(t.id) + ':' + S.clicked.has(t.id); }).join(','),
-    t => {
-      const x = S.ff.get(t.id), ff = x && x.ff != null ? `, FF ${x.ff.toFixed(2)}` : '';
-      return `<li${both(t.id)}>
+  strip('hv', 'hvList', { id: 'hvSub', text: `${fmtInt(hv.length)} okay to hit within ${BAND} of your score of ${S.ffScore}, biggest bounty first` }, hv,
+    cardSig(hv),
+    t => { const tier = valTier(t.reward), col = valColor(t.reward);
+      return okayCard(t, ` class="vb vb${tier}"${col ? ` style="--vb:${col}"` : ''}`); });
+
+  strip('ready', 'readyList', { id: 'readySub', text: `${fmtInt(pm.length)} okay to hit${byFFScore() ? `, closest to your score of ${S.ffScore} first` : ', highest bounty first'}` }, pm,
+    cardSig(pm), t => okayCard(t));
+
+  strip('freshSec', 'freshList', { id: 'freshSub', text: `${fmtInt(fresh.length)} out of hospital in the last 5 minutes, newest first`, empty: 'kept here for 5 minutes, with their latest status' }, fresh,
+    fresh.map(t => { const st = S.status.get(t.id); return t.id + ':' + (st ? st.at + st.state + st.until + isFresh(st) + isPresumed(st) : '') + ':' + S.clicked.has(t.id) + ':' + !!undoable(t.id); }).join(','),
+    t => `<li>
 <span class="soon-t" title="${fmtFull(t.reward)}">${fmtMoney(t.reward)}</span>
 <a class="soon-n" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}</a>
 <span class="soon-st">${freshState(S.status.get(t.id))}</span>
-<span class="soon-m"><span class="soon-k">Lvl ${lvlOf(t)}${ff}</span><span>${attackA(t)}${hitBtn(t, 'link hitq')}</span></span>
-</li>`;
-    });
+<span class="soon-m"><span class="soon-k">${ffLine(t)}</span><span>${attackA(t)}${hitBtn(t, 'link hitq')}</span></span>
+</li>`, 'Nobody out of hospital in the last 5 minutes. Anyone whose timer ends shows up here.');
 
   const soon = [];
   if (S.phase !== 'idle' && S.phase !== 'list') {
-    for (const t of S.matched) {
-      if (S.hit.has(t.id)) continue;
+    for (const t of S.scan) {
+      if (isHidden(t.id) || !inPlay(t)) continue;
       const st = S.status.get(t.id);
       // Only timers still running. Once a timer ends they're Fresh or Okay, so they move to the other strips.
       if (st && st.state === 'Hospital' && st.until > ns && !isProt(st)) soon.push([t, st]);
@@ -2159,12 +2437,13 @@ function renderStrips() {
   }
   soon.sort((a, b) => a[1].until - b[1].until || b[0].reward - a[0].reward);
   strip('soon', 'soonList', { id: 'soonSub', text: `${fmtInt(soon.length)} of your matches are in hospital, soonest out first` }, soon,
-    soon.map(([t, st]) => t.id + ':' + st.until + ':' + (st.until - ns < SOON_SECS) + ':' + S.clicked.has(t.id)).join(','),
+    soon.map(([t, st]) => t.id + ':' + st.until + ':' + (st.until - ns < SOON_SECS) + ':' + S.clicked.has(t.id) + ':' + !!undoable(t.id) + ':' + (S.ff.get(t.id)?.at || 0)).join(','),
     ([t, st]) => {
       const left = st.until - ns;
       return `<li>
 <span class="soon-t${left < SOON_SECS ? ' near' : ''}"${left > 0 ? ` data-until="${st.until}" data-slots` : ''}>${slots(fmtLeft(left))}</span>
 <a class="soon-n" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}</a>
+<span class="soon-st soon-k">${ffLine(t)}</span>
 <span class="soon-m"><span class="money" title="${fmtFull(t.reward)}">${fmtMoney(t.reward)}</span><span>${attackA(t)}${hitBtn(t, 'link hitq')}</span></span>
 </li>`;
     });
@@ -2208,7 +2487,6 @@ function renderHead() {
   if (S.targets.size) {
     parts.push(`<span class="ready"><b>${fmtInt(c.okay || 0)}</b> ready</span>`);
     parts.push(`<span><b>${fmtInt(n)}</b> of ${fmtInt(S.targets.size)} match</span>`);
-    if (S.hitHidden) parts.push(`<span>${fmtInt(S.hitHidden)} marked hit${S.f.states.has('hit') ? '' : ', hidden'} <button class="link" type="button" data-act="unhit">Bring back</button></span>`);
     if (S.demo) parts.push('<span>made-up data</span>');
     else if (S.snap) parts.push(`<span>list from ${fmtAgo(S.snap * 1000)}</span>`);
   }
@@ -2218,7 +2496,15 @@ function renderHead() {
     note.hidden = false;
     note.innerHTML = esc(S.searchNote) + ' <button class="link" type="button" data-act="clear">Show everything</button>';
   } else note.hidden = true;
-  $('refreshBtn').disabled = !!S.sweepRun || (!S.key && !S.demo);
+  const can = !!(S.key || S.demo);
+  $('boardBtn').disabled = !!S.sweepRun || !can;
+  const rl = refreshPlan();
+  $('refreshBtn').disabled = !can || !S.targets.size || S.phase === 'idle' || S.phase === 'list' || !rl.length;
+  $('refreshBtn').title = `Status checks only, no board: High value, then Easy fights, then everyone else. ${fmtInt(rl.length)} Torn calls${S.demo ? '' : `, about ${Math.max(1, Math.ceil(rl.length * Pacer.gap() / 60000))} min at your pace`}.`;
+  // The Hit view sums up what the ledger holds.
+  const hn = $('hitNote'), g = gainsTotal();
+  if (S.f.states.has('hit') && g.n) { hn.hidden = false; hn.innerHTML = `Gained <b>${fmtMoney(g.v)}</b> in ${fmtInt(g.n)} ${g.n === 1 ? 'hit' : 'hits'} on ${fmtInt(g.people)} ${g.people === 1 ? 'target' : 'targets'}, based on your Hit marks.`; }
+  else hn.hidden = true;
   for (const b of document.querySelectorAll('#chips .chip')) {
     b.setAttribute('aria-pressed', S.f.states.has(b.dataset.s) ? 'true' : 'false');
     b.querySelector('.c').textContent = fmtInt(c[b.dataset.s] || 0);
@@ -2252,9 +2538,9 @@ function renderSteps() {
   else if (S.ffState === 'error') setStep('ff', 'error', 'off, FFScouter did not answer', 0);
   else if (S.ffState === 'off') setStep('ff', 'skip', 'off, no FFScouter key', 0);
 
-  const m = S.matched;
+  const m = S.scan;
   let checked = 0, ready = 0;
-  for (const t of m) { const st = S.status.get(t.id); if (st) { checked++; if (bucket(st) === 'okay' && !S.hit.has(t.id)) ready++; } }
+  for (const t of m) { const st = S.status.get(t.id); if (st) { checked++; if (bucket(st) === 'okay' && !isHidden(t.id)) ready++; } }
   const left = m.length - checked, ratio = m.length ? checked / m.length : 1;
   const tally = `${fmtInt(checked)} of ${fmtInt(m.length)} checked, ${fmtInt(ready)} ready`;
   let state, text;
@@ -2268,7 +2554,9 @@ function renderSteps() {
     if (min > 15 && !S.demo) text += '. Narrower filters go faster';
   } else if (S.live) {
     state = 'live';
-    text = document.hidden ? `all ${fmtInt(m.length)} checked, ${fmtInt(ready)} ready, re-checks paused in the background` : `all ${fmtInt(m.length)} checked, ${fmtInt(ready)} ready, watching`;
+    const due = planNext(400).filter(x => x.due <= Date.now()).length;
+    text = document.hidden ? `all ${fmtInt(m.length)} checked, ${fmtInt(ready)} ready, re-checks paused in the background`
+      : `all ${fmtInt(m.length)} checked, ${fmtInt(ready)} ready, ${due ? `${fmtInt(due)} re-checks due` : 'quiet until a timer ends or a re-check is due'}`;
   } else { state = 'done'; text = `all ${fmtInt(m.length)} checked, ${fmtInt(ready)} ready`; }
   if (Pacer.hold > Date.now()) text = "waiting out Torn's rate limit, " + text;
   if (KeyGuard.blockedUntil() > Date.now()) text = `IP blocked by Torn, nothing sent for ${fmtLeft((KeyGuard.blockedUntil() - Date.now()) / 1000)}, ` + text;
@@ -2285,6 +2573,9 @@ function renderControls() {
   // Gold marks the next thing to do: Connect first, the hunt after.
   $('huntBtn').classList.toggle('gold', !!(S.key || S.demo));
   $('huntBtn').classList.toggle('ghost', !(S.key || S.demo));
+  const g = gainsTotal();
+  $('gains').hidden = !g.n;
+  if (g.n) $('gainsText').textContent = `This tracker gained ${fmtMoney(g.v)} for you in ${fmtInt(g.n)} ${g.n === 1 ? 'hit' : 'hits'}`;
   renderPace();
 }
 
@@ -2305,12 +2596,13 @@ function dirty() { if (!renderT) renderT = setTimeout(() => { renderT = 0; rende
 
 function render() {
   pruneExpired(nowS());
-  clearFreshHits();
+  clearHits();
   computeView();
   if (S.targets.size || S.phase !== 'idle') $('board').hidden = false;
   renderHead();
   renderStrips();
   renderRows();
+  syncChroma();
   renderSteps();
   renderControls();
   if (S.ffState === 'on' && !ffBusy && S.phase !== 'idle' && S.phase !== 'list') scheduleFF();
@@ -2332,6 +2624,64 @@ function tick() {
   render();
   Alerts.scan();
 }
+
+/* ------------------------------------------------------------------ *
+ *  Resizable columns. Drag the edge of a header, like a spreadsheet.
+ *  Widths are saved on this device; Reset columns goes back to automatic.
+ * ------------------------------------------------------------------ */
+const Cols = {
+  w: (v => (v && typeof v === 'object' ? v : null))(store.get('colw', null)),
+  MIN: 48,
+  ths() { return [...document.querySelectorAll('#thead th')]; },
+  key: th => (th.className.match(/\bh-(\w+)/) || [])[1],
+  shown: th => getComputedStyle(th).display !== 'none',
+  apply() {
+    const tbl = $('tbl');
+    $('colReset').disabled = !this.w;
+    if (!this.w) { tbl.classList.remove('fixed'); tbl.style.width = ''; tbl.style.minWidth = ''; for (const th of this.ths()) th.style.width = ''; return; }
+    tbl.classList.add('fixed');
+    let sum = 0;
+    for (const th of this.ths()) {
+      if (!this.shown(th)) continue;
+      const px = this.w[this.key(th)] || 120;   // a column you never sized, like Gained, starts at 120px
+      th.style.width = px + 'px';
+      sum += px;
+    }
+    tbl.style.width = sum + 'px';
+    tbl.style.minWidth = '100%';
+  },
+  // First drag: freeze every column at the width it has right now, so only the dragged one moves.
+  snapshot() {
+    if (this.w) return;
+    this.w = {};
+    for (const th of this.ths()) if (this.shown(th)) this.w[this.key(th)] = Math.round(th.getBoundingClientRect().width);
+  },
+  reset() { this.w = null; store.del('colw'); this.apply(); },
+  wire() {
+    for (const th of this.ths()) {
+      const h = document.createElement('span');
+      h.className = 'rz'; h.setAttribute('aria-hidden', 'true'); h.title = 'Drag to resize';
+      th.append(h);
+      h.addEventListener('pointerdown', e => {
+        if (e.button !== 0) return;
+        e.preventDefault(); e.stopPropagation();
+        this.snapshot();
+        const k = this.key(th), x0 = e.clientX, w0 = this.w[k] || Math.round(th.getBoundingClientRect().width);
+        h.classList.add('on'); document.body.classList.add('rzing');
+        h.setPointerCapture(e.pointerId);
+        const move = ev => { this.w[k] = Math.max(this.MIN, Math.round(w0 + ev.clientX - x0)); this.apply(); };
+        const up = () => {
+          h.classList.remove('on'); document.body.classList.remove('rzing');
+          h.removeEventListener('pointermove', move); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up);
+          store.set('colw', this.w);
+        };
+        h.addEventListener('pointermove', move); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+      });
+      h.addEventListener('click', e => e.stopPropagation());
+    }
+    $('colReset').addEventListener('click', () => this.reset());
+  },
+};
 
 /* ------------------------------------------------------------------ *
  *  Filters
@@ -2464,11 +2814,11 @@ const Alerts = {
     }
   },
   // Only matches you can actually hit: not marked hit, not protected.
-  eligible(t) { return t && !S.hit.has(t.id) && S.matchedIds.has(t.id); },
+  eligible(t) { return t && !S.hit.has(t.id) && inPlay(t); },
   // Called every second: catches the moment a hospital timer runs out.
   scan() {
     if (S.phase !== 'hunting' && S.phase !== 'paused') return;
-    for (const t of S.matched) {
+    for (const t of S.scan) {
       const st = S.status.get(t.id);
       if (isFresh(st) && this.eligible(t) && nowS() - st.until < 3) this.fire('fresh', t);
     }
@@ -2483,7 +2833,7 @@ const Alerts = {
 const Idle = {
   last: Date.now(), stopped: false, never: store.get('noidle', false) === true,
   touch() { this.last = Date.now(); },
-  firstPassLeft() { return S.matched.some(t => !S.status.has(t.id)); },
+  firstPassLeft() { return S.scan.some(t => !S.status.has(t.id) && !S.hit.has(t.id)); },
   check() {
     if (this.stopped || this.never || S.phase !== 'hunting') return;
     if (Date.now() - this.last < IDLE_STOP || this.firstPassLeft()) return;
@@ -2529,6 +2879,9 @@ const Dev = {
   },
   applyCols() {
     for (const [k] of COLS) $('board').classList.toggle('hide-' + k, this.hidden.has(k));
+    // The last column on screen draws the right edge of the value border.
+    $('board').dataset.last = [...COLS].reverse().map(c => c[0]).find(k => !this.hidden.has(k)) || 'name';
+    Cols.apply();
     $('cols').innerHTML = COLS.map(([k, label]) => `<label class="check"><input type="checkbox" data-col="${k}"${this.hidden.has(k) ? '' : ' checked'}><span>${label}</span></label>`).join('')
       + '<label class="check"><input type="checkbox" checked disabled><span>Target (always on)</span></label>';
   },
@@ -2590,7 +2943,7 @@ const Dev = {
   },
   op(name) {
     const m = S.matched.filter(t => !S.hit.has(t.id));
-    if (name === 'board') refreshList();
+    if (name === 'board') refetchBoard(true);
     if (name === 'all') this.queueAll(m, 'Devmode: re-check every match');
     if (name === 'stale') {
       const age = Number($('staleMin').value) * 60000, now = Date.now();
@@ -2612,9 +2965,10 @@ const Dev = {
       ['board', 'Bounty board', b && b.rows ? `${fmtInt(b.rows.length)} listings, Torn snapshot from ${b.snap ? fmtAgo(b.snap * 1000) : 'unknown'}` : 'Nothing saved', ['board']],
       ['status', 'Statuses', `${fmtInt(Array.isArray(st) ? st.length : 0)} targets, kept 10 minutes`, ['status']],
       ['ff', 'Fair fight', ff && ff.rows ? `${fmtInt(ff.rows.length)} targets, kept 6 hours, for one account` : 'Nothing saved', ['ff']],
-      ['hit', 'Hit tags', `${fmtInt(S.hit.size)} targets marked hit`, ['hit']],
+      ['hit', 'Hit tags', `${fmtInt(S.hit.size)} targets hidden until the hospital timer from your hit ends`, ['hit']],
+      ['ledger', 'Gains', (g => g.n ? `${fmtInt(g.n)} hits worth ${fmtMoney(g.v)} on ${fmtInt(g.people)} targets. Clearing takes two presses.` : 'No hits marked yet')(gainsTotal()), ['ledger']],
       ['search', 'Search and filters', 'Your last search, filters and sort', ['spec', 'filters', 'sort']],
-      ['settings', 'Settings', 'Pace, live checks, Learn mode, columns, devmode, sound, alerts, inactivity stop', ['pace', 'live', 'learn', 'cols', 'dev', 'sound', 'notify', 'remember', 'noidle']],
+      ['settings', 'Settings', 'Pace, live checks, Learn mode, columns and their widths, devmode, sound, alerts, inactivity stop', ['pace', 'live', 'learn', 'cols', 'colw', 'dev', 'sound', 'notify', 'remember', 'noidle']],
       ['pacer', 'Rate limit log', 'When your recent Torn calls went out, shared by every tab. Not clearable: it keeps you under Torn\'s cap.', ['pacer']],
       ['deadkeys', 'Refused keys', `${fmtInt(KeyGuard.dead().length)} keys Torn refused, kept as fingerprints, never the keys. The tool won't send them again. Clear only if one of them works again (unpaused, back from inactivity).`, ['deadkeys']],
       ['ipblock', 'IP block cooldown', KeyGuard.blockedUntil() > Date.now() ? `Active: nothing goes to Torn for ${fmtLeft((KeyGuard.blockedUntil() - Date.now()) / 1000)}. Not clearable.` : 'None. Not clearable: it protects your IP after Torn blocks it.', ['ipblock']],
@@ -2630,9 +2984,13 @@ const Dev = {
     if (id === 'status') { store.del('status'); S.status = new Map(); }
     if (id === 'ff') { store.del('ff'); S.ff = new Map(); }
     if (id === 'hit') unhitAll();
+    if (id === 'ledger') {
+      if (Date.now() - (this.ledArm || 0) > 4000) { this.ledArm = Date.now(); $('wipeNote').textContent = 'Press Clear on Gains again within 4 seconds to erase every hit and the gains.'; return; }
+      this.ledArm = 0; $('wipeNote').textContent = ''; eraseGains();
+    }
     if (id === 'deadkeys') store.del('deadkeys');
     if (id === 'search') ['spec', 'filters', 'sort'].forEach(k => store.del(k));
-    if (id === 'settings') { ['pace', 'live', 'learn', 'cols', 'dev', 'sound', 'notify', 'remember', 'noidle'].forEach(k => store.del(k)); Idle.never = false; Idle.paint(); }
+    if (id === 'settings') { ['pace', 'live', 'learn', 'cols', 'colw', 'dev', 'sound', 'notify', 'remember', 'noidle'].forEach(k => store.del(k)); Idle.never = false; Idle.paint(); Cols.reset(); }
     render(); this.storage();
   },
   wipe() {
@@ -2643,7 +3001,7 @@ const Dev = {
     // The safety logs stay: the rate limit log, refused keys and the IP block keep you inside Torn's rules.
     const keep = new Set(['hbt:pacer', 'hbt:deadkeys', 'hbt:ipblock']);
     try { for (const k of Object.keys(localStorage)) if (k.startsWith('hbt:') && !keep.has(k)) localStorage.removeItem(k); } catch {}
-    S.targets = new Map(); S.status = new Map(); S.ff = new Map(); S.hit = new Map(); S.snap = 0; S.listCount = 0; S.phase = 'idle';
+    S.targets = new Map(); S.status = new Map(); S.ff = new Map(); S.hit = new Map(); S.ledger = new Map(); S.snap = 0; S.listCount = 0; S.phase = 'idle';
     this.on = false; this.show();
     $('wipeNote').textContent = '';
     say('Everything this tool stored in your browser is gone, except the safety logs that keep you inside Torn\'s rules.');
@@ -2655,7 +3013,7 @@ const Dev = {
  *  Inspector: live log, queue, catalog, Learn mode
  * ------------------------------------------------------------------ */
 // What the engine was doing when a call went out. A divider marks every change in the log.
-const PHASES = { connect: 'Connect', board: 'Board sweep', ff: 'Fair fight', first: 'First pass', recheck: 'Re-checks', manual: 'Manual checks', fresh: 'Timer ended, confirming', other: 'Other calls' };
+const PHASES = { connect: 'Connect', board: 'Board sweep', ff: 'Fair fight', first: 'First pass', recheck: 'Re-checks', manual: 'Manual checks', refresh: 'Refresh list', fresh: 'Timer ended, confirming', other: 'Other calls' };
 function phaseLabel(from, to) {
   const l = PHASES[to] || PHASES.other;
   if (from === 'first' && to === 'recheck') return 'First pass done. Re-checks start';
@@ -2759,13 +3117,14 @@ ${e.demo ? '<p class="faint">Demo mode: answered inside your browser. Nothing wa
     if (S.phase === 'idle') return '';
     if (Idle.stopped) return 'Stopped: no activity for 10 minutes.';
     if (S.phase === 'list') return S.sweepLeft ? `Board: ${fmtInt(S.sweepLeft)} pages left, about ${eta(S.sweepLeft)} at your pace.` : 'Reading the board.';
-    const n = S.matched.filter(t => !S.status.has(t.id)).length;
+    const n = S.scan.filter(t => !S.status.has(t.id) && !S.hit.has(t.id)).length;
     if (n) return `First pass: ${fmtInt(n)} left, about ${eta(n)} at your pace.`;
     if (S.phase !== 'hunting') return 'First pass done. Checks are paused.';
     if (!S.live) return 'First pass done. Live checks are off.';
     const now = Date.now();
     let due = S.priority.length;
-    for (const t of S.matched) { const st = S.status.get(t.id); if (st && !S.pwhy.has(t.id) && dueOf(st, now)[0] <= now) due++; }
+    hotIds();
+    for (const t of S.scan) { const st = S.status.get(t.id); if (st && !S.pwhy.has(t.id) && dueOf(st, now, t.id)[0] <= now) due++; }
     return `First pass done. Re-checking: ${fmtInt(due)} due now.`;
   },
   queue() {
@@ -2776,7 +3135,7 @@ ${e.demo ? '<p class="faint">Demo mode: answered inside your browser. Nothing wa
     const plan = planNext(10).map((x, i) => `<li><span class="n">${i + 1}</span><span>${name(x.id)}</span><span class="w">${esc(x.why)}</span><span class="faint">${x.due <= now ? 'due now' : 'in ' + fmtLeft((x.due - now) / 1000)}</span></li>`).join('');
     const pace = S.frozen ? 'All calls are paused from devmode.' : Pacer.hold > now ? `Holding for Torn's rate limit, ${fmtLeft((Pacer.hold - now) / 1000)} left.` : wait > 0 ? `Next free slot in ${(wait / 1000).toFixed(1)}s.` : 'A slot is free right now.';
     $('inspQueue').innerHTML = `
-<p class="learn-only learn-card"><b>How the queue works.</b> Every Torn call waits at one gate, the pacer, so the tool never goes over your pace. The status loop then picks one target at a time: hand-picked checks first, then targets never checked, then whoever has been due a re-check the longest. A target whose timer just ran out jumps to the front, even ahead of the first pass. Okay targets are re-checked every 90 seconds, stretched on a long list so they never use more than 70% of your pace (right now: every ${fmtLeft(okayGap() / 1000)}). Travelers every 5 minutes, the rest every 10. After 10 minutes with no click, key press, scroll or touch, every call stops.</p>
+<p class="learn-only learn-card"><b>How the queue works.</b> Every Torn call waits at one gate, the pacer, so the tool never goes over your pace. The status loop then picks one target at a time: hand-picked checks first, then targets never checked, then whoever has been due a re-check the longest. A target whose timer just ran out jumps to the front, even ahead of the first pass. Okay targets at the top of High value and Easy fights are re-checked every 90 seconds (right now: every ${fmtLeft(hotGap() / 1000)}). Other Okay targets every 10 minutes, 20 once they've been offline an hour, 30 once offline a day. Re-checks never use more than 25% of your pace. Hospital timers get one check when they end, never before. Targets you marked hit get none until then. Travelers every 5 minutes, jail and the rest every 10. After 10 minutes with no click, key press, scroll or touch, every call stops.</p>
 <p class="qhead">The pacer</p><p style="margin:0">${S.demo ? 'Demo pace: no real limit, and nothing leaves your browser.' : `${Pacer.recent()} / ${S.pace} calls used this minute. ${pace}`}</p>
 <p class="qhead">Waiting at the pacer (${Pacer.waiting.size})</p>${gate ? `<ol class="qlist">${gate}</ol>` : '<p class="faint" style="margin:0">Nothing waiting.</p>'}
 <p class="qhead">Status loop, next up</p>${plan ? `<ol class="qlist">${plan}</ol>` : `<p class="faint" style="margin:0">${S.phase === 'hunting' ? (document.hidden ? 'Re-checks pause while the tab is in the background.' : S.live ? 'Nobody is due yet.' : 'Live checks are off.') : 'The status loop is not running.'}</p>`}
@@ -2839,7 +3198,7 @@ document.addEventListener('pointerdown', () => Alerts.unlock(), { capture: true 
 // Scrolling counts through wheel, touch and keys, not the scroll event: the page fires that by itself when the strips change height.
 for (const ev of ['pointerdown', 'keydown', 'wheel', 'touchstart']) document.addEventListener(ev, () => Idle.touch(), { capture: true, passive: true });
 $('idleResume').addEventListener('click', () => Idle.resume());
-for (const id of ['readyList', 'freshList', 'soonList']) Car.wire(id);
+for (const id of ['hvList', 'readyList', 'freshList', 'soonList']) Car.wire(id);
 document.addEventListener('click', e => { const b = e.target.closest('[data-car]'); if (b) Car.step(b.dataset.car, Number(b.dataset.dir)); });
 $('noIdle').addEventListener('change', e => Idle.setNever(e.target.checked));
 Idle.paint();
@@ -2857,6 +3216,7 @@ $('cols').addEventListener('change', e => {
 });
 $('storRows').addEventListener('click', e => { const b = e.target.closest('[data-clear]'); if (b) Dev.clear(b.dataset.clear); });
 $('wipeBtn').addEventListener('click', () => Dev.wipe());
+Cols.wire();
 Dev.applyCols();
 Dev.show();
 document.addEventListener('click', e => { const b = e.target.closest('[data-open="insp"]'); if (b) Insp.open(b); });
@@ -2895,6 +3255,7 @@ $('live').checked = S.live;
 $('live').addEventListener('change', e => { S.live = e.target.checked; store.set('live', S.live); render(); });
 $('pauseBtn').addEventListener('click', togglePause);
 $('refreshBtn').addEventListener('click', refreshList);
+$('boardBtn').addEventListener('click', () => refetchBoard(false));
 
 for (const id of ['fQ', 'fLvlMin', 'fLvlMax', 'fReward', 'fFF', 'fAge']) $(id).addEventListener('input', onFilterInput);
 $('sortSel').addEventListener('change', e => setSort(e.target.value));
@@ -2917,7 +3278,13 @@ $('moreBtn').addEventListener('click', () => { S.shown += SHOW_STEP; render(); }
 $('board').addEventListener('click', e => {
   const btn = e.target.closest('[data-act]');
   if (btn && btn.dataset.act === 'clear') return clearFilters();
-  if (btn && btn.dataset.act === 'unhit') return unhitAll();
+  if (btn && btn.dataset.act === 'rmhit') {
+    const id = Number(btn.dataset.id);
+    if (S.rmArm && S.rmArm.id === id && Date.now() - S.rmArm.at < 3000) return removeHit(id);
+    S.rmArm = { id, at: Date.now() };
+    render(); setTimeout(() => dirty(), 3100);
+    return;
+  }
   const sorter = e.target.closest('.sorter');
   if (sorter) {
     const k = sorter.dataset.sort;
@@ -2932,11 +3299,12 @@ $('board').addEventListener('click', e => {
 });
 // Attack and Hit? live in the board and both strips, so one listener covers all three.
 document.addEventListener('click', e => {
-  const el = e.target.closest('[data-act="attack"], [data-act="hit"]');
+  const el = e.target.closest('[data-act="attack"], [data-act="hit"], [data-act="undo"]');
   if (!el) return;
   const id = Number(el.dataset.id);
   if (!id) return;
   if (el.dataset.act === 'attack') { S.clicked.add(id); dirty(); }   // the link still opens Torn
+  else if (el.dataset.act === 'undo') undoHit(id);
   else markHit(id);
 });
 const tbl = $('tbl');
@@ -2979,7 +3347,9 @@ const Demo = (() => {
       const nm = name();
       // Plenty of low levels are brand new accounts, which is the whole point of the protection check.
       const age = level <= 6 && rnd() < .4 ? Math.floor(rnd() * PROTECT_DAYS) : 20 + Math.floor(rnd() * 3000);
-      people.set(id, { name: nm, level, age, signed: now - age * 86400 - Math.floor(rnd() * 86400) });
+      // Last action: a third active in the last hour, a third offline for hours, a third gone for days.
+      const r2 = rnd(), la = now - Math.floor(r2 < .33 ? rnd() * 3000 : r2 < .66 ? 3600 + rnd() * 70000 : 86400 + rnd() * 40 * 86400);
+      people.set(id, { name: nm, level, age, signed: now - age * 86400 - Math.floor(rnd() * 86400), la });
       const n = rnd() < .72 ? 1 : rnd() < .7 ? 2 : 3 + Math.floor(rnd() * 3);
       for (let k = 0; k < n; k++) {
         const anon = rnd() < .3;
@@ -3020,6 +3390,8 @@ const Demo = (() => {
 
   return {
     reset() { board = null; people = new Map(); st = new Map(); seed = 20261101; },
+    // A Hit mark in the demo acts like a real hit: the target goes to hospital for 20 to 70 minutes.
+    hit(id) { st.set(id, hosp(1200 + rnd() * 3000, 'Hospitalized by Demo hunter')); },
     async torn(path, p) {
       await sleep(60 + rnd() * 140);
       if (path === '/key/info') return { info: { access: { level: 1, type: 'Public Only' }, selections: {}, user: { id: 0 } } };
@@ -3033,7 +3405,9 @@ const Demo = (() => {
       if (m) {
         const id = Number(m[1]), who = people.get(id);
         if (!who) throw new ApiError('torn', 6, TORN_MSG[6]);
-        return { profile: { id, name: who.name, level: who.level, age: who.age, signed_up: who.signed, status: next(id) } };
+        const away = nowS() - who.la;
+        const last_action = { status: away < 600 ? 'Online' : away < 3600 ? 'Idle' : 'Offline', timestamp: who.la, relative: fmtAgo(who.la * 1000) };
+        return { profile: { id, name: who.name, level: who.level, age: who.age, signed_up: who.signed, last_action, status: next(id) } };
       }
       throw new ApiError('torn', 4, 'Wrong fields.');
     },

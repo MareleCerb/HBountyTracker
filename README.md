@@ -8,14 +8,45 @@ A freebie by [The Great Stag](https://www.thegreatstag.com). Open source, so any
 
 1. **Bounty list.** Pulls the whole board from `GET /v2/torn/bounties`, 100 per page. Stacks multiple bounties on one head into a single row. Torn serves one shared snapshot, so if `bounties_timestamp` hasn't moved since the last search, the saved copy is reused and the sweep costs one call.
 2. **Your filters.** The board shows unfiltered while it loads, then snaps to the search limits (max level, min reward, Fair Fight Score as the fair fight cap). Everything stays editable on the board, plus name, level range and minimum account age.
-3. **Fair fight.** One FFScouter call per 205 targets (`/api/v1/get-stats`). Optional, and only runs if you give it the key you registered on ffscouter.com. Rows FFScouter has no estimate for get a slight gray border.
-4. **Live status.** One `GET /v2/user/{id}/profile` per target, in the board's current sort order. Timers (hospital, jail, protection, bounty expiry) count down locally from the last call. With live checks on, okay targets get re-checked every 90 seconds, stretched on a long list (see Limits). Every status check carries a `timestamp` parameter, so Torn's 30-second service cache never hands back an old answer.
+3. **Fair fight.** One FFScouter call per 205 targets (`/api/v1/get-stats`). Optional, and only runs if you give it the key you registered on ffscouter.com. It scouts every target your search allows, past the fair fight cap too, so the strips and the check order can see both sides of your score. Rows FFScouter has no estimate for get a gray background.
+4. **Live status.** One `GET /v2/user/{id}/profile` per target. With fair fight and a score, the first pass goes: your band first (within 1.5 of your score, either side), then everyone under it, then everyone over it, biggest bounty first in each. Targets with no fair fight go last. Without a score, it follows the board's sort. Timers (hospital, jail, protection, bounty expiry) count down locally from the last call. Every status check carries a `timestamp` parameter, so Torn's 30-second service cache never hands back an old answer. Re-checks are covered in **Smart re-checks** below.
 5. **Fresh.** Fresh isn't a status of its own. It's how the first 10 seconds of Okay look once a hospital timer runs out. After those 10 seconds the target gets one check, since someone may have hit them in the window. That check jumps to the front of the queue, ahead of the first pass, and runs in a background tab too (not with live checks off). Until it lands, they show as **Okay** with a small "confirming" dot. Same for jail, without the 10 seconds.
-6. **Perfect match.** Every Okay target, closest to your **Fair Fight Score** first, on either side of it. At the same distance, the one under your score wins, then the bigger bounty. This strip looks past the board's fair fight filter on purpose. With an FFScouter key, targets FFScouter has no estimate for stay out. Without one, it's simply the highest bounties you can hit.
-7. **Fresh out of the hospital.** The last 10 matches to leave hospital, newest first: the strip that tells you what the Fresh sound was about. Once a check moves their status on (Okay confirmed, or back in hospital), they stay 30 seconds with that status, then drop. A target in both Perfect match and this strip gets a green border in both.
-8. **Available soon.** Every match whose hospital timer is still running, soonest out first, with big countdowns.
+6. **High value.** Every Okay target within 1.5 of your **Fair Fight Score**, either side, biggest bounty first. Each card gets a value border (see below). Needs an FFScouter key and a score.
+7. **Easy fights.** Every Okay target, closest to your **Fair Fight Score** first, on either side of it. At the same distance, the one under your score wins, then the bigger bounty. Both strips look past the board's fair fight filter on purpose. With an FFScouter key, targets FFScouter has no estimate for stay out. Without one, Easy fights is simply the highest bounties you can hit.
+8. **Fresh out of the hospital.** Everyone who turned Fresh in the last 5 minutes, newest first: the strip that tells you what the Fresh sound was about. They stay the full 5 minutes with their latest status, even back in hospital. The strip stays on screen when it's empty, so the layout never jumps.
+9. **Available soon.** Every match whose hospital timer is still running, soonest out first, with big countdowns, level and fair fight.
 
-All three strips are carousels with every qualifying target: swipe on touch, drag with a mouse, or use the arrows.
+All four strips are carousels with every qualifying target: swipe on touch, drag with a mouse, or use the arrows.
+
+## Value borders
+
+One scale, used by the High value strip and every row of the board:
+
+| Current value | Border |
+| --- | --- |
+| Under $10k | Gray |
+| $10k to $500k | Dark green to gold, on a log scale |
+| $500k to $1m | Gold |
+| $1m to $2m | Gold to purple, on a log scale |
+| $2m and up | A color cycle with a golden glow |
+
+On the board, neighbors in the same tier merge into one shape, each row keeping its own shade. On phones the cards glue together. With "reduce motion" on in your system settings, the color cycle stops on plain gold.
+
+## Smart re-checks
+
+Once everyone has had a first check, the tool only spends calls where they matter:
+
+| Target | Re-checked |
+| --- | --- |
+| Okay, in the top 10 of High value or Easy fights | Every 90 seconds, stretched so these alone never pass 25% of your pace |
+| Okay, active in the last hour | Every 10 minutes |
+| Okay, offline an hour or more | Every 20 minutes |
+| Okay, offline a day or more | Every 30 minutes |
+| In hospital | Never while the timer runs. One check 10 seconds after it ends |
+| Marked hit | Never, until the hospital timer from the hit ends |
+| Jail, and anything else | Every 10 minutes. Travelers every 5 |
+
+"Offline" comes from `last_action` in the same profile call, so it costs nothing extra. Re-checks never use more than 25% of your pace in any minute. With nothing due, the loop goes quiet until a timer ends.
 
 ## Current value
 
@@ -25,7 +56,28 @@ The Value column, the Ready strip, Available soon, sorting and the value filters
 
 > **To be tested and confirmed:** that a hit always claims the highest bounty first. Built on one real hit that matched it. If Torn turns out to use another order (oldest first, say), only `recalc()` changes.
 
-Each row links to the target's profile and attack page. Once you open Attack, a **Hit?** button appears. Press it and the target gets a Hit tag and drops off the board. The **Hit** chip shows them again. The tag clears by itself the moment that target leaves hospital and turns Fresh, or when its bounty leaves Torn's board. "Bring back" in the board header clears every tag. Nothing is automated on torn.com.
+Each row links to the target's profile and attack page. Nothing is automated on torn.com.
+
+## Hits and gains
+
+1. Open **Attack** on a target. A **Hit?** button appears.
+2. Press it once you've hospitalized them. For one minute it turns into **Undo**, in case you misclicked.
+3. The tool checks them once, about 5 seconds later, to pick up the hospital timer from your hit.
+4. After the minute, they're hidden everywhere, with a "Just hit" tag, and get **no status checks** until that timer ends.
+5. When the timer ends, they're back everywhere with a "Hit" tag, and get checked like everyone else.
+
+If the check after a mark shows they never went to hospital, the tag clears right away.
+
+Every mark goes in a ledger in your browser, at the value shown when you pressed Hit?. That's what the banner under "Pace and live checks" adds up: *"This tracker gained $X for you in N hits"*, based on your Hit marks. A Public key can't read your attack log, so the tool can only count what you mark.
+
+The **Hit** chip shows every target in the ledger, even ones whose bounty left the board, with **Gained** and **Times hit** columns, and a **Remove** button (two presses) that takes a target out of the ledger. Devmode Storage can erase all gains (two presses). Gains live in local storage, so clearing your browser's site data erases them too, and the embedded page and the standalone page keep separate ledgers.
+
+## The board buttons
+
+- **Refetch board.** Reads the bounty board again. If Torn's board hasn't changed, page 1 says so and that's the only call.
+- **Refresh list.** Status checks only, no board. High value first, then Easy fights, then everyone else the loop walks. One call per target; the button's tooltip shows the count and the time at your pace.
+
+Drag the edge of any column header to resize it, like a spreadsheet. Widths are saved on the device. **Reset columns** goes back to automatic.
 
 ## Sorting
 
@@ -48,7 +100,7 @@ Keys are always masked (`••••••••••••3fA9`), in the log 
 | Torn | `GET /v2/key/info` | Connect | What kind of key this is, before anything else runs |
 | Torn | `GET /v2/user/profile` | Connect | Who you are: name, ID, level, account age |
 | Torn | `GET /v2/torn/bounties` | Start the hunt, Refetch board | The bounty board, 100 per page |
-| Torn | `GET /v2/user/{id}/profile` | Status loop, Check now | One target's live status and account age |
+| Torn | `GET /v2/user/{id}/profile` | Status loop, Refresh list, Check now | One target's live status, last action and account age |
 | FFScouter | `GET /api/v1/check-key` | Connect, only with an FFScouter key | Is the key registered? |
 | FFScouter | `GET /api/v1/get-stats` | After the board, Refetch fair fight | Fair fight for up to 205 targets |
 
@@ -58,13 +110,13 @@ Google Fonts loads the two typefaces. That's a font file, not an API call. Nothi
 
 The **Devmode** button in the header opens a panel for the engine's internals. The choice is remembered.
 
-- **Engine.** Run each part on its own: refetch the board, re-check every match, re-check stale only (older than 2, 5, 10 or 30 minutes), pause or resume the status loop, clear the hand-picked queue, refetch fair fight, freeze all calls, start over. Each shows its live cost in calls, and the time at your pace, before you press. Plus **Never stop for inactivity**, remembered on the device: the tool then keeps calling at your pace for as long as the tab is open. Leave it off unless you're testing.
+- **Engine.** Run each part on its own: refetch the board (every page, forced), re-check every match, re-check stale only (older than 2, 5, 10 or 30 minutes), pause or resume the status loop, clear the hand-picked queue, refetch fair fight, freeze all calls, start over. Each shows its live cost in calls, and the time at your pace, before you press. Plus **Never stop for inactivity**, remembered on the device: the tool then keeps calling at your pace for as long as the tab is open. Leave it off unless you're testing.
 - **Board.** Sliders for max level, max fair fight, and a value range (from / up to, on a log scale from $1k to $1b). They filter the board you already have and cost no calls. Column toggles for every column, plus an Account age column that's off by default.
-- **Storage.** Everything the tool keeps in your browser, with its size and a Clear button. Keys are never shown. "Wipe everything" takes two presses and disconnects. The rate-limit log can't be cleared, because it keeps you under Torn's cap.
+- **Storage.** Everything the tool keeps in your browser, with its size and a Clear button. Keys are never shown. Clearing Gains takes two presses. "Wipe everything" takes two presses, disconnects, and erases the gains too. The rate-limit log can't be cleared, because it keeps you under Torn's cap.
 
 ## Alerts
 
-- **Sound** when a matching target turns Fresh: two rising notes. That's the only sound. At most one every 2 seconds. The **Sound** button in the header turns it off. The target shows up in Fresh out of the hospital.
+- **Sound** when a matching target turns Fresh (a board match, or anyone in your band): two rising notes. That's the only sound. At most one every 2 seconds. The **Sound** button in the header turns it off. The target shows up in Fresh out of the hospital.
 - **Browser notification**, opt-in under "Pace and live checks", for the same moment, only while the tab is in the background.
 - Hit-tagged and protected targets never alert.
 - Browsers block notifications inside a cross-site iframe, which is how the tool sits on thegreatstag.com. There, the setting links to the tool on its own page. Sound works in both.
@@ -100,8 +152,8 @@ Add `?demo` to the URL, or press **Try the demo**. Made-up players and bounties,
 
 - Torn allows 100 calls per minute per player, shared across every tool and script they run. The default pace is 60. It's adjustable from 20 to 90 under "Pace and live checks". The pace line shows both numbers apart: what you used out of your pace, and what your pace leaves for your other tools.
 - The pace is a hard cap on any rolling minute, shared by every open tab of the tool and kept across reloads. The tool can't see calls from your other Torn tools, so leave them room.
-- A status check is one call per target. Checking 200 targets takes about 3 to 4 minutes at 60 per minute. Narrow filters go faster.
-- Okay re-checks never ask for more than 70% of your pace. The gap is 90 seconds, or `Okay targets / (0.7 × pace)` minutes on a long list: 100 Okay targets at a pace of 60 are re-checked about every 2m 23s, 200 about every 4m 46s. Confirm checks and Check now skip the line.
+- A status check is one call per target. Checking 200 targets takes about 3 to 4 minutes at 60 per minute. With fair fight and a score, the first pass also covers targets above your score, so it's longer. Narrow filters go faster.
+- Re-checks never use more than 25% of your pace in any minute (see Smart re-checks). Confirm checks, Refresh list and Check now skip the line.
 - Re-checks pause while the tab is in the background. The first pass and confirm checks keep going.
 - **Inactivity stop.** After 10 minutes with no click, key press, scroll or touch, every call stops and a banner says so. Timers keep counting. Press Resume to carry on. The first pass is exempt: you pressed Start to get the whole list. Mouse movement doesn't count, since a bumped mouse isn't someone using the tool.
 - If Torn answers "too many requests", everything waits 30 seconds, then carries on.
