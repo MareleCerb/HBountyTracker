@@ -984,9 +984,46 @@ class ApiError extends Error {
   constructor(src, code, msg, retry) { super(msg); this.src = src; this.code = code; this.retry = retry || 0; }
 }
 
+/* ------------------------------------------------------------------ *
+ *  Key guard. Torn's rules: "Multiple requests using invalid keys may
+ *  result in a temporary IP ban - you must account for this by removing
+ *  disabled or invalid keys upon error." So a refused key is never sent
+ *  again, and an IP block stops every Torn call for a while.
+ * ------------------------------------------------------------------ */
+const DEAD = new Set([2, 10, 13, 18]);     // the key itself is refused: wrong key, owner in federal jail, inactive, paused
+const IP_COOLDOWN = 10 * 60e3;             // Torn gives no length for an IP block (error 8), so wait 10 minutes to be safe
+const DEAD_NOTE = 'The tool will not send this key again. Paste a different one.';
+// A fingerprint, so the tool can recognise a refused key without keeping the key itself.
+const keyPrint = k => { let h = 0x811c9dc5; for (let i = 0; i < k.length; i++) { h ^= k.charCodeAt(i); h = Math.imul(h, 0x01000193); } return (h >>> 0).toString(16) + ':' + k.length; };
+const KeyGuard = {
+  dead() { const l = store.get('deadkeys', []); return Array.isArray(l) ? l : []; },
+  isDead(k) { if (!k) return null; const p = keyPrint(k); return this.dead().find(d => d.fp === p) || null; },
+  kill(k, code) {
+    if (!k) return;
+    const p = keyPrint(k), l = this.dead().filter(d => d.fp !== p);
+    l.push({ fp: p, code, at: Date.now() });
+    store.set('deadkeys', l.slice(-20));
+    // Torn says remove it, so a refused key doesn't stay saved for the next visit.
+    if (store.get('key', '') === k) store.del('key');
+  },
+  blockedUntil() { return Number(store.get('ipblock', 0)) || 0; },
+  blockIP() { store.set('ipblock', Date.now() + IP_COOLDOWN); },
+  // Checked before a call leaves the browser. Returns the reason not to send, or null.
+  gate(k) {
+    const until = this.blockedUntil();
+    if (until > Date.now()) return new ApiError('torn', 8, `Torn blocked your IP for a while. Nothing goes to Torn for the next ${fmtLeft((until - Date.now()) / 1000)}.`);
+    const d = this.isDead(k);
+    if (d) return new ApiError('torn', d.code, 'Torn already refused this key. ' + DEAD_NOTE);
+    return null;
+  },
+};
+
 async function torn(path, params = {}, meta = {}) {
   const kind = kindOf('torn', path);
+  if (!S.demo) { const g = KeyGuard.gate(S.key); if (g) throw g; }
   await Pacer.take({ kind, why: meta.why });
+  // Check again: another call or another tab may have hit a refused key or an IP block while this one waited.
+  if (!S.demo) { const g = KeyGuard.gate(S.key); if (g) throw g; }
   const u = new URL('https://api.torn.com/v2' + path);
   for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
   u.searchParams.set('comment', 'HBountyTracker');
@@ -1004,6 +1041,8 @@ async function torn(path, params = {}, meta = {}) {
   if (j && j.error) {
     const code = Number(j.error.code);
     const x = new ApiError('torn', code, TORN_MSG[code] || String(j.error.error || 'Torn API error.'));
+    if (DEAD.has(code)) { KeyGuard.kill(S.key, code); x.message += ' ' + DEAD_NOTE; }
+    if (code === 8) { KeyGuard.blockIP(); x.message = 'Torn blocked your IP for a while. Nothing goes to Torn for the next 10 minutes.'; }
     CallLog.fail(e, r.status, x, j);
     throw x;
   }
@@ -1272,6 +1311,9 @@ async function connect(silent) {
   const key = $('tornKey').value.trim(), ffKey = $('ffKey').value.trim(), remember = $('remember').checked;
   if (!KEY_RE.test(key)) return keyMsg('A Torn key is 16 letters and numbers. Check it was copied in full.');
   if (ffKey && !KEY_RE.test(ffKey)) return keyMsg('An FFScouter key is also 16 letters and numbers.');
+  // A key Torn refused, or an IP block: stop here, before anything is sent.
+  const g = KeyGuard.gate(key);
+  if (g) return keyMsg(g.message);
   if (S.demo) leaveDemo(true);
   const btn = $('connectBtn');
   btn.disabled = true; btn.textContent = 'Connecting';
@@ -2058,6 +2100,7 @@ function renderSteps() {
     text = document.hidden ? `all ${fmtInt(m.length)} checked, ${fmtInt(ready)} ready, re-checks paused in the background` : `all ${fmtInt(m.length)} checked, ${fmtInt(ready)} ready, watching`;
   } else { state = 'done'; text = `all ${fmtInt(m.length)} checked, ${fmtInt(ready)} ready`; }
   if (Pacer.hold > Date.now()) text = "waiting out Torn's rate limit, " + text;
+  if (KeyGuard.blockedUntil() > Date.now()) text = `IP blocked by Torn, nothing sent for ${fmtLeft((KeyGuard.blockedUntil() - Date.now()) / 1000)}, ` + text;
   if (S.frozen) text = 'all calls frozen in devmode, ' + text;
   setStep('status', state, text, ratio);
 }
@@ -2378,9 +2421,12 @@ const Dev = {
       ['search', 'Search and filters', 'Your last search, filters and sort', ['spec', 'filters', 'sort']],
       ['settings', 'Settings', 'Pace, live checks, Learn mode, columns, devmode, sound, alerts', ['pace', 'live', 'learn', 'cols', 'dev', 'sound', 'notify', 'remember']],
       ['pacer', 'Rate limit log', 'When your recent Torn calls went out, shared by every tab. Not clearable: it keeps you under Torn\'s cap.', ['pacer']],
+      ['deadkeys', 'Refused keys', `${fmtInt(KeyGuard.dead().length)} keys Torn refused, kept as fingerprints, never the keys. The tool won't send them again. Clear only if one of them works again (unpaused, back from inactivity).`, ['deadkeys']],
+      ['ipblock', 'IP block cooldown', KeyGuard.blockedUntil() > Date.now() ? `Active: nothing goes to Torn for ${fmtLeft((KeyGuard.blockedUntil() - Date.now()) / 1000)}. Not clearable.` : 'None. Not clearable: it protects your IP after Torn blocks it.', ['ipblock']],
     ];
+    const locked = new Set(['pacer', 'ipblock']);
     $('storRows').innerHTML = rows.map(([id, label, what, keys]) => `<tr><td><b>${label}</b></td><td>${esc(what)}</td><td>${kb(keys.reduce((a, k) => a + size(k), 0))}</td>`
-      + `<td>${id === 'pacer' ? '' : `<button class="btn ghost sm" type="button" data-clear="${id}">Clear</button>`}</td></tr>`).join('');
+      + `<td>${locked.has(id) ? '' : `<button class="btn ghost sm" type="button" data-clear="${id}">Clear</button>`}</td></tr>`).join('');
   },
   clear(id) {
     if (id === 'key') store.del('key');
@@ -2389,6 +2435,7 @@ const Dev = {
     if (id === 'status') { store.del('status'); S.status = new Map(); }
     if (id === 'ff') { store.del('ff'); S.ff = new Map(); }
     if (id === 'hit') unhitAll();
+    if (id === 'deadkeys') store.del('deadkeys');
     if (id === 'search') ['spec', 'filters', 'sort'].forEach(k => store.del(k));
     if (id === 'settings') ['pace', 'live', 'learn', 'cols', 'dev', 'sound', 'notify', 'remember'].forEach(k => store.del(k));
     render(); this.storage();
@@ -2398,11 +2445,13 @@ const Dev = {
     if (Date.now() - this.wipeArm > 4000) { this.wipeArm = Date.now(); $('wipeNote').textContent = 'Press again within 4 seconds to wipe it all and disconnect.'; return; }
     this.wipeArm = 0;
     if (S.demo) leaveDemo(true); else disconnect();
-    try { for (const k of Object.keys(localStorage)) if (k.startsWith('hbt:') && k !== 'hbt:pacer') localStorage.removeItem(k); } catch {}
+    // The safety logs stay: the rate limit log, refused keys and the IP block keep you inside Torn's rules.
+    const keep = new Set(['hbt:pacer', 'hbt:deadkeys', 'hbt:ipblock']);
+    try { for (const k of Object.keys(localStorage)) if (k.startsWith('hbt:') && !keep.has(k)) localStorage.removeItem(k); } catch {}
     S.targets = new Map(); S.status = new Map(); S.ff = new Map(); S.hit = new Map(); S.snap = 0; S.listCount = 0; S.phase = 'idle';
     this.on = false; this.show();
     $('wipeNote').textContent = '';
-    say('Everything this tool stored in your browser is gone.');
+    say('Everything this tool stored in your browser is gone, except the safety logs that keep you inside Torn\'s rules.');
     render();
   },
 };
@@ -2777,9 +2826,21 @@ const Demo = (() => {
   if (/[?&]demo\b/.test(location.search)) { enterDemo(); return; }
   const saved = store.get('key', '');
   if (saved && KEY_RE.test(saved)) {
-    $('tornKey').value = saved;
-    $('ffKey').value = store.get('ffkey', '') || '';
-    connect(true);
+    const g = KeyGuard.gate(saved);
+    if (g && KeyGuard.isDead(saved)) {
+      // Refused before: drop it and don't send it, even once.
+      store.del('key');
+      keyMsg('Your saved key was not sent. ' + g.message);
+    } else if (g) {
+      // IP block: keep the key, send nothing, let the person connect once it's over.
+      $('tornKey').value = saved;
+      $('ffKey').value = store.get('ffkey', '') || '';
+      keyMsg('Your saved key was not sent. ' + g.message);
+    } else {
+      $('tornKey').value = saved;
+      $('ffKey').value = store.get('ffkey', '') || '';
+      connect(true);
+    }
   }
 })();
 

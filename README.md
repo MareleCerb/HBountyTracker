@@ -99,6 +99,9 @@ Add `?demo` to the URL, or press **Try the demo**. Made-up players and bounties,
 - A status check is one call per target. Checking 200 targets takes about 3 to 4 minutes at 60 per minute. Narrow filters go faster.
 - Re-checks pause while the tab is in the background. The first pass keeps going.
 - If Torn answers "too many requests", everything waits 30 seconds, then carries on.
+- Torn warns that repeated requests with invalid keys can get an IP banned for a while. So a key Torn refuses (wrong key, owner in federal jail, inactive, paused) is never sent again: it's dropped from storage, and only a fingerprint is kept so the tool recognises it. A saved key that was refused is not sent on the next visit either. Paste a different key to carry on. If a paused or inactive key works again, clear "Refused keys" in devmode Storage.
+- If Torn blocks your IP (error 8), nothing goes to Torn for 10 minutes, in every tab. Torn doesn't say how long a block lasts, so the tool waits on the safe side.
+- "Wipe everything" keeps the rate limit log, the refused keys and the IP block cooldown. They are what keeps you inside Torn's rules.
 
 ## Privacy (Torn API terms)
 
