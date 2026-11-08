@@ -347,6 +347,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
 /* Header tools and devmode */
 .mast-r{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
 .tools{display:flex;gap:8px}
+#soundBtn[aria-pressed=false]{color:var(--mist-dim);text-decoration:line-through;text-decoration-color:var(--mist-faint)}
 .tool[aria-pressed=true],.tool[aria-pressed=true]:hover{background:var(--bone);border-color:var(--bone);color:var(--obsidian)}
 .tool[aria-pressed=true]:hover{background:var(--bone-soft)}
 @media(max-width:640px){.mast-r{width:100%;justify-content:space-between}}
@@ -443,6 +444,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
   </div>
   <div class="mast-r">
     <div class="tools" id="tools">
+      <button class="btn sm ghost" id="soundBtn" type="button" aria-pressed="true" title="Sound alerts when a target turns Fresh or Ready">Sound on</button>
       <button class="btn sm ghost tool" id="devBtn" type="button" aria-pressed="false" aria-controls="dev">Devmode</button>
     </div>
     <div class="conn" id="conn" hidden>
@@ -558,6 +560,8 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
       <p class="hint" style="margin-top:-4px">Torn allows 100 a minute across every tool and script you run. Leave room for the rest.</p>
       <label class="check"><input type="checkbox" id="live" checked><span>Keep checking while this page is open</span></label>
       <p class="hint" style="margin-top:-4px">Okay targets get re-checked every 90 seconds. Anyone whose timer runs out gets checked again. Re-checks pause while this tab is in the background.</p>
+      <label class="check"><input type="checkbox" id="notify"><span>Browser notification when a target turns Fresh or Ready</span></label>
+      <p class="hint" style="margin-top:-4px" id="notifyHint">Sound plays for the same moments. The Sound button at the top turns all sound off.</p>
     </div>
   </details>
   <p class="msg" id="huntMsg" role="status" aria-live="polite"></p>
@@ -815,7 +819,7 @@ const S = {
   f: savedF ? Object.assign(blankFilters(), savedF, { states: new Set(savedF.states || []) }) : blankFilters(),
   sort: store.get('sort', 'reward_desc'),
   shown: SHOW_STEP,
-  matched: [], view: [], counts: {},
+  matched: [], matchedIds: new Set(), view: [], counts: {},
   phase: 'idle',                              // idle | list | hunting | paused | stopped
   runId: 0, sweepRun: 0, pumping: false, searchNote: '',
   hover: false, freezeAt: 0,
@@ -1628,8 +1632,9 @@ async function checkStatus(id, why) {
     // Profile rather than basic: same single call, and it carries the account age for New Player Protection.
     // timestamp busts Torn's 30-second service cache, so a re-check never gets an old answer back.
     const p = normProfile(await tornTry('/user/' + id + '/profile', { timestamp: Math.floor(Date.now() / 1000) }, { why: why || 'Status check', target: id }));
-    const st = p.status || {}, at = Date.now();
+    const st = p.status || {}, at = Date.now(), prev = S.status.get(id);
     setStatus(id, { state: String(st.state || 'Unknown'), until: Number(st.until) || 0, desc: plain(st.description), details: plain(st.details), at, age: p.age, pe: protectionEnd(p, at) });
+    Alerts.check(prev, S.status.get(id), id);
     const t = S.targets.get(id);
     if (t) {
       if (p.level) t.liveLevel = p.level;
@@ -1760,6 +1765,7 @@ function computeView() {
   }
   matched.sort(SORTS[S.sort] || SORTS.reward_desc);
   S.matched = matched;
+  S.matchedIds = new Set(matched.map(t => t.id));
   S.counts = counts;
   S.hitHidden = hitHidden;
   // Hit targets only show when the Hit chip is on. Everyone else follows their status chip.
@@ -2108,6 +2114,7 @@ function tick() {
   for (const el of document.querySelectorAll('#tbl [data-ago]')) el.textContent = fmtAgo(Number(el.dataset.ago));
   if (S.phase === 'hunting' && !S.pumping) pump();
   render();
+  Alerts.scan();
 }
 
 /* ------------------------------------------------------------------ *
@@ -2176,6 +2183,88 @@ function setSort(v) {
 }
 
 
+
+
+/* ------------------------------------------------------------------ *
+ *  Alerts: a sound, and a browser notification if you opt in, the
+ *  moment a matching target turns Fresh or comes back Okay.
+ * ------------------------------------------------------------------ */
+const Alerts = {
+  sound: store.get('sound', true) !== false, notify: store.get('notify', false) === true,
+  ctx: null, lastSound: 0, done: new Set(),
+  // Browsers only allow audio after a click on the page, so the audio engine starts on the first one.
+  unlock() {
+    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch {}
+  },
+  beep(kind) {
+    if (!this.sound || !this.ctx || Date.now() - this.lastSound < 2000) return;
+    this.lastSound = Date.now();
+    // Fresh: two quick rising notes. Ready: one soft note.
+    const notes = kind === 'fresh' ? [[880, 0], [1320, .13]] : [[660, 0]];
+    const t0 = this.ctx.currentTime;
+    for (const [f, at] of notes) {
+      const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0 + at);
+      g.gain.exponentialRampToValueAtTime(0.18, t0 + at + .02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + .22);
+      o.connect(g).connect(this.ctx.destination);
+      o.start(t0 + at); o.stop(t0 + at + .25);
+    }
+  },
+  // Notifications are blocked inside a cross-site iframe, which is how the tool sits on thegreatstag.com.
+  get embedded() { try { return window.top !== window.self; } catch { return true; } },
+  canNotify() { return 'Notification' in window && !this.embedded; },
+  async setNotify(on) {
+    if (on && !this.canNotify()) { on = false; }
+    else if (on && Notification.permission !== 'granted') on = (await Notification.requestPermission()) === 'granted';
+    this.notify = on; store.set('notify', on);
+    this.paint();
+  },
+  paint() {
+    $('soundBtn').textContent = this.sound ? 'Sound on' : 'Sound off';
+    $('soundBtn').setAttribute('aria-pressed', String(this.sound));
+    $('notify').checked = this.notify;
+    const hint = $('notifyHint');
+    if (this.embedded) hint.innerHTML = `Browsers block notifications inside an embedded page. <a href="${esc(location.href)}" target="_blank" rel="noopener">Open the tool on its own</a> to turn them on. Sound works here.`;
+    else if ('Notification' in window && Notification.permission === 'denied') hint.textContent = 'Notifications are blocked for this site in your browser settings. Sound still works.';
+    else hint.textContent = 'Sound plays for the same moments. The Sound button at the top turns all sound off.';
+    $('notify').disabled = !this.canNotify();
+  },
+  fire(kind, t) {
+    const key = kind + ':' + t.id + ':' + Math.floor(Date.now() / 60000);
+    if (this.done.has(key)) return;
+    this.done.add(key);
+    if (this.done.size > 500) this.done = new Set([...this.done].slice(-200));
+    this.beep(kind);
+    if (this.notify && this.canNotify() && Notification.permission === 'granted' && document.hidden) {
+      try {
+        const n = new Notification(`${kind === 'fresh' ? 'Fresh' : 'Ready'}: ${t.name}`, {
+          body: `${fmtMoney(t.reward)} on your next hit. Level ${lvlOf(t)}.`, tag: 'hbt-' + t.id, silent: true,
+        });
+        n.onclick = () => { window.focus(); n.close(); };
+      } catch {}
+    }
+  },
+  // Only matches you can actually hit: not marked hit, not protected.
+  eligible(t) { return t && !S.hit.has(t.id) && S.matchedIds.has(t.id); },
+  // Called every second: catches the moment a hospital timer runs out.
+  scan() {
+    if (S.phase !== 'hunting' && S.phase !== 'paused') return;
+    for (const t of S.matched) {
+      const st = S.status.get(t.id);
+      if (isFresh(st) && this.eligible(t) && nowS() - st.until < 3) this.fire('fresh', t);
+    }
+  },
+  // Called after each status check: catches someone coming back Okay without a timer (travel, revive, and so on).
+  check(prev, st, id) {
+    if (!prev || effState(prev) === 'Okay' || isProt(prev)) return;
+    if (effState(st) !== 'Okay') return;
+    const t = S.targets.get(id);
+    if (this.eligible(t)) this.fire('ready', t);
+  },
+};
 
 /* ------------------------------------------------------------------ *
  *  Devmode: run each part of the engine by hand, shape the board,
@@ -2351,7 +2440,7 @@ const Insp = {
     for (const k of ['comment', 'key']) u.searchParams.delete(k);
     const q = u.searchParams.toString();
     const code = e.state === 'pending' ? '<span class="code pend">...</span>' : e.state === 'ok' ? `<span class="code ok">${e.http}</span>` : `<span class="code err">${e.http || 'fail'}</span>`;
-    return `<span>${new Date(e.at).toLocaleTimeString([], { hour12: false })}</span><span class="svc ${e.svc}">${e.svc === 'torn' ? 'Torn' : 'FFScouter'}</span>`
+    return `<span>${new Date(e.at).toLocaleTimeString([], { hour12: false })}</span><span class="svc ${e.svc}" title="${e.svc === 'torn' ? 'Torn API' : 'FFScouter'}">${e.svc === 'torn' ? 'Torn' : 'FFS'}</span>`
       + `<span class="cp" title="${esc(e.url)}">GET ${esc(u.pathname)}${q ? '?' + esc(decodeURIComponent(q)) : ''}</span><span class="ck">${esc(c.label || e.kind)}</span>`
       + `${code}<span class="cm cms">${e.state === 'pending' ? '' : e.ms + 'ms'}</span><span class="cm csz">${e.size ? (e.size / 1024).toFixed(1) + 'kb' : ''}</span>`;
   },
@@ -2460,6 +2549,10 @@ ${Object.entries(CATALOG).map(([k, c]) => `<tr><td><span class="svc ${c.svc}">${
  * ------------------------------------------------------------------ */
 for (const [k, c] of Object.entries(CATALOG)) $('inspKind').add(new Option(c.label, k));
 $('devBtn').addEventListener('click', () => Dev.toggle());
+$('soundBtn').addEventListener('click', () => { Alerts.sound = !Alerts.sound; store.set('sound', Alerts.sound); Alerts.unlock(); Alerts.paint(); if (Alerts.sound) { Alerts.lastSound = 0; Alerts.beep('ready'); } });
+$('notify').addEventListener('change', e => Alerts.setNotify(e.target.checked));
+document.addEventListener('pointerdown', () => Alerts.unlock(), { capture: true });
+Alerts.paint();
 for (const b of document.querySelectorAll('#dev .tab')) b.addEventListener('click', () => Dev.setTab(b.dataset.dtab));
 $('eng').addEventListener('click', e => { const b = e.target.closest('[data-op]'); if (b) Dev.op(b.dataset.op); });
 $('staleMin').addEventListener('change', () => Dev.render());
