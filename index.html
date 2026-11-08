@@ -344,6 +344,63 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
 .foot{margin-top:48px;padding-top:16px;border-top:1px solid var(--ash);font-size:.85rem;color:var(--mist-dim)}
 .foot p{margin:0}
 
+/* Inspector. Anchored near the button that opened it, so it lands in view even inside the Webflow iframe. */
+.dlg{position:absolute;top:var(--dt,40px);left:0;right:0;margin:0 auto;width:min(1120px,calc(100vw - 24px));height:min(700px,calc(100vh - 24px));max-height:none;padding:0;
+  background:var(--carbon);color:var(--mist-light);border:1px solid var(--ash-light);border-radius:8px;flex-direction:column;overflow:hidden}
+.dlg[open]{display:flex}
+.dlg::backdrop{background:rgba(0,0,0,.72)}
+.dlg h2{font-size:1.6rem}
+.dlg-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;padding:16px 18px 10px;border-bottom:1px solid var(--ash)}
+.dlg-head .grow{flex:1}
+.dlg-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;padding:8px 18px;border-bottom:1px solid var(--ash)}
+.tabs{display:flex;flex-wrap:wrap;gap:4px}
+.tab{font:inherit;font-size:.88rem;font-weight:700;padding:7px 12px;border-radius:4px;border:1px solid transparent;background:none;color:var(--mist);cursor:pointer}
+.tab:hover{color:var(--bone)}
+.tab[aria-selected=true]{color:var(--bone);border-color:var(--ash-light);background:var(--graphite)}
+.dlg-pane{flex:1;overflow:auto;padding:12px 18px 18px;min-height:0}
+.dlg-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px}
+.dlg-tools select{width:auto;min-height:36px;padding:6px 32px 6px 10px;font-size:.86rem}
+.dlg-tools .hint{margin:0}
+.learn-only{display:none}
+.dlg.learn .learn-only{display:block}
+.learn-intro{margin:0 0 10px;font-size:.88rem;color:var(--mist)}
+.calls{font-size:.86rem;font-variant-numeric:tabular-nums}
+.call{border-bottom:1px solid var(--ash-deep);margin:0}
+.call>summary{display:grid;grid-template-columns:70px 64px minmax(0,1fr) 110px 52px 64px 64px;gap:10px;align-items:center;min-height:34px;width:auto;padding:4px 0;font-weight:400;color:var(--mist-light)}
+.call>summary::before{display:none}
+.call>summary:hover{background:var(--obsidian-soft);color:var(--bone)}
+.call .cp{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--bone-dim)}
+.call .cm{color:var(--mist-dim);text-align:right}
+.svc{font-size:.72rem;font-weight:700;border-radius:3px;padding:1px 6px;text-align:center;color:var(--obsidian)}
+.svc.torn{background:var(--bone-dim)}
+.svc.ffs{background:var(--status-travel)}
+.code.ok{color:var(--status-ready)}
+.code.err{color:var(--status-hospital)}
+.code.pend{color:var(--mist-dim)}
+.call-body{padding:6px 0 14px 12px;border-left:2px solid var(--ash-light);margin:2px 0 10px}
+.call-body h4{margin:12px 0 4px;font-size:.78rem;color:var(--mist-dim);text-transform:none;font-weight:700}
+.call-body pre{margin:0;padding:10px;background:var(--obsidian-deep);border:1px solid var(--ash);border-radius:4px;max-height:340px;overflow:auto;font-size:.78rem;line-height:1.45;color:var(--bone-dim);white-space:pre-wrap;overflow-wrap:anywhere}
+.learn-card{margin:4px 0 6px;padding:10px 12px;border-left:3px solid var(--gold-dark);background:var(--obsidian-soft);color:var(--mist-light);font-size:.86rem;max-width:90ch}
+.learn-card b{color:var(--bone)}
+.qhead{margin:14px 0 6px;font-size:1rem;color:var(--bone);font-weight:700}
+.qhead:first-child{margin-top:0}
+.qlist{list-style:none;margin:0;padding:0;font-size:.88rem}
+.qlist li{display:grid;grid-template-columns:28px minmax(0,1fr) minmax(0,1.6fr) 90px;gap:10px;padding:6px 0;border-bottom:1px solid var(--ash-deep)}
+.qlist .n{color:var(--mist-faint)}
+.cat{width:100%;border-collapse:collapse;font-size:.86rem}
+.cat th{text-align:left;font-size:.78rem;color:var(--mist-dim);padding:8px 10px 8px 0;border-bottom:1px solid var(--ash)}
+.cat td{padding:10px 10px 10px 0;border-bottom:1px solid var(--ash-deep);vertical-align:top}
+.cat code{font-size:.78rem;color:var(--bone-dim);overflow-wrap:anywhere}
+@media(max-width:879px){
+  .call>summary{grid-template-columns:60px 58px minmax(0,1fr) 46px;}
+  .call .ck,.call .cms,.call .csz{display:none}
+  .qlist li{grid-template-columns:24px minmax(0,1fr) 80px}
+  .qlist .w{grid-column:2/-1}
+  .cat thead{display:none}
+  .cat tr{display:block;padding:8px 0;border-bottom:1px solid var(--ash)}
+  .cat td{display:block;border:0;padding:2px 0}
+}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -386,6 +443,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
   </div>
   <div class="kfoot">
     <label class="check"><input type="checkbox" id="remember" checked><span>Remember on this device</span></label>
+    <button class="link hint" type="button" data-open="insp">Watch every API call live</button>
   </div>
   <p class="msg" id="keyMsg" role="alert"></p>
   <details class="privacy">
@@ -435,6 +493,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
   <div class="bar"><i id="runBar"></i></div>
   <div class="ctl">
     <button class="btn ghost sm" id="pauseBtn" type="button" hidden>Pause</button>
+    <button class="btn ghost sm" type="button" data-open="insp">Inspect calls</button>
     <span class="pace" id="paceInfo"></span>
     <span class="pbar" id="paceBar" aria-hidden="true"><i class="u"></i><i class="cap"></i></span>
   </div>
@@ -516,6 +575,36 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
   </table>
   <div class="more" id="moreWrap" hidden><button class="btn ghost" id="moreBtn" type="button">Show more</button></div>
 </section>
+
+<dialog class="dlg" id="insp" aria-labelledby="inspTitle">
+  <div class="dlg-head">
+    <h2 id="inspTitle">API calls</h2>
+    <p class="meta grow" id="inspSum"></p>
+    <button class="btn ghost sm" type="button" id="inspClose">Close</button>
+  </div>
+  <div class="dlg-bar">
+    <div class="tabs" role="tablist" aria-label="Inspector views">
+      <button class="tab" type="button" role="tab" data-tab="log" aria-selected="true">Live log</button>
+      <button class="tab" type="button" role="tab" data-tab="queue" aria-selected="false">Queue</button>
+      <button class="tab" type="button" role="tab" data-tab="catalog" aria-selected="false">Every call explained</button>
+    </div>
+    <label class="check"><input type="checkbox" id="inspLearn"><span>Learn mode</span></label>
+  </div>
+  <div class="dlg-pane" data-pane="log">
+    <div class="dlg-tools">
+      <select id="inspSvc" aria-label="Service"><option value="all">Torn and FFScouter</option><option value="torn">Torn only</option><option value="ffs">FFScouter only</option></select>
+      <select id="inspKind" aria-label="Call type"><option value="all">Every call type</option></select>
+      <button class="btn ghost sm" type="button" id="inspPause">Pause the stream</button>
+      <button class="btn ghost sm" type="button" id="inspClear">Clear</button>
+      <button class="btn ghost sm" type="button" id="inspExport">Export JSON</button>
+      <span class="hint" id="inspNew"></span>
+    </div>
+    <p class="learn-only learn-intro">Newest call on top. Click a call to see what was sent, what came back, and why the tool asked. Keys are always masked. The log lives in memory and is gone on reload.</p>
+    <div class="calls" id="inspList"></div>
+  </div>
+  <div class="dlg-pane" data-pane="queue" hidden><div id="inspQueue"></div></div>
+  <div class="dlg-pane" data-pane="catalog" hidden><div id="inspCat"></div></div>
+</dialog>
 
 <footer class="foot">
   <p>Made by <a href="https://www.thegreatstag.com" target="_blank" rel="noopener">The Great Stag</a>. Open source (MIT) on <a href="https://github.com/MareleCerb/HBountyTracker" target="_blank" rel="noopener">GitHub</a>. Data from the Torn API and FFScouter. Not affiliated with either.</p>
@@ -641,7 +730,7 @@ const S = {
   live: store.get('live', true) !== false,
   targets: new Map(), listCount: 0, snap: 0, fetchedAt: 0, nextExpiry: Infinity,
   status: new Map(), ff: new Map(),
-  inflight: new Set(), priority: [], open: new Set(),
+  inflight: new Set(), priority: [], pwhy: new Map(), open: new Set(), frozen: false,
   f: savedF ? Object.assign(blankFilters(), savedF, { states: new Set(savedF.states || []) }) : blankFilters(),
   sort: store.get('sort', 'reward_desc'),
   shown: SHOW_STEP,
@@ -662,7 +751,7 @@ const S = {
 // call log is shared between tabs and survives a reload: a reload or a second tab
 // can't start a fresh minute while Torn is still counting the last one.
 const Pacer = {
-  last: 0, hold: 0, log: [],
+  last: 0, hold: 0, log: [], waiting: new Set(),
   WINDOW: 60000, MARGIN: 1000,                // a second of slack for clock drift with Torn
   gap() { return S.demo ? 110 : Math.ceil(60000 / S.pace); },
   sync() {
@@ -692,8 +781,14 @@ const Pacer = {
     if (this.log.length > 240) this.log.splice(0, this.log.length - 240);
     this.save();
   },
-  async take() {
+  async take(info) {
+    const w = { ...(info || {}), since: Date.now() };
+    this.waiting.add(w);
+    try { await this.takeSlot(); } finally { this.waiting.delete(w); }
+  },
+  async takeSlot() {
     for (;;) {
+      while (S.frozen) await sleep(300);
       await this.ready();
       // A browser-wide lock makes the last check and the claim one step, across every tab.
       if (!S.demo && navigator.locks) {
@@ -716,6 +811,87 @@ const Pacer = {
   recent() { this.sync(); const c = Date.now() - 60000; return this.log.filter(t => t > c).length; },
 };
 
+
+/* ------------------------------------------------------------------ *
+ *  Call log. Every request to Torn and FFScouter goes through here,
+ *  so the inspector can show exactly what the engine does. Memory only.
+ * ------------------------------------------------------------------ */
+// Every call the tool can make. The inspector's catalog and Learn mode read from this list.
+const CATALOG = {
+  key_info: {
+    svc: 'torn', path: '/v2/key/info', label: 'Key check', when: 'Connect',
+    why: 'Finds out what kind of key you gave, before anything else runs.',
+    fields: 'info.access.type, info.selections',
+    learn: "Every Torn key has a type: Public Only, Minimal, Limited, Full or Custom. This call answers for any key, even the weakest, so it's the safe first move. The tool reads the type to name it, and for a Custom key it checks that User → Profile and Torn → Bounties are ticked. A key that can't do the job stops here, before it wastes calls.",
+  },
+  my_profile: {
+    svc: 'torn', path: '/v2/user/profile', label: 'Your profile', when: 'Connect',
+    why: 'Who you are: name, ID, level and account age.',
+    fields: 'profile.id, name, level, age',
+    learn: "Your own profile. The name goes in the header. Your account age matters for New Player Protection: if you're under 14 days old yourself, other protected players older than a day count as fair game.",
+  },
+  bounties: {
+    svc: 'torn', path: '/v2/torn/bounties', label: 'Bounty board', when: 'Start the hunt, Refetch board',
+    why: 'The whole bounty board, 100 listings per page.',
+    fields: 'bounties[].target_id, target_name, target_level, reward, quantity, valid_until, lister, reason, is_anonymous; bounties_timestamp; _metadata.total',
+    learn: "Torn serves one shared snapshot of the board. Page 1 also says how many listings exist (_metadata.total), so the tool knows exactly how many pages to read. It also carries bounties_timestamp: if that hasn't moved since last time, the board is the same and the sweep stops after one call. Listings on the same target get stacked into one row.",
+  },
+  target_profile: {
+    svc: 'torn', path: '/v2/user/{id}/profile', label: 'Target status', when: 'Status loop, Check now',
+    why: "One target's live status. One call per target.",
+    fields: 'profile.status.state, status.until, status.description, status.details, age, signed_up, level, name',
+    learn: "This is the call the whole tool is built on. status.state says Okay, Hospital, Jail, Traveling and so on. status.until is when a timer ends, so the countdowns tick in your browser without more calls. age and signed_up give New Player Protection. The timestamp parameter makes Torn skip its 30-second cache, so a re-check never hands back an old answer.",
+  },
+  ffs_check: {
+    svc: 'ffs', path: '/api/v1/check-key', label: 'FFScouter key check', when: 'Connect, only with an FFScouter key',
+    why: 'Is your FFScouter key registered with FFScouter?',
+    fields: 'is_registered',
+    learn: "FFScouter only answers keys that were registered on ffscouter.com. Without an FFScouter key, nothing is ever sent there. FFScouter only takes its key in the URL, so in this log it's masked.",
+  },
+  ffs_stats: {
+    svc: 'ffs', path: '/api/v1/get-stats', label: 'Fair fight', when: 'After the board loads, Refetch fair fight',
+    why: 'Fair fight estimates, up to 205 targets per call.',
+    fields: '[].player_id, fair_fight, bs_estimate_human',
+    learn: "Fair fight compares a target's estimated stats to yours. Near 1 is an easy fight, 3 and up is hard. One call covers 205 targets, so even a big board takes a handful of calls. Results are saved for 6 hours, per account.",
+  },
+};
+function kindOf(svc, path) {
+  if (svc === 'ffs') return path === 'check-key' ? 'ffs_check' : 'ffs_stats';
+  if (path === '/key/info') return 'key_info';
+  if (path === '/user/profile') return 'my_profile';
+  if (path === '/torn/bounties') return 'bounties';
+  return 'target_profile';
+}
+// Keys never show in full anywhere in the inspector, not even in an export.
+const maskKey = k => k ? '••••••••••••' + String(k).slice(-4) : '(none)';
+
+const CallLog = {
+  list: [], n: 0, KEEP: 500, BODIES: 80, counts: { torn: 0, ffs: 0, err: 0 },
+  start(o) {
+    const e = { n: ++this.n, at: Date.now(), ms: 0, state: 'pending', http: 0, demo: S.demo, size: 0, ...o };
+    this.list.push(e);
+    if (this.list.length > this.KEEP) this.list.shift();
+    // Keep full answers for the recent calls only. A board page is big.
+    const old = this.list[this.list.length - 1 - this.BODIES];
+    if (old && old.body !== undefined) { old.body = undefined; old.dropped = true; }
+    this.counts[o.svc]++;
+    Insp.onAdd(e);
+    return e;
+  },
+  done(e, http, body) {
+    e.ms = Date.now() - e.at; e.http = http; e.state = 'ok'; e.body = body;
+    try { e.size = JSON.stringify(body).length; } catch {}
+    Insp.onUpd(e);
+    return body;
+  },
+  fail(e, http, err, body) {
+    e.ms = Date.now() - e.at; e.http = http; e.state = 'error'; e.body = body;
+    e.err = (err.code != null ? 'Code ' + err.code + ': ' : '') + err.message;
+    this.counts.err++;
+    Insp.onUpd(e);
+  },
+};
+
 /* ------------------------------------------------------------------ *
  *  API clients
  * ------------------------------------------------------------------ */
@@ -723,28 +899,35 @@ class ApiError extends Error {
   constructor(src, code, msg, retry) { super(msg); this.src = src; this.code = code; this.retry = retry || 0; }
 }
 
-async function torn(path, params = {}) {
-  await Pacer.take();
-  if (S.demo) return Demo.torn(path, params);
+async function torn(path, params = {}, meta = {}) {
+  const kind = kindOf('torn', path);
+  await Pacer.take({ kind, why: meta.why });
   const u = new URL('https://api.torn.com/v2' + path);
   for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
   u.searchParams.set('comment', 'HBountyTracker');
+  const e = CallLog.start({ svc: 'torn', kind, url: u.toString(), headers: { Authorization: 'ApiKey ' + maskKey(S.key) }, params, why: meta.why });
+  if (S.demo) {
+    try { return CallLog.done(e, 200, await Demo.torn(path, params)); }
+    catch (x) { CallLog.fail(e, 200, x); throw x; }
+  }
   let r, j;
   // Key travels in a header, never in the URL.
   try { r = await fetch(u, { headers: { Authorization: 'ApiKey ' + S.key }, cache: 'no-store', referrerPolicy: 'no-referrer' }); }
-  catch { throw new ApiError('torn', -1, 'Could not reach the Torn API. Check your connection.'); }
+  catch { const x = new ApiError('torn', -1, 'Could not reach the Torn API. Check your connection.'); CallLog.fail(e, 0, x); throw x; }
   try { j = await r.json(); }
-  catch { throw new ApiError('torn', -2, 'Torn sent a response that could not be read (HTTP ' + r.status + ').'); }
+  catch { const x = new ApiError('torn', -2, 'Torn sent a response that could not be read (HTTP ' + r.status + ').'); CallLog.fail(e, r.status, x); throw x; }
   if (j && j.error) {
     const code = Number(j.error.code);
-    throw new ApiError('torn', code, TORN_MSG[code] || String(j.error.error || 'Torn API error.'));
+    const x = new ApiError('torn', code, TORN_MSG[code] || String(j.error.error || 'Torn API error.'));
+    CallLog.fail(e, r.status, x, j);
+    throw x;
   }
-  return j;
+  return CallLog.done(e, r.status, j);
 }
 
-async function tornTry(path, params) {
+async function tornTry(path, params, meta) {
   for (let i = 0; ; i++) {
-    try { return await torn(path, params); }
+    try { return await torn(path, params, meta); }
     catch (e) {
       if (!RETRY.has(e.code) || i >= 3) throw e;
       if (e.code === 5) {
@@ -759,23 +942,31 @@ async function tornTry(path, params) {
 }
 
 let ffLast = 0;
-async function ffs(path, params = {}) {
+async function ffs(path, params = {}, meta = {}) {
+  while (S.frozen) await sleep(300);
   const w = ffLast + 1000 - Date.now();
   if (w > 0) await sleep(w);
   ffLast = Date.now();
-  if (S.demo) return Demo.ffs(path, params);
   const u = new URL('https://ffscouter.com/api/v1/' + path);
   u.searchParams.set('key', S.ffKey);              // FFScouter only takes the key as a query param
   for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
+  const shown = new URL(u); shown.searchParams.set('key', maskKey(S.ffKey));
+  const e = CallLog.start({ svc: 'ffs', kind: kindOf('ffs', path), url: shown.toString(), headers: {}, params, why: meta.why });
+  if (S.demo) {
+    try { return CallLog.done(e, 200, await Demo.ffs(path, params)); }
+    catch (x) { CallLog.fail(e, 200, x); throw x; }
+  }
   let r, j;
   try { r = await fetch(u, { cache: 'no-store', referrerPolicy: 'no-referrer' }); }
-  catch { throw new ApiError('ffs', -1, 'Could not reach FFScouter.'); }
+  catch { const x = new ApiError('ffs', -1, 'Could not reach FFScouter.'); CallLog.fail(e, 0, x); throw x; }
   try { j = await r.json(); }
-  catch { throw new ApiError('ffs', -2, 'FFScouter sent a response that could not be read.'); }
+  catch { const x = new ApiError('ffs', -2, 'FFScouter sent a response that could not be read.'); CallLog.fail(e, r.status, x); throw x; }
   if (!r.ok || (j && !Array.isArray(j) && j.error)) {
-    throw new ApiError('ffs', Number(j?.code ?? r.status), String(j?.error || 'FFScouter error.'), Number(j?.retry_after_seconds) || 0);
+    const x = new ApiError('ffs', Number(j?.code ?? r.status), String(j?.error || 'FFScouter error.'), Number(j?.retry_after_seconds) || 0);
+    CallLog.fail(e, r.status, x, j);
+    throw x;
   }
-  return j;
+  return CallLog.done(e, r.status, j);
 }
 
 function normProfile(j) {
@@ -908,7 +1099,7 @@ function markHit(id) {
   S.hit.set(id, Date.now()); S.clicked.delete(id); saveHits();
   if (S.hover) S.freezeAt = 1;
   // One check a few seconds later picks up the new hospital timer, so Fresh can fire on time.
-  setTimeout(() => { if (S.hit.has(id) && S.phase === 'hunting') checkNow(id); }, 5000);
+  setTimeout(() => { if (S.hit.has(id) && S.phase === 'hunting') checkNow(id, 'You marked a hit, picking up the new hospital timer'); }, 5000);
   render();
 }
 // A hit loses its tag once that target leaves hospital after the hit, the moment it turns Fresh.
@@ -1000,14 +1191,14 @@ async function connect(silent) {
   keyMsg('');
   S.key = key; S.ffKey = ffKey; S.keyType = '';
   try {
-    const k = keyCheck(await tornTry('/key/info'));
+    const k = keyCheck(await tornTry('/key/info', {}, { why: 'Connect: checking what kind of key this is' }));
     S.keyType = k.type;
     if (k.missing.length) {
       throw new ApiError('torn', 16, `This is a Custom key without ${k.missing.join(' or ')}, so it can't read what this tool needs.`
         + (k.looksFFS ? ' It looks like your FFScouter key: put that one in the FFScouter field, and make a Public Only key for Torn.' : ' Make a dedicated Public Only key instead.'));
     }
     let me;
-    try { me = normProfile(await tornTry('/user/profile')); }
+    try { me = normProfile(await tornTry('/user/profile', {}, { why: 'Connect: reading who you are' })); }
     catch (e) { if (e.code === 16) e.message = `Torn says this ${keyLabel()} can't read your profile.`; throw e; }
     if (!me.id) throw new ApiError('torn', -2, 'Torn did not return a player for this key.');
     S.me = me;
@@ -1032,7 +1223,7 @@ async function checkFF() {
   S.ffState = 'checking'; S.ffNote = '';
   renderKey();
   try {
-    const j = await ffs('check-key');
+    const j = await ffs('check-key', {}, { why: 'Connect: is your FFScouter key registered?' });
     S.ffState = j && j.is_registered ? 'on' : 'unregistered';
   } catch (e) {
     S.ffState = e.code === 6 ? 'unregistered' : 'error';
@@ -1179,7 +1370,7 @@ async function sweep(force, run, progressive) {
   S.sweepRun = run;
   try {
     setStep('list', 'active', 'reading page 1', 0);
-    const first = await tornTry('/torn/bounties', { limit: PAGE_SIZE, offset: 0 });
+    const first = await tornTry('/torn/bounties', { limit: PAGE_SIZE, offset: 0 }, { why: force ? 'Board page 1, forced refetch' : 'Board page 1, also tells us if the board changed' });
     if (run !== S.runId) return false;
     const snap = Number(first.bounties_timestamp) || 0;
     const total = Number(first?._metadata?.total) || 0;
@@ -1198,7 +1389,7 @@ async function sweep(force, run, progressive) {
 
     let more = pages ? pages > 1 : (raw.length >= PAGE_SIZE && !!first?._metadata?.links?.next);
     for (let p = 1; more && p < MAX_PAGES; p++) {
-      const j = await tornTry('/torn/bounties', { limit: PAGE_SIZE, offset: p * PAGE_SIZE });
+      const j = await tornTry('/torn/bounties', { limit: PAGE_SIZE, offset: p * PAGE_SIZE }, { why: `Board page ${p + 1}${pages ? ' of ' + pages : ''}` });
       if (run !== S.runId) return false;
       const got = Array.isArray(j.bounties) ? j.bounties : [];
       raw.push(...got);
@@ -1273,55 +1464,86 @@ async function pump() {
       if (S.phase !== 'hunting' && !S.priority.length) break;
       await Pacer.ready();
       if (S.phase !== 'hunting' && !S.priority.length) break;
-      const id = nextTarget();
-      if (!id) break;
-      await checkStatus(id);
+      const nx = nextTarget();
+      if (!nx) break;
+      await checkStatus(nx.id, nx.why);
     }
   } finally {
     S.pumping = false;
   }
 }
 
+// When a checked target is due for its next check, and why. One place, so the loop and the queue view agree.
+function dueOf(st, now) {
+  const ns = now / 1000;
+  if (isProt(st)) return [st.at + IDLE_RECHECK * 3, 'New player protection, slow re-check'];   // can't be hit for days
+  switch (st.state) {
+    case 'Okay': return [st.at + OKAY_RECHECK, 'Okay re-check, every 90s'];
+    case 'Hospital':
+      // Out of hospital: Fresh for 10 seconds, then one check. Most get hit again in that window.
+      return st.until && st.until <= ns ? [Math.max(st.until * 1000 + FRESH_MS, st.at + 5000), 'Fresh is over, confirming Okay'] : [st.at + IDLE_RECHECK, 'Hospital, slow re-check'];
+    case 'Jail': case 'Federal':
+      return st.until && st.until <= ns ? [Math.max(st.until * 1000, st.at + 5000), 'Out of jail, confirming Okay'] : [st.at + IDLE_RECHECK, 'Jail, slow re-check'];
+    case 'Traveling': case 'Abroad': return [st.at + TRAVEL_RECHECK, 'Traveling, re-check every 5 min'];
+    default: return [st.at + IDLE_RECHECK, 'Slow re-check, every 10 min'];
+  }
+}
+
 function nextTarget() {
   while (S.priority.length) {
     const id = S.priority.shift();
-    if (S.targets.has(id) && !S.inflight.has(id)) return id;
+    const why = S.pwhy.get(id) || 'Asked for by hand'; S.pwhy.delete(id);
+    if (S.targets.has(id) && !S.inflight.has(id)) return { id, why };
   }
   if (S.phase !== 'hunting') return null;
-  for (const t of S.matched) if (!S.status.has(t.id) && !S.inflight.has(t.id)) return t.id;
+  for (const t of S.matched) if (!S.status.has(t.id) && !S.inflight.has(t.id)) return { id: t.id, why: 'First pass, never checked' };
   if (!S.live || document.hidden) return null;
 
   // Everyone has been checked once. Re-check whoever has been due the longest.
-  const now = Date.now(), ns = now / 1000;
-  let best = 0, bestDue = Infinity;
+  const now = Date.now();
+  let best = 0, bestDue = Infinity, bestWhy = '';
   for (const t of S.matched) {
     if (S.inflight.has(t.id)) continue;
     const st = S.status.get(t.id);
     if (!st) continue;
-    let due;
-    if (isProt(st)) due = st.at + IDLE_RECHECK * 3;   // can't be hit for days, so barely worth a call
-    else switch (st.state) {
-      case 'Okay': due = st.at + OKAY_RECHECK; break;
-      case 'Hospital':
-        // Out of hospital: Fresh for 10 seconds, then one check. Most get hit again in that window.
-        due = st.until && st.until <= ns ? Math.max(st.until * 1000 + FRESH_MS, st.at + 5000) : st.at + IDLE_RECHECK; break;
-      case 'Jail': case 'Federal':
-        due = st.until && st.until <= ns ? Math.max(st.until * 1000, st.at + 5000) : st.at + IDLE_RECHECK; break;
-      case 'Traveling': case 'Abroad': due = st.at + TRAVEL_RECHECK; break;
-      default: due = st.at + IDLE_RECHECK;
-    }
-    if (due <= now && due < bestDue) { best = t.id; bestDue = due; }
+    const [due, why] = dueOf(st, now);
+    if (due <= now && due < bestDue) { best = t.id; bestDue = due; bestWhy = why; }
   }
-  return best || null;
+  return best ? { id: best, why: bestWhy } : null;
 }
 
-async function checkStatus(id) {
+// A read-only preview of what the status loop will pick next. Same rules as nextTarget, nothing consumed.
+function planNext(limit) {
+  const out = [], now = Date.now(), seen = new Set();
+  for (const id of S.priority) {
+    if (out.length >= limit) return out;
+    if (seen.has(id) || !S.targets.has(id)) continue;
+    seen.add(id); out.push({ id, why: S.pwhy.get(id) || 'Asked for by hand', due: now });
+  }
+  const live = S.phase === 'hunting';
+  if (live) for (const t of S.matched) {
+    if (out.length >= limit) return out;
+    if (!S.status.has(t.id) && !seen.has(t.id)) { seen.add(t.id); out.push({ id: t.id, why: 'First pass, never checked', due: now }); }
+  }
+  if (!live || !S.live) return out;
+  const rest = [];
+  for (const t of S.matched) {
+    const st = S.status.get(t.id);
+    if (!st || seen.has(t.id)) continue;
+    const [due, why] = dueOf(st, now);
+    rest.push({ id: t.id, why, due });
+  }
+  rest.sort((a, b) => a.due - b.due);
+  return out.concat(rest.slice(0, limit - out.length));
+}
+
+async function checkStatus(id, why) {
   S.inflight.add(id);
   dirty();
   try {
     // Profile rather than basic: same single call, and it carries the account age for New Player Protection.
     // timestamp busts Torn's 30-second service cache, so a re-check never gets an old answer back.
-    const p = normProfile(await tornTry('/user/' + id + '/profile', { timestamp: Math.floor(Date.now() / 1000) }));
+    const p = normProfile(await tornTry('/user/' + id + '/profile', { timestamp: Math.floor(Date.now() / 1000) }, { why: why || 'Status check', target: id }));
     const st = p.status || {}, at = Date.now();
     setStatus(id, { state: String(st.state || 'Unknown'), until: Number(st.until) || 0, desc: plain(st.description), details: plain(st.details), at, age: p.age, pe: protectionEnd(p, at) });
     const t = S.targets.get(id);
@@ -1339,9 +1561,10 @@ async function checkStatus(id) {
   }
 }
 
-function checkNow(id) {
+function checkNow(id, why) {
   if (!S.key && !S.demo) { keyMsg('Connect your key first, or try the demo.'); return; }
   if (!S.priority.includes(id)) S.priority.unshift(id);
+  S.pwhy.set(id, why || 'Check now, pressed by hand');
   pump();
 }
 
@@ -1366,7 +1589,7 @@ async function scheduleFF() {
       setStep('ff', need.length ? 'active' : 'done', need.length ? `${fmtInt(have)} of ${fmtInt(scope.length)} scouted` : `${fmtInt(have)} scouted`, scope.length ? have / scope.length : 1);
       if (!need.length) break;
       let arr;
-      try { arr = await ffs('get-stats', { targets: need.join(',') }); }
+      try { arr = await ffs('get-stats', { targets: need.join(',') }, { why: `Fair fight for ${need.length} targets` }); }
       catch (e) {
         if (e.code === 21) { await sleep((e.retry || 10) * 1000); continue; }
         S.ffState = e.code === 6 ? 'unregistered' : 'error';
@@ -1863,9 +2086,163 @@ function setSort(v) {
   render();
 }
 
+
+/* ------------------------------------------------------------------ *
+ *  Inspector: live log, queue, catalog, Learn mode
+ * ------------------------------------------------------------------ */
+const Insp = {
+  paused: false, missed: 0, tab: 'log', els: new Map(), qT: 0,
+  get isOpen() { return $('insp').open; },
+  passes(e) {
+    const svc = $('inspSvc').value, kind = $('inspKind').value;
+    return (svc === 'all' || e.svc === svc) && (kind === 'all' || e.kind === kind);
+  },
+  onAdd(e) {
+    this.summary();
+    if (!this.isOpen) return;
+    if (this.paused) { this.missed++; this.newNote(); return; }
+    if (!this.passes(e)) return;
+    const el = this.make(e);
+    $('inspList').prepend(el);
+    // Keep the DOM in step with what the log keeps.
+    const list = $('inspList');
+    while (list.children.length > CallLog.KEEP) { const last = list.lastElementChild; this.els.delete(Number(last.dataset.n)); last.remove(); }
+  },
+  onUpd(e) {
+    this.summary();
+    const el = this.els.get(e.n);
+    if (!el) return;
+    el.querySelector('summary').innerHTML = this.sumHTML(e);
+    if (el.open) this.fill(el, e);
+  },
+  sumHTML(e) {
+    const c = CATALOG[e.kind] || {}, u = new URL(e.url);
+    for (const k of ['comment', 'key']) u.searchParams.delete(k);
+    const q = u.searchParams.toString();
+    const code = e.state === 'pending' ? '<span class="code pend">...</span>' : e.state === 'ok' ? `<span class="code ok">${e.http}</span>` : `<span class="code err">${e.http || 'fail'}</span>`;
+    return `<span>${new Date(e.at).toLocaleTimeString([], { hour12: false })}</span><span class="svc ${e.svc}">${e.svc === 'torn' ? 'Torn' : 'FFScouter'}</span>`
+      + `<span class="cp" title="${esc(e.url)}">GET ${esc(u.pathname)}${q ? '?' + esc(decodeURIComponent(q)) : ''}</span><span class="ck">${esc(c.label || e.kind)}</span>`
+      + `${code}<span class="cm cms">${e.state === 'pending' ? '' : e.ms + 'ms'}</span><span class="cm csz">${e.size ? (e.size / 1024).toFixed(1) + 'kb' : ''}</span>`;
+  },
+  make(e) {
+    const el = document.createElement('details');
+    el.className = 'call'; el.dataset.n = e.n;
+    el.innerHTML = `<summary>${this.sumHTML(e)}</summary><div class="call-body"></div>`;
+    el.addEventListener('toggle', () => { if (el.open) this.fill(el, e); });
+    this.els.set(e.n, el);
+    return el;
+  },
+  // The heavy part (pretty JSON) is only built when a call is opened.
+  fill(el, e) {
+    const c = CATALOG[e.kind] || {};
+    let resp;
+    if (e.state === 'pending') resp = '<p class="faint">Waiting for the answer.</p>';
+    else if (e.dropped) resp = `<p class="faint">Answer dropped to save memory. Only the last ${CallLog.BODIES} answers are kept in full.</p>`;
+    else {
+      let txt = '';
+      try { txt = JSON.stringify(e.body, null, 2) ?? ''; } catch { txt = String(e.body); }
+      const max = 60000, cut = txt.length > max;
+      resp = (e.err ? `<p class="code err">${esc(e.err)}</p>` : '') + (txt ? `<pre>${esc(cut ? txt.slice(0, max) : txt)}</pre>${cut ? `<p class="faint">Cut at ${fmtInt(max)} characters of ${fmtInt(txt.length)}. Export JSON for the whole thing.</p>` : ''}` : '');
+    }
+    el.querySelector('.call-body').innerHTML = `
+<div class="learn-only learn-card"><b>${esc(c.label || '')}.</b> ${esc(c.learn || '')}<br><br><b>Fields the tool reads:</b> ${esc(c.fields || '')}</div>
+<h4>Why now</h4><p style="margin:0">${esc(e.why || c.why || '')}</p>
+<h4>Request</h4><pre>${esc(JSON.stringify({ method: 'GET', url: e.url, headers: e.headers, sent: new Date(e.at).toISOString(), demo: e.demo || undefined }, null, 2))}</pre>
+${e.demo ? '<p class="faint">Demo mode: answered inside your browser. Nothing was sent.</p>' : ''}
+<h4>Response${e.state !== 'pending' ? ` <span class="faint">HTTP ${e.http || 'none'}, ${e.ms}ms${e.size ? ', ' + (e.size / 1024).toFixed(1) + 'kb' : ''}</span>` : ''}</h4>${resp}`;
+  },
+  rebuild() {
+    const list = $('inspList');
+    list.innerHTML = ''; this.els.clear(); this.missed = 0; this.newNote();
+    const frag = document.createDocumentFragment();
+    for (let i = CallLog.list.length - 1; i >= 0; i--) { const e = CallLog.list[i]; if (this.passes(e)) frag.append(this.make(e)); }
+    list.append(frag);
+    if (!list.children.length) list.innerHTML = '<p class="faint" style="margin:8px 0">No calls yet. Connect a key or try the demo, then start the hunt.</p>';
+  },
+  newNote() { $('inspNew').textContent = this.paused ? (this.missed ? `${fmtInt(this.missed)} new calls waiting` : 'Stream paused') : ''; },
+  summary() {
+    if (!this.isOpen) return;
+    const c = CallLog.counts;
+    $('inspSum').textContent = `${fmtInt(c.torn)} Torn, ${fmtInt(c.ffs)} FFScouter, ${fmtInt(c.err)} failed this session.${S.demo ? ' Demo: all answered in your browser.' : ` ${Pacer.recent()} Torn calls in the last minute.`}`;
+  },
+  queue() {
+    if (!this.isOpen || this.tab !== 'queue') return;
+    const now = Date.now(), wait = Pacer.wait();
+    const name = id => { const t = S.targets.get(id); return t ? esc(t.name) + ` <span class="faint">[${id}]</span>` : '[' + id + ']'; };
+    const gate = [...Pacer.waiting].map((w, i) => `<li><span class="n">${i + 1}</span><span>${esc((CATALOG[w.kind] || {}).label || w.kind)}</span><span class="w">${esc(w.why || '')}</span><span class="faint">waiting ${Math.round((now - w.since) / 1000)}s</span></li>`).join('');
+    const plan = planNext(10).map((x, i) => `<li><span class="n">${i + 1}</span><span>${name(x.id)}</span><span class="w">${esc(x.why)}</span><span class="faint">${x.due <= now ? 'due now' : 'in ' + fmtLeft((x.due - now) / 1000)}</span></li>`).join('');
+    const pace = S.frozen ? 'All calls are paused from devmode.' : Pacer.hold > now ? `Holding for Torn's rate limit, ${fmtLeft((Pacer.hold - now) / 1000)} left.` : wait > 0 ? `Next free slot in ${(wait / 1000).toFixed(1)}s.` : 'A slot is free right now.';
+    $('inspQueue').innerHTML = `
+<p class="learn-only learn-card"><b>How the queue works.</b> Every Torn call waits at one gate, the pacer, so the tool never goes over your pace. The status loop then picks one target at a time: hand-picked checks first, then targets never checked, then whoever has been due a re-check the longest. Okay targets are re-checked every 90 seconds, travelers every 5 minutes, the rest every 10.</p>
+<p class="qhead">The pacer</p><p style="margin:0">${S.demo ? 'Demo pace: no real limit, and nothing leaves your browser.' : `${Pacer.recent()} / ${S.pace} calls used this minute. ${pace}`}</p>
+<p class="qhead">Waiting at the pacer (${Pacer.waiting.size})</p>${gate ? `<ol class="qlist">${gate}</ol>` : '<p class="faint" style="margin:0">Nothing waiting.</p>'}
+<p class="qhead">Status loop, next up</p>${plan ? `<ol class="qlist">${plan}</ol>` : `<p class="faint" style="margin:0">${S.phase === 'hunting' ? (document.hidden ? 'Re-checks pause while the tab is in the background.' : S.live ? 'Nobody is due yet.' : 'Live checks are off.') : 'The status loop is not running.'}</p>`}
+<p class="qhead">FFScouter</p><p style="margin:0">${S.ffState !== 'on' ? 'Off.' : ffBusy ? 'A fair fight batch is running.' : 'Idle. Runs when targets without fair fight show up.'}</p>`;
+  },
+  catalog() {
+    const n = {};
+    for (const e of CallLog.list) n[e.kind] = (n[e.kind] || 0) + 1;
+    $('inspCat').innerHTML = `
+<p class="learn-intro" style="display:block">This is every request the tool can make. Nothing else leaves your browser. The Torn key goes in the <code>Authorization</code> header, never in a URL.</p>
+<table class="cat"><thead><tr><th>Service</th><th>Call</th><th>When</th><th>What it's for</th><th>Fields used</th><th>This session</th></tr></thead><tbody>
+${Object.entries(CATALOG).map(([k, c]) => `<tr><td><span class="svc ${c.svc}">${c.svc === 'torn' ? 'Torn' : 'FFScouter'}</span></td><td><b>${esc(c.label)}</b><br><code>GET ${esc(c.path)}</code></td><td>${esc(c.when)}</td><td>${esc(c.why)}<div class="learn-only learn-card">${esc(c.learn)}</div></td><td><code>${esc(c.fields)}</code></td><td>${fmtInt(n[k] || 0)}</td></tr>`).join('')}
+</tbody></table>
+<p class="qhead">Other connections</p>
+<p style="margin:0">Google Fonts loads the two typefaces when the page opens. That's a font file, not an API call, and it carries no key. Nothing is ever sent to The Great Stag, and there is no analytics.</p>
+<p class="qhead">Limits</p>
+<p style="margin:0">Torn: 100 calls a minute per player, across every tool. FFScouter: 205 targets per get-stats call, 120 calls a minute per IP.</p>`;
+  },
+  setTab(t) {
+    this.tab = t;
+    for (const b of document.querySelectorAll('#insp .tab')) b.setAttribute('aria-selected', String(b.dataset.tab === t));
+    for (const p of document.querySelectorAll('#insp .dlg-pane')) p.hidden = p.dataset.pane !== t;
+    if (t === 'log') this.rebuild();
+    if (t === 'queue') this.queue();
+    if (t === 'catalog') this.catalog();
+  },
+  open(from) {
+    const d = $('insp');
+    // In the Webflow iframe the viewport is the whole page, so put the dialog where the button is.
+    const r = from ? from.getBoundingClientRect() : { top: 40 };
+    // On its own page the viewport is the screen, so this keeps it fully in view. In the iframe, innerHeight is the
+    // whole page, so it simply lands next to the button the visitor just clicked.
+    const h = Math.min(700, window.innerHeight - 24);
+    d.style.setProperty('--dt', window.scrollY + clamp(r.top - 60, 8, Math.max(8, window.innerHeight - h - 12)) + 'px');
+    d.showModal();
+    this.setTab(this.tab);
+    this.summary();
+    clearInterval(this.qT);
+    this.qT = setInterval(() => { if (!this.isOpen) return clearInterval(this.qT); this.summary(); this.queue(); }, 1000);
+  },
+  export() {
+    const data = CallLog.list.map(({ n, at, svc, kind, url, headers, why, http, ms, state, err, size, demo, body }) => ({ n, at: new Date(at).toISOString(), svc, kind, url, headers, why, http, ms, state, err, size, demo, body }));
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+    a.download = 'hbountytracker-calls-' + new Date().toISOString().slice(0, 19).replace(/:/g, '') + '.json';
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  },
+};
+
 /* ------------------------------------------------------------------ *
  *  Wiring
  * ------------------------------------------------------------------ */
+for (const [k, c] of Object.entries(CATALOG)) $('inspKind').add(new Option(c.label, k));
+document.addEventListener('click', e => { const b = e.target.closest('[data-open="insp"]'); if (b) Insp.open(b); });
+$('inspClose').addEventListener('click', () => $('insp').close());
+$('insp').addEventListener('click', e => { if (e.target === $('insp')) $('insp').close(); });   // click on the backdrop
+for (const b of document.querySelectorAll('#insp .tab')) b.addEventListener('click', () => Insp.setTab(b.dataset.tab));
+$('inspLearn').checked = store.get('learn', false) === true;
+$('insp').classList.toggle('learn', $('inspLearn').checked);
+$('inspLearn').addEventListener('change', e => { $('insp').classList.toggle('learn', e.target.checked); store.set('learn', e.target.checked); if (Insp.tab === 'catalog') Insp.catalog(); });
+for (const id of ['inspSvc', 'inspKind']) $(id).addEventListener('change', () => Insp.rebuild());
+$('inspPause').addEventListener('click', e => {
+  Insp.paused = !Insp.paused;
+  e.currentTarget.textContent = Insp.paused ? 'Resume the stream' : 'Pause the stream';
+  if (!Insp.paused) Insp.rebuild(); else Insp.newNote();
+});
+$('inspClear').addEventListener('click', () => { CallLog.list = []; Insp.rebuild(); });
+$('inspExport').addEventListener('click', () => Insp.export());
 $('connectBtn').addEventListener('click', () => connect(false));
 for (const id of ['tornKey', 'ffKey']) $(id).addEventListener('keydown', e => { if (e.key === 'Enter') connect(false); });
 $('revealKey').addEventListener('click', e => {
