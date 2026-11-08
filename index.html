@@ -344,6 +344,35 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
 .foot{margin-top:48px;padding-top:16px;border-top:1px solid var(--ash);font-size:.85rem;color:var(--mist-dim)}
 .foot p{margin:0}
 
+/* Header tools and devmode */
+.mast-r{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.tools{display:flex;gap:8px}
+.tool[aria-pressed=true],.tool[aria-pressed=true]:hover{background:var(--bone);border-color:var(--bone);color:var(--obsidian)}
+.tool[aria-pressed=true]:hover{background:var(--bone-soft)}
+@media(max-width:640px){.mast-r{width:100%;justify-content:space-between}}
+.dev{margin-top:20px;padding:16px 18px 18px;border:1px dashed var(--gold-dark);border-radius:6px;background:var(--obsidian-soft)}
+.dev-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;margin-bottom:12px}
+.dev-head .grow{flex:1}
+.dev h2{font-size:1.6rem}
+.dpane{margin-top:12px}
+.dnote{margin:0 0 12px}
+.eng{display:grid;gap:0}
+.op{display:grid;grid-template-columns:minmax(260px,auto) 220px minmax(0,1fr);gap:4px 16px;align-items:center;padding:8px 0;border-bottom:1px solid var(--ash-deep);font-size:.88rem}
+.opx{display:flex;gap:8px;align-items:center}
+.opx select{width:auto;min-height:36px;padding:6px 32px 6px 10px;font-size:.84rem}
+.cost{color:var(--gold-light);font-variant-numeric:tabular-nums}
+.what{color:var(--mist)}
+@media(max-width:879px){.op{grid-template-columns:minmax(0,1fr)}}
+.sliders{display:grid;gap:14px 28px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.sliders input[type=range]{max-width:none}
+.cols{display:flex;flex-wrap:wrap;gap:4px 22px}
+.stor td:nth-child(3){white-space:nowrap;color:var(--mist)}
+.stor td:last-child{text-align:right}
+#board.hide-lvl :is(.c-lvl,.h-lvl),#board.hide-status :is(.c-status,.h-status),#board.hide-reward :is(.c-reward,.h-reward),
+#board.hide-bounties :is(.c-bounties,.h-bounties),#board.hide-ff :is(.c-ff,.h-ff),#board.hide-age :is(.c-age,.h-age),
+#board.hide-checked :is(.c-checked,.h-checked),#board.hide-act :is(.c-act,.h-act){display:none!important}
+.c-age{white-space:nowrap;font-size:.86rem;color:var(--mist)}
+
 /* Inspector. Anchored near the button that opened it, so it lands in view even inside the Webflow iframe. */
 .dlg{position:absolute;top:var(--dt,40px);left:0;right:0;margin:0 auto;width:min(1120px,calc(100vw - 24px));height:min(700px,calc(100vh - 24px));max-height:none;padding:0;
   background:var(--carbon);color:var(--mist-light);border:1px solid var(--ash-light);border-radius:8px;flex-direction:column;overflow:hidden}
@@ -412,11 +441,62 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
     <h1>HBountyTracker</h1>
     <span class="by">A freebie by <a href="https://www.thegreatstag.com" target="_blank" rel="noopener">TGS</a></span>
   </div>
-  <div class="conn" id="conn" hidden>
-    <div class="who"><span id="meName"></span><span id="meFF"></span></div>
-    <button class="btn sm ghost" id="disconnectBtn" type="button">Disconnect</button>
+  <div class="mast-r">
+    <div class="tools" id="tools">
+      <button class="btn sm ghost tool" id="devBtn" type="button" aria-pressed="false" aria-controls="dev">Devmode</button>
+    </div>
+    <div class="conn" id="conn" hidden>
+      <div class="who"><span id="meName"></span><span id="meFF"></span></div>
+      <button class="btn sm ghost" id="disconnectBtn" type="button">Disconnect</button>
+    </div>
   </div>
 </header>
+
+<section class="dev" id="dev" hidden aria-labelledby="devTitle">
+  <div class="dev-head">
+    <h2 id="devTitle">Devmode</h2>
+    <p class="meta grow" id="devState"></p>
+    <button class="btn ghost sm" type="button" data-open="insp">Open the API inspector</button>
+  </div>
+  <div class="tabs" role="tablist" aria-label="Devmode views">
+    <button class="tab" type="button" role="tab" data-dtab="engine" aria-selected="true">Engine</button>
+    <button class="tab" type="button" role="tab" data-dtab="board" aria-selected="false">Board</button>
+    <button class="tab" type="button" role="tab" data-dtab="storage" aria-selected="false">Storage</button>
+  </div>
+
+  <div class="dpane" data-dpane="engine">
+    <p class="hint dnote">Run each part of the engine on its own. The cost shows before you press.</p>
+    <div class="eng" id="eng">
+      <div class="op"><button class="btn sm ghost" type="button" data-op="board">Refetch the board</button><span class="cost" data-cost="board"></span><span class="what">Reads every page again, even if Torn's timestamp hasn't moved.</span></div>
+      <div class="op"><button class="btn sm ghost" type="button" data-op="all">Re-check every match</button><span class="cost" data-cost="all"></span><span class="what">Puts every match at the front of the status queue.</span></div>
+      <div class="op"><span class="opx"><button class="btn sm ghost" type="button" data-op="stale">Re-check stale only</button>
+        <select id="staleMin" aria-label="Older than"><option value="2">older than 2 min</option><option value="5" selected>older than 5 min</option><option value="10">older than 10 min</option><option value="30">older than 30 min</option></select></span><span class="cost" data-cost="stale"></span><span class="what">Only matches whose last check is older than that, plus anyone never checked.</span></div>
+      <div class="op"><button class="btn sm ghost" type="button" data-op="loop">Pause the status loop</button><span class="cost" data-cost="loop"></span><span class="what">Freezes or restarts the live checks. Timers keep counting.</span></div>
+      <div class="op"><button class="btn sm ghost" type="button" data-op="queue">Clear the check queue</button><span class="cost" data-cost="queue"></span><span class="what">Drops hand-picked checks that haven't run yet.</span></div>
+      <div class="op"><button class="btn sm ghost" type="button" data-op="ff">Refetch fair fight</button><span class="cost" data-cost="ff"></span><span class="what">Forgets the saved estimates for your matches and asks FFScouter again.</span></div>
+      <div class="op"><button class="btn sm ghost" type="button" data-op="freeze">Freeze all calls</button><span class="cost" data-cost="freeze"></span><span class="what">Nothing leaves your browser until you unfreeze. Calls wait in line.</span></div>
+      <div class="op"><button class="btn sm ghost" type="button" data-op="restart">Start over</button><span class="cost" data-cost="restart"></span><span class="what">All of the above in one go, with the limits from Find targets.</span></div>
+    </div>
+  </div>
+
+  <div class="dpane" data-dpane="board" hidden>
+    <p class="hint dnote">Sliders filter the board you already have. They cost no calls.</p>
+    <div class="sliders">
+      <label class="field range" for="sLvl"><span>Max level <output id="sLvlOut"></output></span><input id="sLvl" type="range" min="1" max="100" step="1"></label>
+      <label class="field range" for="sFF"><span>Max fair fight <output id="sFFOut"></output></span><input id="sFF" type="range" min="10" max="50" step="1"></label>
+      <label class="field range" for="sVmin"><span>Value from <output id="sVminOut"></output></span><input id="sVmin" type="range" min="0" max="100" step="1"></label>
+      <label class="field range" for="sVmax"><span>Value up to <output id="sVmaxOut"></output></span><input id="sVmax" type="range" min="0" max="100" step="1"></label>
+    </div>
+    <p class="qhead">Columns</p>
+    <div class="cols" id="cols"></div>
+  </div>
+
+  <div class="dpane" data-dpane="storage" hidden>
+    <p class="hint dnote">Everything the tool keeps in this browser. Nothing is stored anywhere else.</p>
+    <table class="cat stor"><thead><tr><th>Item</th><th>What's in it</th><th>Size</th><th></th></tr></thead><tbody id="storRows"></tbody></table>
+    <div class="ctl"><button class="btn ghost sm" type="button" id="wipeBtn">Wipe everything</button><span class="hint" id="wipeNote" style="margin:0"></span></div>
+  </div>
+</section>
 
 <section class="connect" id="connect" aria-labelledby="keyTitle">
   <h2 id="keyTitle">Your Torn key</h2>
@@ -562,16 +642,17 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
 
   <table id="tbl">
     <thead id="thead"><tr>
-      <th scope="col" data-col="name"><button class="sorter" type="button" data-sort="name">Target</button></th>
-      <th scope="col" data-col="level"><button class="sorter" type="button" data-sort="level">Level</button></th>
-      <th scope="col" data-col="ready"><button class="sorter" type="button" data-sort="ready">Status</button></th>
-      <th scope="col" data-col="reward"><button class="sorter" type="button" data-sort="reward" title="Current value: what your next hit pays">Value</button></th>
-      <th scope="col" data-col="ends"><button class="sorter" type="button" data-sort="ends">Bounties</button></th>
-      <th scope="col" data-col="ff"><button class="sorter" type="button" data-sort="ff">Fair fight</button></th>
-      <th scope="col" data-col="checked"><button class="sorter" type="button" data-sort="checked">Checked</button></th>
-      <th scope="col"><span class="sr">Links</span></th>
+      <th scope="col" class="h-name" data-col="name"><button class="sorter" type="button" data-sort="name">Target</button></th>
+      <th scope="col" class="h-lvl" data-col="level"><button class="sorter" type="button" data-sort="level">Level</button></th>
+      <th scope="col" class="h-status" data-col="ready"><button class="sorter" type="button" data-sort="ready">Status</button></th>
+      <th scope="col" class="h-reward" data-col="reward"><button class="sorter" type="button" data-sort="reward" title="Current value: what your next hit pays">Value</button></th>
+      <th scope="col" class="h-bounties" data-col="ends"><button class="sorter" type="button" data-sort="ends">Bounties</button></th>
+      <th scope="col" class="h-ff" data-col="ff"><button class="sorter" type="button" data-sort="ff">Fair fight</button></th>
+      <th scope="col" class="h-age">Account age</th>
+      <th scope="col" class="h-checked" data-col="checked"><button class="sorter" type="button" data-sort="checked">Checked</button></th>
+      <th scope="col" class="h-act"><span class="sr">Links</span></th>
     </tr></thead>
-    <tbody id="empty" hidden><tr><td colspan="8" class="emptycell" id="emptyText"></td></tr></tbody>
+    <tbody id="empty" hidden><tr><td colspan="9" class="emptycell" id="emptyText"></td></tr></tbody>
   </table>
   <div class="more" id="moreWrap" hidden><button class="btn ghost" id="moreBtn" type="button">Show more</button></div>
 </section>
@@ -718,7 +799,7 @@ const TORN_MSG = {
 /* ------------------------------------------------------------------ *
  *  State
  * ------------------------------------------------------------------ */
-const blankFilters = () => ({ q: '', lvlMin: 0, lvlMax: 0, rewardMin: 0, ffMax: 0, ageMin: 0, states: new Set() });
+const blankFilters = () => ({ q: '', lvlMin: 0, lvlMax: 0, rewardMin: 0, rewardMax: 0, ffMax: 0, ageMin: 0, states: new Set() });
 const savedF = store.get('filters', null);
 if (savedF && Array.isArray(savedF.states)) savedF.states = savedF.states.map(s => (s === 'ready' ? 'okay' : s));
 
@@ -1124,6 +1205,7 @@ function saveStatusSoon() {
   if (S.demo || statusSaveT) return;
   statusSaveT = setTimeout(() => {
     statusSaveT = 0;
+    if (S.demo) return;   // demo may have started since the timer was set
     const c = Date.now() - STATUS_TTL, rows = [];
     for (const [id, s] of S.status) if (s.at > c && s.state !== 'Error') rows.push([id, s.state, s.until, s.desc, s.details, s.at, s.age, s.pe]);
     store.set('status', rows);
@@ -1140,6 +1222,7 @@ function saveFFSoon() {
   if (S.demo || ffSaveT || !S.me) return;
   ffSaveT = setTimeout(() => {
     ffSaveT = 0;
+    if (S.demo || !S.me) return;
     const c = Date.now() - FF_TTL, rows = [];
     for (const [id, x] of S.ff) if (x.at > c) rows.push([id, x.ff, x.bsh, x.at]);
     store.set('ff', { owner: S.me.id, rows });
@@ -1383,6 +1466,7 @@ async function sweep(force, run, progressive) {
 
     const raw = Array.isArray(first.bounties) ? first.bounties.slice() : [];
     const pages = total ? Math.min(Math.ceil(total / PAGE_SIZE), MAX_PAGES) : 0;
+    if (pages) S.lastPages = pages;
     const apply = () => { const { map, n } = stack(raw); setBoard(map, n); dirty(); };
     if (progressive) apply();
     setStep('list', 'active', pages ? `page 1 of ${pages}` : 'page 1', pages ? 1 / pages : .03);
@@ -1666,6 +1750,7 @@ function computeView() {
     if (f.lvlMin && lvl < f.lvlMin) continue;
     if (f.lvlMax && lvl > f.lvlMax) continue;
     if (f.rewardMin && t.reward < f.rewardMin) continue;
+    if (f.rewardMax && t.reward > f.rewardMax) continue;
     if (f.ffMax) { const x = S.ff.get(t.id); if (x && x.ff != null && x.ff > f.ffMax) continue; }
     // Age is only known once a target has been checked; until then it stays in.
     if (f.ageMin && st && st.age != null && st.age < f.ageMin) continue;
@@ -1758,11 +1843,12 @@ function rowHTML(t) {
 <td class="c-reward"><span class="money big" title="Current value: ${fmtFull(t.reward)} for your next hit">${fmtMoney(t.reward)}</span></td>
 <td class="c-bounties"><button class="bt" type="button" data-act="toggle" aria-expanded="${open}"><span class="lab">${t.count} ${t.count === 1 ? 'bounty' : 'bounties'}</span><span class="car" aria-hidden="true"></span></button>${t.count > 1 ? `<span class="ends" title="Every bounty on this target added up. One hit claims one bounty.">+${t.count - 1} more, ${fmtMoney(t.total)} stacked</span>` : ''}${ends}</td>
 <td class="c-ff">${ffHTML(t)}</td>
+<td class="c-age">${st && st.age != null ? `${fmtInt(st.age)} ${st.age === 1 ? 'day' : 'days'}` : '<span class="faint">not yet</span>'}</td>
 <td class="c-checked">${st ? `<span data-ago="${st.at}">${fmtAgo(st.at)}</span>` : '<span class="faint">not yet</span>'}<button class="icon" type="button" data-act="check" title="Check now" aria-label="Check ${esc(t.name)} now">${ICON_RECHECK}</button></td>
 <td class="c-act"><a class="btn sm ghost" href="${profileUrl(t.id)}" target="_blank" rel="noopener">Profile</a>${attackA(t, 'btn sm ' + (ready ? 'go' : 'ghost'))}${hitBtn(t, 'btn sm gold')}</td>
 </tr>`;
   if (open) {
-    html += `<tr class="detail"><td colspan="8"><ul class="listings">${t.listings.map(l => `<li>
+    html += `<tr class="detail"><td colspan="9"><ul class="listings">${t.listings.map(l => `<li>
 <span class="who2">${l.anon || !l.lid ? '<span class="faint">Listed anonymously</span>' : `<span class="faint">Listed by</span> <a href="${profileUrl(l.lid)}" target="_blank" rel="noopener">${esc(l.lname || 'Player ' + l.lid)}</a>`}</span>
 <span><span class="money" title="${fmtFull(l.reward)}">${fmtMoney(l.reward)}</span>${l.qty > 1 ? `<span class="qty">× ${l.qty}</span>` : ''}</span>
 <span class="reason">${l.reason ? '“' + esc(l.reason) + '”' : '<span class="faint">No reason given</span>'}</span>
@@ -1919,7 +2005,7 @@ function renderHead() {
     b.setAttribute('aria-pressed', S.f.states.has(b.dataset.s) ? 'true' : 'false');
     b.querySelector('.c').textContent = fmtInt(c[b.dataset.s] || 0);
   }
-  const active = (S.f.q ? 1 : 0) + (S.f.lvlMin ? 1 : 0) + (S.f.lvlMax ? 1 : 0) + (S.f.rewardMin ? 1 : 0) + (S.f.ffMax ? 1 : 0) + (S.f.ageMin ? 1 : 0);
+  const active = (S.f.q ? 1 : 0) + (S.f.lvlMin ? 1 : 0) + (S.f.lvlMax ? 1 : 0) + (S.f.rewardMin ? 1 : 0) + (S.f.rewardMax ? 1 : 0) + (S.f.ffMax ? 1 : 0) + (S.f.ageMin ? 1 : 0);
   $('ftoggle').textContent = 'Filters and sort' + (active ? ` (${active} on)` : '');
   const key = S.sort.replace(/_(asc|desc)$/, '');
   for (const th of document.querySelectorAll('#thead th[data-col]')) {
@@ -1966,6 +2052,7 @@ function renderSteps() {
     text = document.hidden ? `all ${fmtInt(m.length)} checked, ${fmtInt(ready)} ready, re-checks paused in the background` : `all ${fmtInt(m.length)} checked, ${fmtInt(ready)} ready, watching`;
   } else { state = 'done'; text = `all ${fmtInt(m.length)} checked, ${fmtInt(ready)} ready`; }
   if (Pacer.hold > Date.now()) text = "waiting out Torn's rate limit, " + text;
+  if (S.frozen) text = 'all calls frozen in devmode, ' + text;
   setStep('status', state, text, ratio);
 }
 
@@ -2009,6 +2096,7 @@ function render() {
   renderControls();
   if (S.ffState === 'on' && !ffBusy && S.phase !== 'idle' && S.phase !== 'list') scheduleFF();
   saveStatusSoon();
+  Dev.render();
 }
 
 function tick() {
@@ -2033,6 +2121,7 @@ function syncFilters() {
   $('fFF').value = S.f.ffMax || '';
   $('fAge').value = S.f.ageMin || '';
   $('sortSel').value = S.sort;
+  Dev.syncSliders();
   for (const id of ['fLvlMin', 'fLvlMax', 'fReward', 'fFF', 'fAge']) $(id).removeAttribute('aria-invalid');
 }
 
@@ -2086,6 +2175,148 @@ function setSort(v) {
   render();
 }
 
+
+
+/* ------------------------------------------------------------------ *
+ *  Devmode: run each part of the engine by hand, shape the board,
+ *  see and clear what's stored.
+ * ------------------------------------------------------------------ */
+// Value sliders run on a log scale: 0 to 100 maps to $1k to $1b, so the useful middle gets most of the travel.
+const toVal = v => { const x = 1000 * Math.pow(10, v * 6 / 100), m = Math.pow(10, Math.floor(Math.log10(x)) - 1); return Math.round(x / m) * m; };
+const fromVal = x => clamp(Math.round(Math.log10(Math.max(1000, x) / 1000) * 100 / 6), 0, 100);
+const COLS = [['lvl', 'Level'], ['status', 'Status'], ['reward', 'Value'], ['bounties', 'Bounties'], ['ff', 'Fair fight'], ['age', 'Account age'], ['checked', 'Checked'], ['act', 'Links']];
+
+const Dev = {
+  on: store.get('dev', false) === true, tab: 'engine', hidden: new Set(store.get('cols', ['age'])), wipeArm: 0,
+  toggle() { this.on = !this.on; store.set('dev', this.on); this.show(); },
+  show() {
+    $('dev').hidden = !this.on;
+    $('devBtn').setAttribute('aria-pressed', String(this.on));
+    if (this.on) { this.setTab(this.tab); this.render(); }
+  },
+  setTab(t) {
+    this.tab = t;
+    for (const b of document.querySelectorAll('#dev .tab')) b.setAttribute('aria-selected', String(b.dataset.dtab === t));
+    for (const p of document.querySelectorAll('#dev .dpane')) p.hidden = p.dataset.dpane !== t;
+    if (t === 'storage') this.storage();
+  },
+  applyCols() {
+    for (const [k] of COLS) $('board').classList.toggle('hide-' + k, this.hidden.has(k));
+    $('cols').innerHTML = COLS.map(([k, label]) => `<label class="check"><input type="checkbox" data-col="${k}"${this.hidden.has(k) ? '' : ' checked'}><span>${label}</span></label>`).join('')
+      + '<label class="check"><input type="checkbox" checked disabled><span>Target (always on)</span></label>';
+  },
+  syncSliders() {
+    const f = S.f;
+    $('sLvl').value = f.lvlMax || 100; $('sLvlOut').textContent = f.lvlMax ? f.lvlMax : 'any';
+    $('sFF').value = f.ffMax ? clamp(Math.round(f.ffMax * 10), 10, 50) : 50; $('sFFOut').textContent = f.ffMax ? f.ffMax.toFixed(1) : 'any';
+    $('sVmin').value = f.rewardMin ? fromVal(f.rewardMin) : 0; $('sVminOut').textContent = f.rewardMin ? fmtMoney(f.rewardMin) : 'any';
+    $('sVmax').value = f.rewardMax ? fromVal(f.rewardMax) : 100; $('sVmaxOut').textContent = f.rewardMax ? fmtMoney(f.rewardMax) : 'any';
+  },
+  slide(id) {
+    const v = Number($(id).value), f = S.f;
+    if (id === 'sLvl') f.lvlMax = v >= 100 ? 0 : v;
+    if (id === 'sFF') f.ffMax = v >= 50 ? 0 : v / 10;
+    if (id === 'sVmin') { f.rewardMin = v <= 0 ? 0 : toVal(v); if (f.rewardMax && f.rewardMin > f.rewardMax) f.rewardMax = f.rewardMin; }
+    if (id === 'sVmax') { f.rewardMax = v >= 100 ? 0 : toVal(v); if (f.rewardMax && f.rewardMin > f.rewardMax) f.rewardMin = f.rewardMax; }
+    S.searchNote = '';
+    S.shown = SHOW_STEP;
+    syncFilters(); saveFilters(); dirty();
+  },
+  // Costs are worked out live, so the number next to each button is what pressing it costs right now.
+  render() {
+    if (!this.on) return;
+    const m = S.matched.filter(t => !S.hit.has(t.id)), mins = n => n * Pacer.gap() / 60000;
+    const time = n => S.demo ? '' : (mins(n) < 1 ? ', under a minute' : `, ~${Math.ceil(mins(n))} min at your pace`);
+    const staleAge = Number($('staleMin').value) * 60000, now = Date.now();
+    const stale = m.filter(t => { const st = S.status.get(t.id); return !st || now - st.at > staleAge; }).length;
+    const pages = S.lastPages || Math.ceil(S.listCount / PAGE_SIZE) || 70;
+    const ffCalls = Math.ceil(m.length / FF_BATCH);
+    const can = !!(S.key || S.demo);
+    const cost = {
+      board: `~${pages} Torn calls${time(pages)}`,
+      all: `${fmtInt(m.length)} Torn calls${time(m.length)}`,
+      stale: `${fmtInt(stale)} Torn calls${time(stale)}`,
+      loop: 'free',
+      queue: S.priority.length ? `free, drops ${S.priority.length}` : 'free, queue is empty',
+      ff: S.ffState === 'on' ? `${ffCalls} FFScouter ${ffCalls === 1 ? 'call' : 'calls'}` : 'off, no FFScouter key',
+      freeze: S.frozen ? `frozen, ${Pacer.waiting.size} waiting` : 'free',
+      restart: `~${pages} board + ${fmtInt(m.length)} status${S.ffState === 'on' ? ' + fair fight' : ''}`,
+    };
+    for (const el of document.querySelectorAll('#eng [data-cost]')) el.textContent = cost[el.dataset.cost];
+    const q = op => document.querySelector(`#eng [data-op="${op}"]`);
+    q('board').disabled = !can || !!S.sweepRun;
+    q('all').disabled = q('stale').disabled = !can || !m.length;
+    q('ff').disabled = S.ffState !== 'on' || !m.length;
+    q('restart').disabled = !can;
+    q('queue').disabled = !S.priority.length;
+    const loop = q('loop');
+    loop.textContent = S.phase === 'hunting' ? 'Pause the status loop' : 'Resume the status loop';
+    loop.disabled = !can || !['hunting', 'paused', 'stopped'].includes(S.phase) || !S.targets.size;
+    q('freeze').textContent = S.frozen ? 'Unfreeze all calls' : 'Freeze all calls';
+    q('freeze').classList.toggle('gold', S.frozen);
+    $('devState').textContent = `Engine: ${{ idle: 'idle', list: 'reading the board', hunting: 'hunting', paused: 'paused', stopped: 'stopped' }[S.phase]}${S.frozen ? ', all calls frozen' : ''}. `
+      + `${fmtInt(S.targets.size)} targets, ${fmtInt(S.matched.length)} match, ${S.priority.length} in the hand-picked queue, ${S.inflight.size} in flight.`;
+  },
+  queueAll(list, why) {
+    for (const t of list) { if (!S.priority.includes(t.id)) S.priority.push(t.id); S.pwhy.set(t.id, why); }
+    pump(); render();
+  },
+  op(name) {
+    const m = S.matched.filter(t => !S.hit.has(t.id));
+    if (name === 'board') refreshList();
+    if (name === 'all') this.queueAll(m, 'Devmode: re-check every match');
+    if (name === 'stale') {
+      const age = Number($('staleMin').value) * 60000, now = Date.now();
+      this.queueAll(m.filter(t => { const st = S.status.get(t.id); return !st || now - st.at > age; }), `Devmode: re-check, older than ${$('staleMin').value} min`);
+    }
+    if (name === 'loop') togglePause();
+    if (name === 'queue') { S.priority = []; S.pwhy.clear(); render(); }
+    if (name === 'ff') { for (const t of m) S.ff.delete(t.id); saveFFSoon(); render(); scheduleFF(); }
+    if (name === 'freeze') { S.frozen = !S.frozen; say(S.frozen ? 'All calls are frozen from devmode. Nothing leaves your browser until you unfreeze.' : ''); render(); }
+    if (name === 'restart') startHunt();
+  },
+  storage() {
+    const size = k => { try { return (localStorage.getItem('hbt:' + k) || '').length; } catch { return 0; } };
+    const kb = n => n ? (n < 1024 ? n + ' b' : (n / 1024).toFixed(1) + ' kb') : 'empty';
+    const b = store.get('board', null), st = store.get('status', []), ff = store.get('ff', null);
+    const rows = [
+      ['key', 'Torn key', size('key') ? 'Saved on this device. Never shown here.' : 'Not saved', ['key']],
+      ['ffkey', 'FFScouter key', size('ffkey') > 2 ? 'Saved on this device. Never shown here.' : 'Not saved', ['ffkey']],
+      ['board', 'Bounty board', b && b.rows ? `${fmtInt(b.rows.length)} listings, Torn snapshot from ${b.snap ? fmtAgo(b.snap * 1000) : 'unknown'}` : 'Nothing saved', ['board']],
+      ['status', 'Statuses', `${fmtInt(Array.isArray(st) ? st.length : 0)} targets, kept 10 minutes`, ['status']],
+      ['ff', 'Fair fight', ff && ff.rows ? `${fmtInt(ff.rows.length)} targets, kept 6 hours, for one account` : 'Nothing saved', ['ff']],
+      ['hit', 'Hit tags', `${fmtInt(S.hit.size)} targets marked hit`, ['hit']],
+      ['search', 'Search and filters', 'Your last search, filters and sort', ['spec', 'filters', 'sort']],
+      ['settings', 'Settings', 'Pace, live checks, Learn mode, columns, devmode, sound, alerts', ['pace', 'live', 'learn', 'cols', 'dev', 'sound', 'notify', 'remember']],
+      ['pacer', 'Rate limit log', 'When your recent Torn calls went out, shared by every tab. Not clearable: it keeps you under Torn\'s cap.', ['pacer']],
+    ];
+    $('storRows').innerHTML = rows.map(([id, label, what, keys]) => `<tr><td><b>${label}</b></td><td>${esc(what)}</td><td>${kb(keys.reduce((a, k) => a + size(k), 0))}</td>`
+      + `<td>${id === 'pacer' ? '' : `<button class="btn ghost sm" type="button" data-clear="${id}">Clear</button>`}</td></tr>`).join('');
+  },
+  clear(id) {
+    if (id === 'key') store.del('key');
+    if (id === 'ffkey') store.del('ffkey');
+    if (id === 'board') { store.del('board'); S.snap = 0; }   // next search reads the whole board again
+    if (id === 'status') { store.del('status'); S.status = new Map(); }
+    if (id === 'ff') { store.del('ff'); S.ff = new Map(); }
+    if (id === 'hit') unhitAll();
+    if (id === 'search') ['spec', 'filters', 'sort'].forEach(k => store.del(k));
+    if (id === 'settings') ['pace', 'live', 'learn', 'cols', 'dev', 'sound', 'notify', 'remember'].forEach(k => store.del(k));
+    render(); this.storage();
+  },
+  wipe() {
+    // Two presses, no browser dialog.
+    if (Date.now() - this.wipeArm > 4000) { this.wipeArm = Date.now(); $('wipeNote').textContent = 'Press again within 4 seconds to wipe it all and disconnect.'; return; }
+    this.wipeArm = 0;
+    if (S.demo) leaveDemo(true); else disconnect();
+    try { for (const k of Object.keys(localStorage)) if (k.startsWith('hbt:') && k !== 'hbt:pacer') localStorage.removeItem(k); } catch {}
+    S.targets = new Map(); S.status = new Map(); S.ff = new Map(); S.hit = new Map(); S.snap = 0; S.listCount = 0; S.phase = 'idle';
+    this.on = false; this.show();
+    $('wipeNote').textContent = '';
+    say('Everything this tool stored in your browser is gone.');
+    render();
+  },
+};
 
 /* ------------------------------------------------------------------ *
  *  Inspector: live log, queue, catalog, Learn mode
@@ -2228,6 +2459,22 @@ ${Object.entries(CATALOG).map(([k, c]) => `<tr><td><span class="svc ${c.svc}">${
  *  Wiring
  * ------------------------------------------------------------------ */
 for (const [k, c] of Object.entries(CATALOG)) $('inspKind').add(new Option(c.label, k));
+$('devBtn').addEventListener('click', () => Dev.toggle());
+for (const b of document.querySelectorAll('#dev .tab')) b.addEventListener('click', () => Dev.setTab(b.dataset.dtab));
+$('eng').addEventListener('click', e => { const b = e.target.closest('[data-op]'); if (b) Dev.op(b.dataset.op); });
+$('staleMin').addEventListener('change', () => Dev.render());
+for (const id of ['sLvl', 'sFF', 'sVmin', 'sVmax']) $(id).addEventListener('input', () => Dev.slide(id));
+$('cols').addEventListener('change', e => {
+  const k = e.target.dataset.col;
+  if (!k) return;
+  if (e.target.checked) Dev.hidden.delete(k); else Dev.hidden.add(k);
+  store.set('cols', [...Dev.hidden]);
+  Dev.applyCols();
+});
+$('storRows').addEventListener('click', e => { const b = e.target.closest('[data-clear]'); if (b) Dev.clear(b.dataset.clear); });
+$('wipeBtn').addEventListener('click', () => Dev.wipe());
+Dev.applyCols();
+Dev.show();
 document.addEventListener('click', e => { const b = e.target.closest('[data-open="insp"]'); if (b) Insp.open(b); });
 $('inspClose').addEventListener('click', () => $('insp').close());
 $('insp').addEventListener('click', e => { if (e.target === $('insp')) $('insp').close(); });   // click on the backdrop
