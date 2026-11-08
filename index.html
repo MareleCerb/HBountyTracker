@@ -461,10 +461,22 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
 .learn-intro{margin:0 0 10px;font-size:.88rem;color:var(--mist)}
 .calls{font-size:.86rem;font-variant-numeric:tabular-nums}
 .call{border-bottom:1px solid var(--ash-deep);margin:0}
-.pdiv{display:flex;align-items:center;gap:10px;margin:10px 0 4px;font-size:.74rem;font-weight:700;color:var(--gold);letter-spacing:.02em}
-.pdiv::before,.pdiv::after{content:"";flex:1;height:1px;background:var(--gold-deep)}
-.pdiv.man{color:var(--status-travel)}
-.pdiv.man::before,.pdiv.man::after{background:color-mix(in srgb,var(--status-travel) 40%,transparent)}
+/* One section per engine step, tinted with that step's color. FFScouter is blue, each Torn step has its own. */
+.psec{--pc:var(--mist);margin:10px 0 0;padding:0 8px 4px;border-left:3px solid var(--pc);border-radius:3px;background:color-mix(in srgb,var(--pc) 7%,transparent)}
+.psec[data-ph=connect]{--pc:var(--mist-light)}
+.psec[data-ph=board]{--pc:var(--gold)}
+.psec[data-ph=ff]{--pc:var(--status-travel)}
+.psec[data-ph=first]{--pc:var(--status-ready)}
+.psec[data-ph=recheck]{--pc:var(--status-protected)}
+.psec[data-ph=fresh]{--pc:var(--status-soon)}
+.psec[data-ph=manual]{--pc:var(--status-jail)}
+.psec[data-ph=refresh]{--pc:#e070b0}
+.pdiv{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;padding:8px 8px 6px;margin:0 -8px;border-bottom:1px solid color-mix(in srgb,var(--pc) 35%,transparent);
+  position:sticky;top:var(--toolh,46px);z-index:1;background:linear-gradient(color-mix(in srgb,var(--pc) 12%,transparent),color-mix(in srgb,var(--pc) 12%,transparent)),var(--carbon)}
+.pdiv b{font-size:.8rem;color:var(--pc);letter-spacing:.02em}
+.pdiv span{font-size:.8rem;color:var(--mist-light)}
+.pdiv time{margin-left:auto;font-size:.76rem;color:var(--mist-dim)}
+.dlg-pane[data-pane=log] .dlg-tools{position:sticky;top:-12px;z-index:2;background:var(--carbon);padding:10px 0 8px;margin-top:-10px}
 .call>summary{display:grid;grid-template-columns:70px 64px minmax(0,1fr) 110px 52px 64px 64px;gap:10px;align-items:center;min-height:34px;width:auto;padding:4px 0;font-weight:400;color:var(--mist-light)}
 .call>summary::before{display:none}
 .call>summary:hover{background:var(--obsidian-soft);color:var(--bone)}
@@ -473,9 +485,15 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
 .svc{font-size:.72rem;font-weight:700;border-radius:3px;padding:1px 6px;text-align:center;color:var(--obsidian)}
 .svc.torn{background:var(--bone-dim)}
 .svc.ffs{background:var(--status-travel)}
-.code.ok{color:var(--status-ready)}
-.code.err{color:var(--status-hospital)}
-.code.pend{color:var(--mist-dim)}
+/* Response code: green when it worked, red when Torn or FFScouter said no, orange when nothing came back, gray while waiting. */
+.code{justify-self:start;font-size:.78rem;font-weight:700;border-radius:3px;padding:1px 7px;white-space:nowrap}
+.code.ok{color:var(--status-ready);background:color-mix(in srgb,var(--status-ready) 16%,transparent)}
+.code.err{color:#ff8a80;background:color-mix(in srgb,var(--status-hospital) 22%,transparent)}
+.code.net{color:var(--status-soon);background:color-mix(in srgb,var(--status-soon) 20%,transparent)}
+.code.pend{color:var(--mist-dim);background:color-mix(in srgb,var(--mist-dim) 14%,transparent)}
+.call.err>summary{background:color-mix(in srgb,var(--status-hospital) 10%,transparent)}
+.call.net>summary{background:color-mix(in srgb,var(--status-soon) 9%,transparent)}
+.call-body p.code{display:inline-block;margin:0 0 6px}
 .call-body{padding:6px 0 14px 12px;border-left:2px solid var(--ash-light);margin:2px 0 10px}
 .call-body h4{margin:12px 0 4px;font-size:.78rem;color:var(--mist-dim);text-transform:none;font-weight:700}
 .call-body pre{margin:0;padding:10px;background:var(--obsidian-deep);border:1px solid var(--ash);border-radius:4px;max-height:340px;overflow:auto;font-size:.78rem;line-height:1.45;color:var(--bone-dim);white-space:pre-wrap;overflow-wrap:anywhere}
@@ -546,7 +564,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
       <div class="op"><button class="btn sm ghost" type="button" data-op="queue">Clear the check queue</button><span class="cost" data-cost="queue"></span><span class="what">Drops hand-picked checks that haven't run yet.</span></div>
       <div class="op"><button class="btn sm ghost" type="button" data-op="ff">Refetch fair fight</button><span class="cost" data-cost="ff"></span><span class="what">Forgets the saved estimates for your matches and asks FFScouter again.</span></div>
       <div class="op"><button class="btn sm ghost" type="button" data-op="freeze">Freeze all calls</button><span class="cost" data-cost="freeze"></span><span class="what">Nothing leaves your browser until you unfreeze. Calls wait in line.</span></div>
-      <div class="op"><label class="check opx"><input type="checkbox" id="noIdle"><span>Never stop for inactivity</span></label><span class="cost">remembered on this device</span><span class="what">Normally every call stops after 10 minutes with no click, key press, scroll or touch, once the first pass is done. Ticked, the tool keeps calling at your pace for as long as the tab is open, even if you walked away. Leave it off unless you're testing.</span></div>
+      <div class="op"><label class="check opx"><input type="checkbox" id="noIdle"><span>Never stop for inactivity</span></label><span class="cost">remembered on this device</span><span class="what">Normally every call stops after 30 minutes with no click, key press, scroll or touch, once the first pass is done. Ticked, the tool keeps calling at your pace for as long as the tab is open, even if you walked away. Leave it off unless you're testing.</span></div>
       <div class="op"><button class="btn sm ghost" type="button" data-op="restart">Start over</button><span class="cost" data-cost="restart"></span><span class="what">All of the above in one go, with the limits from Find targets.</span></div>
     </div>
   </div>
@@ -629,7 +647,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
         <input id="pace" type="range" min="20" max="90" step="5" value="60"></label>
       <p class="hint" style="margin-top:-4px">Torn allows 100 a minute across every tool and script you run. Leave room for the rest.</p>
       <label class="check"><input type="checkbox" id="live" checked><span>Keep checking while this page is open</span></label>
-      <p class="hint" style="margin-top:-4px">Okay targets at the top of High value and Easy fights get re-checked every 90 seconds. Other Okay targets get re-checked every 10 to 30 minutes, slower the longer they have been offline. Re-checks never use more than 25% of your pace. Hospital timers are never re-checked: the target gets one check when the timer ends, even in a background tab. Other re-checks pause while this tab is in the background. After 10 minutes with no click, key press, scroll or touch, every call stops until you resume.</p>
+      <p class="hint" style="margin-top:-4px">Okay targets at the top of High value and Easy fights get re-checked every 90 seconds. Other Okay targets get re-checked every 10 to 30 minutes, slower the longer they have been offline. Re-checks never use more than 25% of your pace. Hospital timers are never re-checked: the target gets one check when the timer ends, even in a background tab. Other re-checks pause while this tab is in the background. After 30 minutes with no click, key press, scroll or touch, every call stops until you resume.</p>
       <label class="check"><input type="checkbox" id="notify"><span>Browser notification when a target turns Fresh</span></label>
       <p class="hint" style="margin-top:-4px" id="notifyHint">Sound plays for the same moments. The Sound button at the top turns all sound off.</p>
     </div>
@@ -655,7 +673,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
 </section>
 
 <div class="idle" id="idleBox" role="status" hidden>
-  <p><b>Stopped: no activity for 10 minutes.</b> To keep your key inside Torn's rules, the tool stops every call when nobody is using it. Timers keep counting from the last check.</p>
+  <p><b>Stopped: no activity for 30 minutes.</b> To keep your key inside Torn's rules, the tool stops every call when nobody is using it. Timers keep counting from the last check.</p>
   <button class="btn gold sm" id="idleResume" type="button">Resume</button>
 </div>
 
@@ -785,7 +803,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
       <button class="btn ghost sm" type="button" id="inspExport">Export JSON</button>
       <span class="hint" id="inspNew"></span>
     </div>
-    <p class="learn-only learn-intro">Newest call on top. Click a call to see what was sent, what came back, and why the tool asked. Keys are always masked. The log lives in memory and is gone on reload.</p>
+    <p class="learn-only learn-intro">Oldest call at the top, newest at the bottom. Each colored block is one job the engine was doing. Click a call to see what was sent, what came back, and why the tool asked. Keys are always masked. The log lives in memory and is gone on reload.</p>
     <div class="calls" id="inspList"></div>
   </div>
   <div class="dlg-pane" data-pane="queue" hidden><div id="inspQueue"></div></div>
@@ -877,7 +895,7 @@ const OKAY_ACTIVE = 10 * 60e3;    // any other Okay target, active in the last h
 const OKAY_AWAY = 20 * 60e3;      // offline for an hour or more
 const OKAY_GONE = 30 * 60e3;      // offline for a day or more
 const RECHECK_SHARE = 0.25;       // re-checks never use more than 25% of your pace in any minute
-const IDLE_STOP = 10 * 60e3;      // no click, key, scroll or touch for this long: every call stops
+const IDLE_STOP = 30 * 60e3;      // no click, key, scroll or touch for this long: every call stops
 const FRESH_HOLD = 5 * 60e3;      // "Fresh out of the hospital" keeps everyone for 5 minutes after they turn Fresh
 const BAND = 1.5;                 // High value and the first checks look this far on either side of your score
 const UNDO_MS = 60e3;             // a Hit mark can be undone for this long
@@ -932,6 +950,7 @@ const S = {
   scan: [],                                   // what the status loop walks, in order: your band, then under, then over
   hot: new Set(), hotAt: 0,                   // the top of High value and Easy fights: re-checked the fastest
   ffScore: 0,                                 // your Fair Fight Score: the fight you want
+  freshShown: false,                          // Fresh out of the hospital has appeared this hunt, so it stays
   freshList: [],                              // { id, until, at }: everyone out of hospital in the last 5 minutes, newest first
   phase: 'idle',                              // idle | list | hunting | paused | stopped
   runId: 0, sweepRun: 0, pumping: false, searchNote: '',
@@ -1629,7 +1648,7 @@ async function startHunt() {
   store.set('spec', { lvl: $('specLevel').value, reward: $('specReward').value, ff: $('specFF').value });
   stop(true);
   Idle.clear();
-  S.freshList = [];
+  S.freshList = []; S.freshShown = false;
   const run = ++S.runId;
   S.phase = 'list';
   S.searchNote = '';
@@ -1859,7 +1878,7 @@ function nextTarget() {
   if (S.phase !== 'hunting') return null;
   const now = Date.now();
   for (const id of S.hit.keys()) if (S.targets.has(id) && !S.inflight.has(id) && hitNeedsTimer(id, now)) return { id, why: 'You marked a hit, picking up the new hospital timer', phase: 'manual' };
-  for (const t of S.scan) if (!S.status.has(t.id) && !S.inflight.has(t.id) && !S.hit.has(t.id)) return { id: t.id, why: 'First pass, never checked', phase: 'first' };
+  for (const t of S.scan) if (!S.status.has(t.id) && !S.inflight.has(t.id) && !S.hit.has(t.id)) return { id: t.id, why: 'Initial profile fetch, never checked', phase: 'first' };
   if (!S.live || document.hidden || !recheckRoom()) return null;
 
   // Everyone has been checked once. Re-check whoever has been due the longest.
@@ -1907,7 +1926,7 @@ function planNext(limit) {
   const live = S.phase === 'hunting';
   if (live) for (const t of S.scan) {
     if (out.length >= limit) return out;
-    if (!S.status.has(t.id) && !seen.has(t.id) && !S.hit.has(t.id)) { seen.add(t.id); out.push({ id: t.id, why: 'First pass, never checked', due: now }); }
+    if (!S.status.has(t.id) && !seen.has(t.id) && !S.hit.has(t.id)) { seen.add(t.id); out.push({ id: t.id, why: 'Initial profile fetch, never checked', due: now }); }
   }
   if (!live || !S.live) return out;
   hotIds();
@@ -2383,10 +2402,9 @@ function freshState(st) {
 }
 
 const sigs = {};
-// keep: the section stays on screen with an empty line when there's nothing in it.
+// keep: once shown, the section stays on screen with an empty line when there's nothing in it.
 function strip(sec, listId, sub, items, sig, card, keep) {
-  const on = S.phase !== 'idle' && S.phase !== 'list';
-  $(sec).hidden = keep ? !on : !items.length;
+  $(sec).hidden = keep ? !S.freshShown : !items.length;
   if (!items.length) {
     $(sub.id).textContent = keep ? sub.empty : '';
     const html = keep ? `<li class="empty">${esc(keep)}</li>` : '';
@@ -2402,6 +2420,10 @@ const ffLine = t => { const x = S.ff.get(t.id); return `Lvl ${lvlOf(t)}${x && x.
 function renderStrips() {
   const ns = nowS(), hv = highList(), pm = perfectList();
   const fresh = S.freshList.map(e => S.targets.get(e.id)).filter(Boolean);
+  // Fresh out of the hospital appears the way the other strips do, the first time there's something to show
+  // in any of them. From then on it stays, even empty, so the layout never jumps. A new hunt starts it hidden again.
+  if (S.phase === 'idle' || S.phase === 'list') S.freshShown = false;
+  else if (!S.freshShown && (hv.length || pm.length || fresh.length || S.scan.some(t => { const st = S.status.get(t.id); return st && st.state === 'Hospital' && st.until > ns; }))) S.freshShown = true;
   const okayCard = (t, extra) => `<li${extra || ''}>
 <span class="soon-t" title="${fmtFull(t.reward)}">${fmtMoney(t.reward)}</span>
 <a class="soon-n" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}</a>
@@ -2544,7 +2566,7 @@ function renderSteps() {
   const left = m.length - checked, ratio = m.length ? checked / m.length : 1;
   const tally = `${fmtInt(checked)} of ${fmtInt(m.length)} checked, ${fmtInt(ready)} ready`;
   let state, text;
-  if (Idle.stopped) { state = 'pending'; text = 'stopped, no activity for 10 minutes, ' + tally; }
+  if (Idle.stopped) { state = 'pending'; text = 'stopped, no activity for 30 minutes, ' + tally; }
   else if (S.phase === 'paused') { state = 'pending'; text = 'paused, ' + tally; }
   else if (S.phase === 'stopped') { state = 'pending'; text = 'stopped, ' + tally; }
   else if (left) {
@@ -2827,7 +2849,7 @@ const Alerts = {
 
 /* ------------------------------------------------------------------ *
  *  Inactivity stop. Nobody clicked, typed, scrolled or touched for
- *  10 minutes: every call stops, timers keep counting. The first pass
+ *  30 minutes: every call stops, timers keep counting. The first pass
  *  is exempt, since you pressed Start to get the whole list.
  * ------------------------------------------------------------------ */
 const Idle = {
@@ -3012,21 +3034,26 @@ const Dev = {
 /* ------------------------------------------------------------------ *
  *  Inspector: live log, queue, catalog, Learn mode
  * ------------------------------------------------------------------ */
-// What the engine was doing when a call went out. A divider marks every change in the log.
-const PHASES = { connect: 'Connect', board: 'Board sweep', ff: 'Fair fight', first: 'First pass', recheck: 'Re-checks', manual: 'Manual checks', refresh: 'Refresh list', fresh: 'Timer ended, confirming', other: 'Other calls' };
-function phaseLabel(from, to) {
-  const l = PHASES[to] || PHASES.other;
-  if (from === 'first' && to === 'recheck') return 'First pass done. Re-checks start';
-  if ((from === 'manual' || from === 'fresh') && (to === 'first' || to === 'recheck')) return 'Back to ' + l.toLowerCase();
-  if (from === 'manual' && to !== 'manual') return 'Manual checks done. ' + l;
-  return l;
-}
+// What the engine was doing when a call went out. Each job gets its own colored block in the log, with a plain explanation.
+const PHASES = {
+  connect: ['Connect', 'Checking what kind of key you gave and reading your own profile, before anything else runs.'],
+  board: ['Board sweep', "Reading Torn's bounty board, 100 listings per page. Page 1 also says if the board changed since last time."],
+  ff: ['Fair fight', 'Asking FFScouter how hard each target is for you, 205 targets per call.'],
+  first: ['Initial profile fetch', 'The first status check for each target: who is Okay, who is in hospital, jail or flying, and when each timer ends. Your fair fight band first, then under it, then over it.'],
+  recheck: ['Re-checks', 'Keeping known statuses fresh: the top of High value and Easy fights every 90s, other Okay targets every 10 to 30 min by last action. Never more than 25% of your pace.'],
+  fresh: ['Timer ended, confirming', 'A hospital or jail timer just ran out. One check to confirm the target is really out, since someone may have hit them in the Fresh window.'],
+  manual: ['Manual checks', 'Checks you asked for: Check now, the timer pickup after a Hit mark, or devmode.'],
+  refresh: ['Refresh list', 'Status checks only, no board: High value first, then Easy fights, then everyone else.'],
+  other: ['Other calls', ''],
+};
 const Insp = {
   paused: false, missed: 0, tab: 'log', els: new Map(), qT: 0, lastShown: null,
-  div(from, to) {
+  // A new block for a new job: a header that says what the job is, then its calls.
+  sec(e) {
+    const ph = PHASES[e.phase] ? e.phase : 'other', [title, what] = PHASES[ph];
     const d = document.createElement('div');
-    d.className = 'pdiv' + (to === 'manual' || from === 'manual' ? ' man' : '');
-    d.innerHTML = `<span>${esc(phaseLabel(from, to))}</span>`;
+    d.className = 'psec'; d.dataset.ph = ph;
+    d.innerHTML = `<div class="pdiv"><b>${esc(title)}</b>${what ? `<span>${esc(what)}</span>` : ''}<time>from ${new Date(e.at).toLocaleTimeString([], { hour12: false })}</time></div>`;
     return d;
   },
   get isOpen() { return $('insp').open; },
@@ -3034,30 +3061,49 @@ const Insp = {
     const svc = $('inspSvc').value, kind = $('inspKind').value;
     return (svc === 'all' || e.svc === svc) && (kind === 'all' || e.kind === kind);
   },
+  pane() { return document.querySelector('#insp .dlg-pane[data-pane=log]'); },
+  atBottom() { const p = this.pane(); return p.scrollHeight - p.scrollTop - p.clientHeight < 60; },
+  toBottom() { const p = this.pane(); p.scrollTop = p.scrollHeight; },
+  // Block headers stick right under the toolbar, whatever height it wraps to.
+  fitTools() { const t = this.pane().querySelector('.dlg-tools'); if (t) this.pane().style.setProperty('--toolh', Math.max(0, t.offsetHeight - 12) + 'px'); },
+  // Newest at the bottom. The view follows new calls only while you're already at the bottom, so reading older ones isn't interrupted.
   onAdd(e) {
     this.summary();
     if (!this.isOpen) return;
     if (this.paused) { this.missed++; this.newNote(); return; }
     if (!this.passes(e)) return;
-    const el = this.make(e), list = $('inspList'), prev = this.lastShown;
-    if (!prev || prev.phase !== e.phase) list.prepend(this.div(prev && prev.phase, e.phase));
-    list.prepend(el);
+    const stick = this.atBottom(), list = $('inspList'), prev = this.lastShown;
+    if (list.firstElementChild && !list.firstElementChild.classList.contains('psec')) list.innerHTML = '';
+    let sec = list.lastElementChild;
+    if (!sec || !prev || prev.phase !== e.phase) { sec = this.sec(e); list.append(sec); }
+    sec.append(this.make(e));
     this.lastShown = e;
-    // Keep the DOM in step with what the log keeps (dividers take a few extra slots).
-    while (list.children.length > CallLog.KEEP + 150) { const last = list.lastElementChild; this.els.delete(Number(last.dataset.n)); last.remove(); }
+    // Keep the DOM in step with what the log keeps: drop the oldest calls, then any block left empty.
+    while (this.els.size > CallLog.KEEP) {
+      const first = list.firstElementChild, call = first && first.querySelector('.call');
+      if (!call) { if (first) first.remove(); else break; continue; }
+      this.els.delete(Number(call.dataset.n)); call.remove();
+      if (!first.querySelector('.call')) first.remove();
+    }
+    if (stick) this.toBottom();
   },
   onUpd(e) {
     this.summary();
     const el = this.els.get(e.n);
     if (!el) return;
     el.querySelector('summary').innerHTML = this.sumHTML(e);
+    this.mark(el, e);
     if (el.open) this.fill(el, e);
   },
   sumHTML(e) {
     const c = CATALOG[e.kind] || {}, u = new URL(e.url);
     for (const k of ['comment', 'key']) u.searchParams.delete(k);
     const q = u.searchParams.toString();
-    const code = e.state === 'pending' ? '<span class="code pend">...</span>' : e.state === 'ok' ? `<span class="code ok">${e.http}</span>` : `<span class="code err">${e.http || 'fail'}</span>`;
+    const ecode = e.err && /^Code (-?\d+)/.exec(e.err);
+    const code = e.state === 'pending' ? '<span class="code pend">...</span>'
+      : e.state === 'ok' ? `<span class="code ok" title="HTTP ${e.http}, answered">${e.http}</span>`
+      : !e.http || (ecode && Number(ecode[1]) < 0) ? '<span class="code net" title="No usable answer came back">fail</span>'
+      : `<span class="code err" title="${esc(e.err || 'Error')}">${e.http}${ecode ? ' · E' + ecode[1] : ''}</span>`;
     return `<span>${new Date(e.at).toLocaleTimeString([], { hour12: false })}</span><span class="svc ${e.svc}" title="${e.svc === 'torn' ? 'Torn API' : 'FFScouter'}">${e.svc === 'torn' ? 'Torn' : 'FFS'}</span>`
       + `<span class="cp" title="${esc(e.url)}">GET ${esc(u.pathname)}${q ? '?' + esc(decodeURIComponent(q)) : ''}</span><span class="ck">${esc(c.label || e.kind)}</span>`
       + `${code}<span class="cm cms">${e.state === 'pending' ? '' : e.ms + 'ms'}</span><span class="cm csz">${e.size ? (e.size / 1024).toFixed(1) + 'kb' : ''}</span>`;
@@ -3066,9 +3112,16 @@ const Insp = {
     const el = document.createElement('details');
     el.className = 'call'; el.dataset.n = e.n;
     el.innerHTML = `<summary>${this.sumHTML(e)}</summary><div class="call-body"></div>`;
+    this.mark(el, e);
     el.addEventListener('toggle', () => { if (el.open) this.fill(el, e); });
     this.els.set(e.n, el);
     return el;
+  },
+  // The row's background follows the answer: red when refused, orange when nothing came back.
+  mark(el, e) {
+    const net = e.state === 'error' && (!e.http || /^Code -/.test(e.err || ''));
+    el.classList.toggle('net', net);
+    el.classList.toggle('err', e.state === 'error' && !net);
   },
   // The heavy part (pretty JSON) is only built when a call is opened.
   fill(el, e) {
@@ -3093,17 +3146,18 @@ ${e.demo ? '<p class="faint">Demo mode: answered inside your browser. Nothing wa
     const list = $('inspList');
     list.innerHTML = ''; this.els.clear(); this.missed = 0; this.newNote();
     const frag = document.createDocumentFragment();
-    let prev = null;
-    // Oldest first, each one on top, so the newest ends up at the top with a divider under each new phase.
+    let prev = null, sec = null;
+    // Oldest first, newest at the bottom. A new block opens every time the engine changes job.
     for (const e of CallLog.list) {
       if (!this.passes(e)) continue;
-      if (!prev || prev.phase !== e.phase) frag.prepend(this.div(prev && prev.phase, e.phase));
-      frag.prepend(this.make(e));
+      if (!sec || !prev || prev.phase !== e.phase) { sec = this.sec(e); frag.append(sec); }
+      sec.append(this.make(e));
       prev = e;
     }
     this.lastShown = prev;
     list.append(frag);
     if (!list.children.length) list.innerHTML = '<p class="faint" style="margin:8px 0">No calls yet. Connect a key or try the demo, then start the hunt.</p>';
+    requestAnimationFrame(() => { this.fitTools(); this.toBottom(); });
   },
   newNote() { $('inspNew').textContent = this.paused ? (this.missed ? `${fmtInt(this.missed)} new calls waiting` : 'Stream paused') : ''; },
   summary() {
@@ -3115,12 +3169,12 @@ ${e.demo ? '<p class="faint">Demo mode: answered inside your browser. Nothing wa
   left() {
     const eta = n => fmtLeft(n * Pacer.gap() / 1000);
     if (S.phase === 'idle') return '';
-    if (Idle.stopped) return 'Stopped: no activity for 10 minutes.';
+    if (Idle.stopped) return 'Stopped: no activity for 30 minutes.';
     if (S.phase === 'list') return S.sweepLeft ? `Board: ${fmtInt(S.sweepLeft)} pages left, about ${eta(S.sweepLeft)} at your pace.` : 'Reading the board.';
     const n = S.scan.filter(t => !S.status.has(t.id) && !S.hit.has(t.id)).length;
-    if (n) return `First pass: ${fmtInt(n)} left, about ${eta(n)} at your pace.`;
-    if (S.phase !== 'hunting') return 'First pass done. Checks are paused.';
-    if (!S.live) return 'First pass done. Live checks are off.';
+    if (n) return `Initial profile fetch: ${fmtInt(n)} left, about ${eta(n)} at your pace.`;
+    if (S.phase !== 'hunting') return 'Initial profile fetch done. Checks are paused.';
+    if (!S.live) return 'Initial profile fetch done. Live checks are off.';
     const now = Date.now();
     let due = S.priority.length;
     hotIds();
@@ -3135,7 +3189,7 @@ ${e.demo ? '<p class="faint">Demo mode: answered inside your browser. Nothing wa
     const plan = planNext(10).map((x, i) => `<li><span class="n">${i + 1}</span><span>${name(x.id)}</span><span class="w">${esc(x.why)}</span><span class="faint">${x.due <= now ? 'due now' : 'in ' + fmtLeft((x.due - now) / 1000)}</span></li>`).join('');
     const pace = S.frozen ? 'All calls are paused from devmode.' : Pacer.hold > now ? `Holding for Torn's rate limit, ${fmtLeft((Pacer.hold - now) / 1000)} left.` : wait > 0 ? `Next free slot in ${(wait / 1000).toFixed(1)}s.` : 'A slot is free right now.';
     $('inspQueue').innerHTML = `
-<p class="learn-only learn-card"><b>How the queue works.</b> Every Torn call waits at one gate, the pacer, so the tool never goes over your pace. The status loop then picks one target at a time: hand-picked checks first, then targets never checked, then whoever has been due a re-check the longest. A target whose timer just ran out jumps to the front, even ahead of the first pass. Okay targets at the top of High value and Easy fights are re-checked every 90 seconds (right now: every ${fmtLeft(hotGap() / 1000)}). Other Okay targets every 10 minutes, 20 once they've been offline an hour, 30 once offline a day. Re-checks never use more than 25% of your pace. Hospital timers get one check when they end, never before. Targets you marked hit get none until then. Travelers every 5 minutes, jail and the rest every 10. After 10 minutes with no click, key press, scroll or touch, every call stops.</p>
+<p class="learn-only learn-card"><b>How the queue works.</b> Every Torn call waits at one gate, the pacer, so the tool never goes over your pace. The status loop then picks one target at a time: hand-picked checks first, then targets never checked, then whoever has been due a re-check the longest. A target whose timer just ran out jumps to the front, even ahead of the first pass. Okay targets at the top of High value and Easy fights are re-checked every 90 seconds (right now: every ${fmtLeft(hotGap() / 1000)}). Other Okay targets every 10 minutes, 20 once they've been offline an hour, 30 once offline a day. Re-checks never use more than 25% of your pace. Hospital timers get one check when they end, never before. Targets you marked hit get none until then. Travelers every 5 minutes, jail and the rest every 10. After 30 minutes with no click, key press, scroll or touch, every call stops.</p>
 <p class="qhead">The pacer</p><p style="margin:0">${S.demo ? 'Demo pace: no real limit, and nothing leaves your browser.' : `${Pacer.recent()} / ${S.pace} calls used this minute. ${pace}`}</p>
 <p class="qhead">Waiting at the pacer (${Pacer.waiting.size})</p>${gate ? `<ol class="qlist">${gate}</ol>` : '<p class="faint" style="margin:0">Nothing waiting.</p>'}
 <p class="qhead">Status loop, next up</p>${plan ? `<ol class="qlist">${plan}</ol>` : `<p class="faint" style="margin:0">${S.phase === 'hunting' ? (document.hidden ? 'Re-checks pause while the tab is in the background.' : S.live ? 'Nobody is due yet.' : 'Live checks are off.') : 'The status loop is not running.'}</p>`}
