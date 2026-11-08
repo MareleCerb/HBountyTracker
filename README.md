@@ -16,7 +16,57 @@ A freebie by [The Great Stag](https://www.thegreatstag.com). Open source, so any
 8. **Fresh out of the hospital.** Everyone who turned Fresh in the last 5 minutes, newest first: the strip that tells you what the Fresh sound was about. They stay the full 5 minutes with their latest status, even back in hospital. It shows up when the other strips do, and once it's there it stays on screen even when empty, so the layout never jumps.
 9. **Available soon.** Every match whose hospital timer is still running, soonest out first, with big countdowns, level and fair fight.
 
-All four strips are carousels with every qualifying target: swipe on touch, drag with a mouse, or use the arrows.
+10. **Personal targets.** Anyone you tagged by hand, bounty or not, no cap. Add them from any card or row, or by player ID (or a profile link) with **Add personal target** on the board. Only ever removed by you (two presses). Checked first at the start of every hunt. The section is hidden while it's empty, and sits at the very top.
+11. **Pinned.** Bounty targets you pinned, 10 at most. Always first on the board, with a pink stripe and tint. See **Pins and personal targets** below.
+
+Every strip is a carousel with every qualifying target: swipe on touch, drag with a mouse, or use the arrows. With a mouse, the list stays exactly where you let go, and a fast drag keeps gliding and slows to a stop (not with "reduce motion" on). The arrows move by whole cards.
+
+## Pins and personal targets
+
+| | Pinned | Personal targets |
+| --- | --- | --- |
+| Who | A bounty target you pinned | Anyone you tagged |
+| Needs a bounty | Yes | No |
+| Cap | 10 | None |
+| Removed | Automatically, 2 days after being marked for deletion | Only by you |
+
+A pin is **marked for deletion** when its bounty is gone: not on the board after a refetch, expired, or you marked a hit on their last bounty. The card and the row say so, with a countdown. A new bounty during those 2 days lifts the mark (after a hit, only a board read newer than the hit can show that). **Keep as personal** moves the target to Personal targets, where nothing removes it.
+
+Both run on their own clock, from their last known status:
+
+| Status | Re-checked |
+| --- | --- |
+| Okay | Every minute |
+| Hospital, jail | Every 5 minutes, in case a revive or a bail ends it early, plus the usual check when the timer ends |
+| Traveling, abroad | Every 5 minutes |
+| Protected | Once, when protection ends |
+
+These re-checks have their own budget: never more than 15% of your pace in any minute, on top of the 25% for everyone else. Personal and pinned targets also get fair fight, in the same FFScouter calls.
+
+## Section controls
+
+Every strip has **Hide** and, except Pinned, **Pin to board**.
+
+- **Hide.** The strip goes, and its fast re-checks stop with it (High value and Easy fights lose their 90-second top 10, Pinned and Personal lose their own clock). Hidden Fresh out of the hospital means no Fresh sound. Hidden strips line up in a "Hidden:" bar; one click brings each back.
+- **Pin to board.** The strip's targets go to the top of the board, in the strip's own order. Pin several and they stack in the order you pinned them, with the number in the circle. Unpin one and the rest move up. A target in two pinned strips shows once, in the first.
+- On the board: Pinned targets first, always. Then each pinned strip. Then everyone else, in the board's sort. Each block gets a header. The board's filters and status chips apply to every block, so High value and Easy fights, which look past the fair fight filter in their strips, are filtered on the board.
+
+Hidden and pinned sections are remembered on the device.
+
+## Fair fight colors
+
+The fair fight number sits on a colored pill. The colors follow Torn's own formula, FF = 1 + 8/3 × (their battle stat score ÷ yours), so every anchor is a real stat ratio:
+
+| FF | Their battle stat score vs yours | Label | Color |
+| --- | --- | --- | --- |
+| 1.00 to 1.50 | 0% to 19% | Free win | Blue |
+| 1.50 to 2.25 | 19% to 47% | Easy | Teal |
+| 2.25 to 3.00 | 47% to 75% | Fair fight | Teal to amber |
+| 3.00 to 3.67 | 75% to 100% | Even | Amber to orange |
+| 3.67 to 4.50 | 100% to 131% | Stronger than you | Orange to red |
+| 4.50 and up | over 131% | May be impossible | Dark red |
+
+The color slides smoothly between anchors. Hover a pill for the ratio and the label. Torn's in-game number caps at 3.00; FFScouter's doesn't. Fair fight changes respect, not bounty money, so here it's a difficulty meter.
 
 ## Value borders
 
@@ -24,8 +74,8 @@ One scale, used by the High value strip and every row of the board:
 
 | Current value | Border |
 | --- | --- |
-| Under $10k | Gray |
-| $10k to $500k | Dark green to gold, on a log scale |
+| Under $50k | Gray |
+| $50k to $500k | Dark green to gold, on a log scale (halfway is about $160k) |
 | $500k to $1m | Gold |
 | $1m to $2m | Gold to purple, on a log scale |
 | $2m and up | A color cycle with a golden glow |
@@ -38,7 +88,8 @@ Once everyone has had a first check, the tool only spends calls where they matte
 
 | Target | Re-checked |
 | --- | --- |
-| Okay, in the top 10 of High value or Easy fights | Every 90 seconds, stretched so these alone never pass 25% of your pace |
+| Pinned or personal | Their own clock and their own 15%, see **Pins and personal targets** |
+| Okay, in the top 10 of High value or Easy fights | Every 90 seconds, stretched so these alone never pass 25% of your pace. Not while that strip is hidden |
 | Okay, active in the last hour | Every 10 minutes |
 | Okay, offline an hour or more | Every 20 minutes |
 | Okay, offline a day or more | Every 30 minutes |
@@ -91,7 +142,8 @@ Highest or lowest value, Okay first, lowest or highest level, lowest or highest 
 - **Queue.** What's waiting at the pacer, and the next 10 status checks with their reason and when they're due.
 - **Calls left.** The summary line says how many calls the first pass still needs and how long that takes at your pace. Once it's done: how many re-checks are due now.
 - **Every call explained.** The catalog of all six calls: service, endpoint, when it runs, what it's for, the fields the tool reads, and how many ran this session.
-- **Learn mode.** Adds a plain-English card to every call and view.
+- **Learn mode.** Adds a plain-English card to every call and view, each linking to its Codex chapter.
+- **Codex.** The long version, in its own tab: the big picture, a real request from your session taken apart piece by piece, how the board is paged, the three layers of caching, rate limits and how tabs share them, the scheduler, fair fight math with a calculator, keys and the walls around them, sections and pins, how the tool got here, and a glossary. The numbers in it are live: your pace, your budget, your calls.
 
 Keys are always masked (`••••••••••••3fA9`), in the log and in exports. The log lives in memory only: the last 500 calls, with full answers for the last 80. Gone on reload.
 
@@ -112,11 +164,13 @@ The **Devmode** button in the header opens a panel for the engine's internals. T
 
 - **Engine.** Run each part on its own: refetch the board (every page, forced), re-check every match, re-check stale only (older than 2, 5, 10 or 30 minutes), pause or resume the status loop, clear the hand-picked queue, refetch fair fight, freeze all calls, start over. Each shows its live cost in calls, and the time at your pace, before you press. Plus **Never stop for inactivity**, remembered on the device: the tool then keeps calling at your pace for as long as the tab is open. Leave it off unless you're testing.
 - **Board.** Sliders for max level, max fair fight, and a value range (from / up to, on a log scale from $1k to $1b). They filter the board you already have and cost no calls. Column toggles for every column, plus an Account age column that's off by default.
-- **Storage.** Everything the tool keeps in your browser, with its size and a Clear button. Keys are never shown. Clearing Gains takes two presses. "Wipe everything" takes two presses, disconnects, and erases the gains too. The rate-limit log can't be cleared, because it keeps you under Torn's cap.
+- **Storage.** Everything the tool keeps in your browser (pins and personal targets included), with its size and a Clear button. Keys are never shown. Clearing Gains takes two presses. "Wipe everything" takes two presses, disconnects, and erases the gains too. The rate-limit log can't be cleared, because it keeps you under Torn's cap.
 
 ## Alerts
 
-- **Sound** when a matching target turns Fresh (a board match, or anyone in your band): two rising notes. That's the only sound. At most one every 2 seconds. The **Sound** button in the header turns it off. The target shows up in Fresh out of the hospital.
+- **Sound** when a matching target turns Fresh (a board match, or anyone in your band): two rising notes. Not while Fresh out of the hospital is hidden. The target shows up there.
+- **Pinned sound** for pinned and personal targets: three lower notes, when a hospital or jail timer runs out. Flights have no timer in the API, so for travelers it plays when a check finds them back in Torn.
+- At most one sound every 2 seconds. The **Sound** button in the header turns them all off.
 - **Browser notification**, opt-in under "Pace and live checks", for the same moment, only while the tab is in the background.
 - Hit-tagged and protected targets never alert.
 - Browsers block notifications inside a cross-site iframe, which is how the tool sits on thegreatstag.com. There, the setting links to the tool on its own page. Sound works in both.
