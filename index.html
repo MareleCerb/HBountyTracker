@@ -169,6 +169,11 @@ input[type=range]{width:100%;max-width:420px;accent-color:var(--bone-dim);height
 .run .bar i{display:block;height:100%;width:0;background:var(--bone-dim);transition:width .35s ease}
 .ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin-top:12px}
 .pace{font-size:.84rem;color:var(--mist-dim);font-variant-numeric:tabular-nums}
+.pace b{color:var(--bone-soft)}
+/* Pace bar: the whole bar is Torn's 100. The line is your pace, the fill is what you used. */
+.pbar{position:relative;display:inline-block;width:140px;height:6px;border-radius:3px;background:var(--ash);overflow:visible}
+.pbar .u{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--bone-dim);width:0;transition:width .3s}
+.pbar .cap{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--gold);left:60%}
 
 /* Section heads */
 .sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px;margin-bottom:14px}
@@ -181,7 +186,7 @@ input[type=range]{width:100%;max-width:420px;accent-color:var(--bone-dim);height
 .meta b{color:var(--bone);font-weight:700;font-variant-numeric:tabular-nums}
 .meta .ready b{color:var(--status-ready)}
 
-/* Ready, then out of hospital next */
+/* Ready, then available soon */
 .soon{margin-top:38px}
 .ready-strip+.soon{margin-top:30px}
 .ready-strip .soon-t{color:var(--status-ready)}
@@ -260,6 +265,8 @@ tbody.t:hover>tr.main{background:var(--obsidian-soft)}
 .sb.ready{background:var(--status-ready);color:var(--status-ready-ink)}
 .sb.ready .sl{font:800 1.45rem/1 var(--display)}
 .sb.fresh{--c:var(--status-ready);box-shadow:inset 0 0 0 1px var(--status-ready)}
+.sb.ready.unconf{background:color-mix(in srgb,var(--status-ready) 62%,var(--obsidian))}
+.sb.ready.unconf::after{content:"";position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;background:var(--status-ready-ink);animation:blink 1.2s ease-in-out infinite}
 .hitq{margin-left:10px;color:var(--gold-light);font-weight:700}
 .newb.hitb{color:var(--gold-light);border-color:color-mix(in srgb,var(--gold) 50%,transparent)}
 .sb.hosp{--c:var(--status-hospital)}
@@ -404,7 +411,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
       <input id="specFF" type="text" inputmode="decimal" autocomplete="off" placeholder="2.5"></label>
     <div class="go-wrap"><button class="btn gold" id="huntBtn" type="button">Start the hunt</button></div>
   </div>
-  <p class="hint">Rewards take 250k or 1.5m. Lower fair fight means an easier fight.</p>
+  <p class="hint">Rewards take 250k or 1.5m, and count per hit: one attack claims one bounty, the biggest on that target. Lower fair fight means an easier fight.</p>
   <details class="adv">
     <summary>Pace and live checks</summary>
     <div class="fields">
@@ -429,6 +436,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
   <div class="ctl">
     <button class="btn ghost sm" id="pauseBtn" type="button" hidden>Pause</button>
     <span class="pace" id="paceInfo"></span>
+    <span class="pbar" id="paceBar" aria-hidden="true"><i class="u"></i><i class="cap"></i></span>
   </div>
 </section>
 
@@ -442,7 +450,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
 
 <section class="soon" id="soon" hidden aria-labelledby="soonTitle">
   <div class="sec-head">
-    <h2 id="soonTitle">Out of hospital next</h2>
+    <h2 id="soonTitle">Available soon</h2>
     <p class="meta" id="soonSub"></p>
   </div>
   <ol class="soon-list" id="soonList"></ol>
@@ -472,32 +480,36 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
     <label class="field q" for="fQ"><span>Name or ID</span><input id="fQ" type="search" autocomplete="off" placeholder="Search"></label>
     <label class="field" for="fLvlMin"><span>Level from</span><input id="fLvlMin" type="number" min="1" max="100" inputmode="numeric" placeholder="1"></label>
     <label class="field" for="fLvlMax"><span>Level to</span><input id="fLvlMax" type="number" min="1" max="100" inputmode="numeric" placeholder="100"></label>
-    <label class="field" for="fReward"><span>Min reward</span><input id="fReward" type="text" autocomplete="off" placeholder="Any"></label>
+    <label class="field" for="fReward"><span>Min value</span><input id="fReward" type="text" autocomplete="off" placeholder="Any"></label>
     <label class="field" for="fFF"><span>Max fair fight</span><input id="fFF" type="text" inputmode="decimal" autocomplete="off" placeholder="Any"></label>
     <label class="field" for="fAge"><span>Min account age</span><input id="fAge" type="number" min="0" inputmode="numeric" placeholder="Days" title="14 or more hides new players under Torn's New Player Protection"></label>
     <label class="field sort" for="sortSel"><span>Sort by</span>
       <select id="sortSel">
-        <option value="reward_desc">Highest reward</option>
-        <option value="reward_asc">Lowest reward</option>
+        <option value="reward_desc">Highest value</option>
+        <option value="reward_asc">Lowest value</option>
         <option value="ready">Okay first</option>
         <option value="level_asc">Lowest level</option>
         <option value="level_desc">Highest level</option>
         <option value="ff_asc">Lowest fair fight</option>
         <option value="ff_desc">Highest fair fight</option>
         <option value="ends">Ending soonest</option>
+        <option value="name_asc">Name A to Z</option>
+        <option value="name_desc">Name Z to A</option>
+        <option value="checked_asc">Checked longest ago</option>
+        <option value="checked_desc">Checked most recently</option>
       </select></label>
     <div class="freset"><button class="link" id="clearBtn" type="button">Clear filters</button></div>
   </div>
 
   <table id="tbl">
     <thead id="thead"><tr>
-      <th scope="col">Target</th>
+      <th scope="col" data-col="name"><button class="sorter" type="button" data-sort="name">Target</button></th>
       <th scope="col" data-col="level"><button class="sorter" type="button" data-sort="level">Level</button></th>
       <th scope="col" data-col="ready"><button class="sorter" type="button" data-sort="ready">Status</button></th>
-      <th scope="col" data-col="reward"><button class="sorter" type="button" data-sort="reward">Reward</button></th>
+      <th scope="col" data-col="reward"><button class="sorter" type="button" data-sort="reward" title="Current value: what your next hit pays">Value</button></th>
       <th scope="col" data-col="ends"><button class="sorter" type="button" data-sort="ends">Bounties</button></th>
       <th scope="col" data-col="ff"><button class="sorter" type="button" data-sort="ff">Fair fight</button></th>
-      <th scope="col">Checked</th>
+      <th scope="col" data-col="checked"><button class="sorter" type="button" data-sort="checked">Checked</button></th>
       <th scope="col"><span class="sr">Links</span></th>
     </tr></thead>
     <tbody id="empty" hidden><tr><td colspan="8" class="emptycell" id="emptyText"></td></tr></tbody>
@@ -554,7 +566,8 @@ function parseMoney(v) {
 }
 
 function fmtLeft(sec) {
-  const s = Math.floor(sec);
+  // Round up: with 0.4s left the timer reads 1s, never "now" while it's still running.
+  const s = Math.ceil(sec);
   if (s <= 0) return 'now';
   const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
   const p = n => String(n).padStart(2, '0');
@@ -583,7 +596,7 @@ const MAX_PAGES = 150;            // ~65 pages normally, headroom for war spikes
 const SHOW_STEP = 50;             // rows added per "Show more"
 const SOON_SECS = 180;            // hospital or jail turns "almost out" for the last 3 minutes
 const FRESH_MS = 10e3;            // just out of hospital: shown as Fresh, re-checked when this runs out
-const SOON_SHOWN = 5;            // targets in the "out of hospital next" strip
+const SOON_SHOWN = 5;            // targets in the "Available soon" strip
 const OKAY_RECHECK = 90e3;        // ready targets
 const TRAVEL_RECHECK = 5 * 60e3;
 const IDLE_RECHECK = 10 * 60e3;   // everything else
@@ -821,14 +834,18 @@ function stack(raw) {
   return { map, n };
 }
 
+// t.reward is the CURRENT value: what one hit pays right now. A hospitalization claims one bounty,
+// and Torn's own board shows the highest one per target, so we take the highest single bounty.
+// To be tested and confirmed on live hits. t.total is the whole stack, shown for info only.
 function recalc(t) {
-  t.reward = 0; t.count = 0; t.ends = FAR;
+  t.total = 0; t.count = 0; t.ends = FAR;
   for (const l of t.listings) {
-    t.reward += l.reward * l.qty;      // reward is per bounty
+    t.total += l.reward * l.qty;       // reward is per bounty
     t.count += l.qty;
     if (l.until && l.until < t.ends) t.ends = l.until;
   }
   t.listings.sort((a, b) => b.reward - a.reward);
+  t.reward = t.listings.length ? t.listings[0].reward : 0;
   t.nameLc = t.name.toLowerCase();
 }
 
@@ -877,7 +894,14 @@ function loadBoard() {
 }
 
 function setStatus(id, s) { S.status.set(id, s); }
+// Fresh is not a status of its own. It's how the first 10 seconds of Okay look once a hospital timer runs out.
 const isFresh = st => !!(st && st.state === 'Hospital' && st.until && st.until <= nowS() && st.until + FRESH_MS / 1000 > nowS() && !isProt(st));
+// Timer over (and Fresh over, for hospital) but the confirming check hasn't landed yet. Default is Okay.
+// The check that follows flips them back to Hospital if someone hit them in the window.
+const isPresumed = st => !!(st && st.until && !isProt(st) && (
+  (st.state === 'Hospital' && st.until + FRESH_MS / 1000 <= nowS()) || (st.state === 'Jail' && st.until <= nowS())));
+// What the board treats the target as right now.
+const effState = st => !st ? '' : isProt(st) ? 'Protected' : (isFresh(st) || isPresumed(st)) ? 'Okay' : st.state;
 function saveHits() { if (!S.demo) store.set('hit', [...S.hit]); }
 // The hover freeze holds rows still so links don't jump; a hit should leave at once, so it skips the freeze.
 function markHit(id) {
@@ -1371,7 +1395,7 @@ async function scheduleFF() {
 function bucket(st) {
   if (!st) return 'unchecked';
   if (isProt(st)) return 'protected';
-  switch (st.state) {
+  switch (effState(st)) {
     case 'Okay': return 'okay';
     case 'Hospital': return 'hospital';
     case 'Traveling': case 'Abroad': return 'travel';
@@ -1385,7 +1409,7 @@ function outAt(t) {
   const st = S.status.get(t.id);
   if (!st) return FAR;
   if (isProt(st)) return FAR - 0.5;
-  if (st.state === 'Okay') return 0;
+  if (effState(st) === 'Okay') return 0;
   if ((st.state === 'Hospital' || st.state === 'Jail' || st.state === 'Federal') && st.until) return st.until;
   if (st.state === 'Traveling' || st.state === 'Abroad') return FAR - 2;
   return FAR - 1;
@@ -1399,7 +1423,13 @@ const SORTS = {
   ff_desc: (a, b) => ffOf(b, -1) - ffOf(a, -1) || b.reward - a.reward,
   ready: (a, b) => outAt(a) - outAt(b) || b.reward - a.reward,
   ends: (a, b) => a.ends - b.ends || b.reward - a.reward,
+  name_asc: (a, b) => a.nameLc.localeCompare(b.nameLc) || a.id - b.id,
+  name_desc: (a, b) => b.nameLc.localeCompare(a.nameLc) || a.id - b.id,
+  // Never checked counts as the oldest check of all.
+  checked_asc: (a, b) => checkedAt(a) - checkedAt(b) || b.reward - a.reward,
+  checked_desc: (a, b) => checkedAt(b) - checkedAt(a) || b.reward - a.reward,
 };
+function checkedAt(t) { const st = S.status.get(t.id); return st ? st.at : 0; }
 
 function computeView() {
   const f = S.f, q = f.q.trim().toLowerCase();
@@ -1467,10 +1497,12 @@ function statusHTML(st, busy) {
   const timed = (cls, label) => left > 0
     ? block(left < SOON_SECS ? 'soon' : cls, label, fmtLeft(left), st.until) + why
     : block('soon', label, 'any moment') + why;
+  // Out, but the confirming check hasn't come back yet. Shown as Okay, with a note.
+  if (isPresumed(st)) return block('ready unconf', 'Okay') + `<span class="why" title="The timer ran out, so they should be Okay. A check is queued to confirm it.">confirming</span>`;
   switch (st.state) {
     case 'Okay': return block('ready', 'Okay');
     case 'Hospital':
-      if (st.until && left <= 0 && left > -FRESH_MS / 1000) return block('fresh', 'Fresh', fmtLeft(st.until + FRESH_MS / 1000 - ns), st.until + FRESH_MS / 1000) + why;
+      if (isFresh(st)) return block('fresh', 'Fresh', fmtLeft(st.until + FRESH_MS / 1000 - ns), st.until + FRESH_MS / 1000) + why;
       return timed('hosp', 'Hospital');
     case 'Jail': return timed('jail', 'Jail');
     case 'Federal': return block('fed', 'Federal jail', left > 0 ? fmtLeft(left) : '', left > 0 ? st.until : 0);
@@ -1491,7 +1523,7 @@ function ffHTML(t) {
 }
 
 function rowHTML(t) {
-  const st = S.status.get(t.id), busy = S.inflight.has(t.id), prot = isProt(st), ready = (st && st.state === 'Okay' && !prot) || isFresh(st), ns = nowS();
+  const st = S.status.get(t.id), busy = S.inflight.has(t.id), prot = isProt(st), ready = effState(st) === 'Okay', ns = nowS();
   const open = S.open.has(t.id);
   const tag = (prot ? `<span class="newb" title="Under Torn's New Player Protection">New player</span>` : '')
     + (S.hit.has(t.id) ? '<span class="newb hitb" title="You marked this target hit. Clears when they leave hospital.">Hit</span>' : '');
@@ -1500,8 +1532,8 @@ function rowHTML(t) {
 <td class="c-name"><a class="tname" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}</a>${tag}<span class="tid">[${t.id}]</span></td>
 <td class="c-lvl"><span class="lv"><span class="lvk">Level </span>${lvlOf(t)}</span></td>
 <td class="c-status">${statusHTML(st, busy)}</td>
-<td class="c-reward"><span class="money big" title="${fmtFull(t.reward)}">${fmtMoney(t.reward)}</span></td>
-<td class="c-bounties"><button class="bt" type="button" data-act="toggle" aria-expanded="${open}"><span class="lab">${t.count} ${t.count === 1 ? 'bounty' : 'bounties'}</span><span class="car" aria-hidden="true"></span></button>${ends}</td>
+<td class="c-reward"><span class="money big" title="Current value: ${fmtFull(t.reward)} for your next hit">${fmtMoney(t.reward)}</span></td>
+<td class="c-bounties"><button class="bt" type="button" data-act="toggle" aria-expanded="${open}"><span class="lab">${t.count} ${t.count === 1 ? 'bounty' : 'bounties'}</span><span class="car" aria-hidden="true"></span></button>${t.count > 1 ? `<span class="ends" title="Every bounty on this target added up. One hit claims one bounty.">+${t.count - 1} more, ${fmtMoney(t.total)} stacked</span>` : ''}${ends}</td>
 <td class="c-ff">${ffHTML(t)}</td>
 <td class="c-checked">${st ? `<span data-ago="${st.at}">${fmtAgo(st.at)}</span>` : '<span class="faint">not yet</span>'}<button class="icon" type="button" data-act="check" title="Check now" aria-label="Check ${esc(t.name)} now">${ICON_RECHECK}</button></td>
 <td class="c-act"><a class="btn sm ghost" href="${profileUrl(t.id)}" target="_blank" rel="noopener">Profile</a>${attackA(t, 'btn sm ' + (ready ? 'go' : 'ghost'))}${hitBtn(t, 'btn sm gold')}</td>
@@ -1519,7 +1551,7 @@ function rowHTML(t) {
 
 function sigOf(t) {
   const st = S.status.get(t.id), x = S.ff.get(t.id), ns = nowS();
-  return [t.name, lvlOf(t), t.reward, t.count, t.ends < ns,
+  return [t.name, lvlOf(t), t.reward, t.total, t.count, t.ends < ns,
     st ? st.at + st.state + (st.until > ns) + (st.until - ns < SOON_SECS) + (st.until + FRESH_MS / 1000 > ns) + isProt(st) : '', x ? x.at : S.ffState,
     S.inflight.has(t.id), S.open.has(t.id), S.clicked.has(t.id), S.hit.has(t.id)].join('|');
 }
@@ -1531,7 +1563,7 @@ const rowCache = new Map();   // id -> { el, sig, state }
 function paint(r, t) {
   const sig = sigOf(t);
   if (sig === r.sig) return;
-  const st = S.status.get(t.id), state = st ? (isProt(st) ? 'Protected' : st.state) : '';
+  const st = S.status.get(t.id), state = effState(st);
   r.el.innerHTML = rowHTML(t);
   r.el.classList.toggle('ready', state === 'Okay');
   if (r.state !== undefined && r.state !== state) {
@@ -1622,7 +1654,8 @@ function renderSoon() {
     for (const t of S.matched) {
       if (S.hit.has(t.id)) continue;
       const st = S.status.get(t.id);
-      if (st && st.state === 'Hospital' && st.until && !isProt(st)) list.push([t, st]);
+      // Only timers still running. Once a timer ends they're Fresh or Okay, so they belong in Ready.
+      if (st && st.state === 'Hospital' && st.until > ns && !isProt(st)) list.push([t, st]);
     }
   }
   list.sort((a, b) => a[1].until - b[1].until || b[0].reward - a[0].reward);
@@ -1636,7 +1669,7 @@ function renderSoon() {
   $('soonList').innerHTML = top.map(([t, st]) => {
     const left = st.until - ns;
     return `<li>
-<span class="soon-t${left < SOON_SECS ? ' near' : ''}"${left > 0 ? ` data-until="${st.until}" data-slots` : ''}>${left > 0 ? slots(fmtLeft(left)) : isFresh(st) ? 'fresh' : 'now'}</span>
+<span class="soon-t${left < SOON_SECS ? ' near' : ''}"${left > 0 ? ` data-until="${st.until}" data-slots` : ''}>${slots(fmtLeft(left))}</span>
 <a class="soon-n" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}</a>
 <span class="soon-m"><span class="money" title="${fmtFull(t.reward)}">${fmtMoney(t.reward)}</span><span>${attackA(t)}${hitBtn(t, 'link hitq')}</span></span>
 </li>`;
@@ -1722,9 +1755,19 @@ function renderControls() {
   // Gold marks the next thing to do: Connect first, the hunt after.
   $('huntBtn').classList.toggle('gold', !!(S.key || S.demo));
   $('huntBtn').classList.toggle('ghost', !(S.key || S.demo));
-  $('paceInfo').textContent = S.demo
-    ? 'Demo pace. Nothing leaves your browser.'
-    : `${Pacer.recent()} of ${S.pace} Torn calls used in the last minute, all tabs. Torn's cap is 100, shared with your other Torn tools`;
+  renderPace();
+}
+
+// Two numbers, kept apart: your own pace (the slider) and Torn's hard cap of 100, shared by all your tools.
+function renderPace() {
+  const used = Pacer.recent();
+  if (S.demo) $('paceInfo').innerHTML = 'Demo pace. Nothing leaves your browser.';
+  else $('paceInfo').innerHTML = `<b>${used} / ${S.pace}</b> calls this minute (your pace, all tabs). Torn's hard cap is 100 a minute across every Torn tool you run, so your pace leaves <b>${100 - S.pace}</b> for the others.`;
+  const bar = $('paceBar');
+  bar.hidden = S.demo;
+  bar.querySelector('.u').style.width = Math.min(100, used) + '%';
+  bar.querySelector('.cap').style.left = S.pace + '%';
+  bar.title = `${used} used, your pace ${S.pace}, Torn's cap 100`;
 }
 
 let renderT = 0;
@@ -1870,7 +1913,7 @@ $('board').addEventListener('click', e => {
   const sorter = e.target.closest('.sorter');
   if (sorter) {
     const k = sorter.dataset.sort;
-    const pairs = { reward: ['reward_desc', 'reward_asc'], level: ['level_asc', 'level_desc'], ff: ['ff_asc', 'ff_desc'], ready: ['ready', 'ready'], ends: ['ends', 'ends'] }[k];
+    const pairs = { reward: ['reward_desc', 'reward_asc'], level: ['level_asc', 'level_desc'], ff: ['ff_asc', 'ff_desc'], ready: ['ready', 'ready'], ends: ['ends', 'ends'], name: ['name_asc', 'name_desc'], checked: ['checked_asc', 'checked_desc'] }[k];
     return setSort(S.sort === pairs[0] ? pairs[1] : pairs[0]);
   }
   if (!btn) return;
