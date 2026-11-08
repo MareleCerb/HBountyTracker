@@ -11,17 +11,24 @@ A freebie by [The Great Stag](https://www.thegreatstag.com). Open source, so any
 3. **Fair fight.** One FFScouter call per 205 targets (`/api/v1/get-stats`). Optional, and only runs if you give it the key you registered on ffscouter.com. It scouts every target your search allows, past the fair fight cap too, so the strips and the check order can see both sides of your score. Rows FFScouter has no estimate for get a gray background.
 4. **Live status.** One `GET /v2/user/{id}/profile` per target. With fair fight and a score, the first pass goes: your band first (within 1.5 of your score, either side), then everyone under it, then everyone over it, biggest bounty first in each. Targets with no fair fight go last. Without a score, it follows the board's sort. Timers (hospital, jail, protection, bounty expiry) count down locally from the last call. Every status check carries a `timestamp` parameter, so Torn's 30-second service cache never hands back an old answer. Re-checks are covered in **Smart re-checks** below.
 5. **Fresh.** Fresh isn't a status of its own. It's how the first 10 seconds of Okay look once a hospital timer runs out. After those 10 seconds the target gets one check, since someone may have hit them in the window. That check jumps to the front of the queue, ahead of the first pass, and runs in a background tab too (not with live checks off). Until it lands, they show as **Okay** with a small "confirming" dot. Same for jail, without the 10 seconds.
-6. **High value.** Every Okay target within 1.5 of your **Fair Fight Score**, either side, biggest bounty first. Each card gets a value border (see below). Needs an FFScouter key and a score.
+6. **High value.** Every Okay target worth **$250k or more**, within 1.5 of your **Fair Fight Score**, either side, biggest bounty first. Below $250k, selling the loot pays as well, so those stay out. Each card gets the value colors (see below). Needs an FFScouter key and a score.
 7. **Easy fights.** Every Okay target, closest to your **Fair Fight Score** first, on either side of it. At the same distance, the one under your score wins, then the bigger bounty. Both strips look past the board's fair fight filter on purpose. With an FFScouter key, targets FFScouter has no estimate for stay out. Without one, Easy fights is simply the highest bounties you can hit.
 8. **Fresh out of the hospital.** Everyone who turned Fresh in the last 5 minutes, newest first: the strip that tells you what the Fresh sound was about. They stay the full 5 minutes with their latest status, even back in hospital. It shows up when the other strips do, and once it's there it stays on screen even when empty, so the layout never jumps.
 9. **Available soon.** Every match whose hospital timer is still running, soonest out first, with big countdowns, level and fair fight.
+10. **Targets to pin.** Every target with 2 bounties or more and $1m or more stacked, not pinned yet. Two lists zipped together: biggest stack, best fair fight match, second biggest stack, second best match, and so on (best match uses the Easy fights rule). Anyone already shown is skipped. Without fair fight and a score, it's biggest stack first. No extra calls: it reads the board you already have.
 
-10. **Personal targets.** Anyone you tagged by hand, bounty or not, no cap. Add them from any card or row, or by player ID (or a profile link) with **Add personal target** on the board. Only ever removed by you (two presses). Checked first at the start of every hunt. The section is hidden while it's empty, and sits at the very top.
-11. **Pinned.** Bounty targets you pinned, 10 at most. Always first on the board, with a pink stripe and tint. See **Pins and personal targets** below.
+11. **Personal targets.** Anyone you tagged by hand, bounty or not, no cap. Add them from any card or row, or by player ID (or a profile link) with **Add personal target** on the board. Only ever removed by you (two presses). Checked first at the start of every hunt. The section is hidden while it's empty, and sits at the very top.
+12. **Pinned.** Bounty targets you pinned, 10 at most. Always first on the board, with a pink stripe and tint. See **Pins and personal targets** below.
+
+Cards with more than one bounty get a **+N more** button: press it to see the value of every bounty on that target.
 
 Every strip is a carousel with every qualifying target: swipe on touch, drag with a mouse, or use the arrows. With a mouse, the list stays exactly where you let go, and a fast drag keeps gliding and slows to a stop (not with "reduce motion" on). The arrows move by whole cards.
 
 ## Pins and personal targets
+
+The pin button on cards and rows is **Pin bounty**: it tracks the bounty on that player for as long as there is one, plus 2 days.
+
+**Add to personal targets** opens a small note box first. Enter or a click away saves (with whatever you typed, or no note). Escape saves with no note. Notes are 80 characters at most, show on the card and under the name on the board, and the small pencil button edits them (Escape there keeps the old note).
 
 | | Pinned | Personal targets |
 | --- | --- | --- |
@@ -45,11 +52,11 @@ These re-checks have their own budget: never more than 15% of your pace in any m
 
 ## Section controls
 
-Every strip has **Hide** and, except Pinned, **Pin to board**.
+Every strip has **Hide** and, except Pinned, **Pin to board**. One section can be pinned to the board at a time.
 
 - **Hide.** The strip goes, and its fast re-checks stop with it (High value and Easy fights lose their 90-second top 10, Pinned and Personal lose their own clock). Hidden Fresh out of the hospital means no Fresh sound. Hidden strips line up in a "Hidden:" bar; one click brings each back.
-- **Pin to board.** The strip's targets go to the top of the board, in the strip's own order. Pin several and they stack in the order you pinned them, with the number in the circle. Unpin one and the rest move up. A target in two pinned strips shows once, in the first.
-- On the board: Pinned targets first, always. Then each pinned strip. Then everyone else, in the board's sort. Each block gets a header. The board's filters and status chips apply to every block, so High value and Easy fights, which look past the fair fight filter in their strips, are filtered on the board.
+- **Pin to board.** The strip's targets go to the top of the board, in the strip's own order. Pinning another strip replaces it. The button shows a small ring with a dot while pinned.
+- On the board: Pinned targets first, always. Then the pinned strip. Then everyone else, in the board's sort. Each block gets a header. The board's filters and status chips apply to every block, so High value and Easy fights, which look past the fair fight filter in their strips, are filtered on the board.
 
 Hidden and pinned sections are remembered on the device.
 
@@ -68,19 +75,22 @@ The fair fight number sits on a colored pill. The colors follow Torn's own formu
 
 The color slides smoothly between anchors. Hover a pill for the ratio and the label. Torn's in-game number caps at 3.00; FFScouter's doesn't. Fair fight changes respect, not bounty money, so here it's a difficulty meter.
 
-## Value borders
+## Value colors
 
-One scale, used by the High value strip and every row of the board:
+One scale, used by the High value strip and every row of the board. Each tier sets the border, the background (the same color at 10%) and a soft glow:
 
-| Current value | Border |
+| Current value | Color |
 | --- | --- |
-| Under $50k | Gray |
-| $50k to $500k | Dark green to gold, on a log scale (halfway is about $160k) |
-| $500k to $1m | Gold |
-| $1m to $2m | Gold to purple, on a log scale |
-| $2m and up | A color cycle with a golden glow |
+| Under the poop threshold ($10k) | Poop brown, with a 💩 tag |
+| $10k to $50k | White |
+| $50k to $250k | Dark orange to bright orange |
+| $250k to $750k | Green, fading into gold |
+| $750k to $1.5m | Gold to purple |
+| $1.5m and up | A color cycle over purple: faint at $1.5m, full at $3m |
 
-On the board, neighbors in the same tier merge into one shape, each row keeping its own shade. On phones the cards glue together. With "reduce motion" on in your system settings, the color cycle stops on plain gold.
+Every gradient runs on a log scale. On the board, neighbors in the same tier merge into one shape, each row keeping its own shade, with a thin line in the tier's color between rows. On phones the cards glue together. With "reduce motion" on in your system settings, the color cycle stops on a still gold and purple mix.
+
+**Discard poop**, in the board filters, hides every bounty under the poop threshold and skips their status checks. Pinned and personal targets stay. Set the threshold in devmode, Board (0 turns poop off).
 
 ## Smart re-checks
 
@@ -109,17 +119,17 @@ The Value column, the Ready strip, Available soon, sorting and the value filters
 
 Each row links to the target's profile and attack page. Nothing is automated on torn.com.
 
-## Hits and gains
+## Hospitalized, hits and gains
 
-1. Open **Attack** on a target. A **Hit?** button appears.
-2. Press it once you've hospitalized them. For one minute it turns into **Undo**, in case you misclicked.
-3. The tool checks them once, about 5 seconds later, to pick up the hospital timer from your hit.
-4. After the minute, they're hidden everywhere, with a "Just hit" tag, and get **no status checks** until that timer ends.
-5. When the timer ends, they're back everywhere with a "Hit" tag, and get checked like everyone else.
+1. Open **Attack** on a target. A **Hospitalized** button appears.
+2. Press it once they're in hospital, whether you put them there or someone beat you to it. The tool checks them once, about 5 seconds later, to pick up the real hospital timer. Then they follow the normal flow: Available soon, Fresh, Okay.
+3. For one minute, the button asks **Was it you?**
+   - **No**, or no answer: nothing is counted.
+   - **Yes**: a hit goes in your gains. For one minute it turns into **Undo**, in case you misclicked. After that minute they're hidden everywhere, with a "Just hit" tag, and get **no status checks** until the hospital timer from your hit ends. Then they're back everywhere with a "Hit" tag.
 
-If the check after a mark shows they never went to hospital, the tag clears right away.
+If the check after the press shows they never went to hospital, the tag clears right away.
 
-Every mark goes in a ledger in your browser, at the value shown when you pressed Hit?. That's what the banner under "Pace and live checks" adds up: *"This tracker gained $X for you in N hits"*, based on your Hit marks. A Public key can't read your attack log, so the tool can only count what you mark.
+Every Yes goes in a ledger in your browser, at the value shown when you pressed Hospitalized. That's what the banner under Find targets adds up: *"This tracker gained $X for you in N hits"*. A Public key can't read your attack log, so the tool can only count what you mark.
 
 The **Hit** chip shows every target in the ledger, even ones whose bounty left the board, with **Gained** and **Times hit** columns, and a **Remove** button (two presses) that takes a target out of the ledger. Devmode Storage can erase all gains (two presses). Gains live in local storage, so clearing your browser's site data erases them too, and the embedded page and the standalone page keep separate ledgers.
 
@@ -138,11 +148,11 @@ Highest or lowest value, Okay first, lowest or highest level, lowest or highest 
 
 **Inspect calls** (next to the pace line, or "Watch every API call live" under the key) opens a live view of every call the tool makes. For everyone, not only devmode: transparency is the point.
 
-- **Live log.** Oldest at the top, newest at the bottom; the view follows new calls while you're at the bottom. Calls are grouped in colored blocks, one per job the engine was doing, each with a header that says what the job is: Connect (gray), Board sweep (gold), Fair fight (blue, FFScouter), Initial profile fetch (green: first status and timers for each target), Re-checks (teal), Timer ended, confirming (orange), Manual checks (purple), Refresh list (pink). The response code is colored too: green when it worked, red when Torn or FFScouter refused (with Torn's error code), orange when no answer came back, gray while waiting. Each call expands to the full request (URL, headers), the full JSON answer, timing, size, and why the engine made it right then ("Initial profile fetch, never checked", "Fresh is over, confirming Okay", "Board page 12 of 69"...). Filter by service or call type, pause the stream, clear, export as JSON.
+- **Live log.** Oldest at the top, newest at the bottom; the view follows new calls while you're at the bottom. Columns: time, service, request, call, **Status** (what state the target was in, for Target profile calls; `n/a` for calls about no single target), response code, time taken, size. Calls are grouped in colored blocks, one per job the engine was doing, each with a header that says what the job is: Connect (gray), Board sweep (gold), Fair fight (blue, FFScouter), Initial profile fetch (green: first status and timers for each target), Re-checks (teal), Timer ended, confirming (orange), Manual checks (purple), Refresh list (pink). The response code is colored too: green when it worked, red when Torn or FFScouter refused (with Torn's error code), orange when no answer came back, gray while waiting. Each call expands to the full request (URL, headers), the full JSON answer, timing, size, and why the engine made it right then ("Initial profile fetch, never checked", "Fresh is over, confirming Okay", "Board page 12 of 69"...). Filter by service or call type, pause the stream, clear, export as JSON.
 - **Queue.** What's waiting at the pacer, and the next 10 status checks with their reason and when they're due.
 - **Calls left.** The summary line says how many calls the first pass still needs and how long that takes at your pace. Once it's done: how many re-checks are due now.
 - **Every call explained.** The catalog of all six calls: service, endpoint, when it runs, what it's for, the fields the tool reads, and how many ran this session.
-- **Learn mode.** Adds a plain-English card to every call and view, each linking to its Codex chapter.
+- **Learn mode.** Adds, on top of the log: a live **engine map** (Connect, Board sweep, Fair fight, Initial profile fetch, Re-checks) lighting up the step running now, a **budget breakdown** of where this session's calls went, and a **side-by-side table** of the three calls that do the work (board, target profile, fair fight: what each asks, answers, costs, caches, how often, what it feeds). Each job block gets a card: what the job is, why it ran, what it feeds, and what it cost (calls, time, share of your pace). Each call gets a card: why that call, for which target, its place in line at the pacer, what changed (*"Hospital, 12m left → Okay"*), and where the target sits now (*"Easy fights #3, board row 41"*). Plus the plain-English card for every call type, each linking to its Codex chapter.
 - **Codex.** The long version, in its own tab: the big picture, a real request from your session taken apart piece by piece, how the board is paged, the three layers of caching, rate limits and how tabs share them, the scheduler, fair fight math with a calculator, keys and the walls around them, sections and pins, how the tool got here, and a glossary. The numbers in it are live: your pace, your budget, your calls.
 
 Keys are always masked (`••••••••••••3fA9`), in the log and in exports. The log lives in memory only: the last 500 calls, with full answers for the last 80. Gone on reload.
@@ -152,7 +162,7 @@ Keys are always masked (`••••••••••••3fA9`), in the log 
 | Torn | `GET /v2/key/info` | Connect | What kind of key this is, before anything else runs |
 | Torn | `GET /v2/user/profile` | Connect | Who you are: name, ID, level, account age |
 | Torn | `GET /v2/torn/bounties` | Start the hunt, Refetch board | The bounty board, 100 per page |
-| Torn | `GET /v2/user/{id}/profile` | Status loop, Refresh list, Check now | One target's live status, last action and account age |
+| Torn | `GET /v2/user/{id}/profile` | Status loop, Refresh list, Check now, Hospitalized | Target profile: one target's live status, last action and account age |
 | FFScouter | `GET /api/v1/check-key` | Connect, only with an FFScouter key | Is the key registered? |
 | FFScouter | `GET /api/v1/get-stats` | After the board, Refetch fair fight | Fair fight for up to 205 targets |
 
@@ -162,8 +172,8 @@ Google Fonts loads the two typefaces. That's a font file, not an API call. Nothi
 
 The **Devmode** button in the header opens a panel for the engine's internals. The choice is remembered.
 
-- **Engine.** Run each part on its own: refetch the board (every page, forced), re-check every match, re-check stale only (older than 2, 5, 10 or 30 minutes), pause or resume the status loop, clear the hand-picked queue, refetch fair fight, freeze all calls, start over. Each shows its live cost in calls, and the time at your pace, before you press. Plus **Never stop for inactivity**, remembered on the device: the tool then keeps calling at your pace for as long as the tab is open. Leave it off unless you're testing.
-- **Board.** Sliders for max level, max fair fight, and a value range (from / up to, on a log scale from $1k to $1b). They filter the board you already have and cost no calls. Column toggles for every column, plus an Account age column that's off by default.
+- **Engine.** First, **Pace and live checks**: the Torn calls per minute slider (20 to 90, default 60), **Keep checking while this page is open**, and what that means. The read-only pace line and **Inspect calls** stay visible to everyone under the progress bar. Then run each part on its own: refetch the board (every page, forced), re-check every match, re-check stale only (older than 2, 5, 10 or 30 minutes), pause or resume the status loop, clear the hand-picked queue, refetch fair fight, freeze all calls, start over. Each shows its live cost in calls, and the time at your pace, before you press. Plus **Never stop for inactivity**, remembered on the device: the tool then keeps calling at your pace for as long as the tab is open. Leave it off unless you're testing.
+- **Board.** Sliders for max level, max fair fight, and a value range (from / up to, on a log scale from $1k to $1b). They filter the board you already have and cost no calls. The **poop threshold** ($10k by default, remembered on the device). Column toggles for every column, plus an Account age column that's off by default.
 - **Storage.** Everything the tool keeps in your browser (pins and personal targets included), with its size and a Clear button. Keys are never shown. Clearing Gains takes two presses. "Wipe everything" takes two presses, disconnects, and erases the gains too. The rate-limit log can't be cleared, because it keeps you under Torn's cap.
 
 ## Alerts
@@ -171,9 +181,8 @@ The **Devmode** button in the header opens a panel for the engine's internals. T
 - **Sound** when a matching target turns Fresh (a board match, or anyone in your band): two rising notes. Not while Fresh out of the hospital is hidden. The target shows up there.
 - **Pinned sound** for pinned and personal targets: three lower notes, when a hospital or jail timer runs out. Flights have no timer in the API, so for travelers it plays when a check finds them back in Torn.
 - At most one sound every 2 seconds. The **Sound** button in the header turns them all off.
-- **Browser notification**, opt-in under "Pace and live checks", for the same moment, only while the tab is in the background.
 - Hit-tagged and protected targets never alert.
-- Browsers block notifications inside a cross-site iframe, which is how the tool sits on thegreatstag.com. There, the setting links to the tool on its own page. Sound works in both.
+- No browser notifications.
 
 ## New player protection
 
@@ -204,7 +213,7 @@ Add `?demo` to the URL, or press **Try the demo**. Made-up players and bounties,
 
 ## Limits worth knowing
 
-- Torn allows 100 calls per minute per player, shared across every tool and script they run. The default pace is 60. It's adjustable from 20 to 90 under "Pace and live checks". The pace line shows both numbers apart: what you used out of your pace, and what your pace leaves for your other tools.
+- Torn allows 100 calls per minute per player, shared across every tool and script they run. The default pace is 60. It's adjustable from 20 to 90 in devmode, Engine, "Pace and live checks". The pace line shows both numbers apart: what you used out of your pace, and what your pace leaves for your other tools.
 - The pace is a hard cap on any rolling minute, shared by every open tab of the tool and kept across reloads. The tool can't see calls from your other Torn tools, so leave them room.
 - A status check is one call per target. Checking 200 targets takes about 3 to 4 minutes at 60 per minute. With fair fight and a score, the first pass also covers targets above your score, so it's longer. Narrow filters go faster.
 - Re-checks never use more than 25% of your pace in any minute (see Smart re-checks). Confirm checks, Refresh list and Check now skip the line.

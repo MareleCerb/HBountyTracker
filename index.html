@@ -204,15 +204,20 @@ input[type=range]{width:100%;max-width:420px;accent-color:var(--bone-dim);height
 .car-nav{display:inline-flex;gap:6px}
 .car-nav .btn{min-width:36px;padding-left:8px;padding-right:8px}
 .car-nav .btn:disabled{opacity:.35;cursor:default}
-/* Value borders. One scale for the High value strip and the board:
-   under $50k grey, $50k to $500k dark green to gold (log scale), $500k to $1m gold,
-   $1m to $2m gold to purple, $2m and up a color cycle with a golden glow.
-   With reduce motion on, the cycle stops on plain gold. */
+/* Value colors. One scale for the High value strip and the board, on the border, the background (10%) and a glow:
+   under the poop threshold brown, up to $50k white, $50k to $250k orange, $250k to $750k green into gold,
+   $750k to $1.5m gold to purple, $1.5m and up a color cycle over purple, faint at $1.5m, full at $3m.
+   One animation per element, all started on the same clock (syncChroma), so merged rows change together.
+   With reduce motion on, the cycle stops on a gold and purple mix. */
 @property --vb{syntax:'<color>';inherits:true;initial-value:transparent}
-@keyframes chroma{0%{--vb:#ff4d4d}16%{--vb:#ffad33}33%{--vb:#f2e94e}50%{--vb:#4ee06b}66%{--vb:#45c8ff}83%{--vb:#a55bff}100%{--vb:#ff4d4d}}
-.vb4{--vb:var(--gold-light);animation:chroma 6s linear infinite}
-.soon-list li.vb{box-shadow:inset 0 0 0 2px var(--vb)}
-.soon-list li.vb4{box-shadow:inset 0 0 0 2px var(--vb),inset 0 0 22px -6px var(--gold);background:color-mix(in srgb,var(--gold) 6%,transparent)}
+@property --vbc{syntax:'<color>';inherits:true;initial-value:#ff4d4d}
+@keyframes chroma{0%{--vbc:#ff4d4d}16%{--vbc:#ffad33}33%{--vbc:#f2e94e}50%{--vbc:#4ee06b}66%{--vbc:#45c8ff}83%{--vbc:#a55bff}100%{--vbc:#ff4d4d}}
+.vb5{--vbc:var(--gold-light);--vb:color-mix(in oklab,var(--vbc) var(--cm,100%),#7a3fc4);animation:chroma 6s linear infinite}
+.vb{--vbg:color-mix(in srgb,var(--vb) 55%,transparent);--vbt:color-mix(in srgb,var(--vb) 10%,transparent)}
+.vb0{--vbt:color-mix(in srgb,var(--vb) 20%,transparent)}
+.soon-list li.vb{box-shadow:inset 0 0 0 2px var(--vb),inset 0 0 18px -6px var(--vbg);background:var(--vbt)}
+.soon-list li.vb5{box-shadow:inset 0 0 0 2px var(--vb),inset 0 0 22px -4px var(--vbg),inset 0 0 30px -12px var(--gold)}
+.poop{margin-left:6px;font-size:.9em;vertical-align:0;cursor:default}
 .soon-st{display:block;margin-top:4px;font-size:.84rem;color:var(--mist)}
 .soon-st b{color:var(--status-ready);font-weight:700}
 .soon-st b.hosp{color:var(--status-hospital)}
@@ -236,6 +241,7 @@ input[type=range]{width:100%;max-width:420px;accent-color:var(--bone-dim);height
 .icon.arm{color:var(--status-soon);border-color:var(--status-soon);width:auto;padding:0 8px;font-size:.78rem;font-weight:700}
 .icon[disabled]{opacity:.35;cursor:not-allowed}
 .pin-strip .soon-t,.mine-strip .soon-t{color:var(--pin)}
+.tpin-strip .soon-t{color:var(--gold-light)}
 .mine-strip .soon-t.ok{color:var(--status-ready)}
 .mine-strip .soon-t.hosp{color:var(--status-hospital)}.mine-strip .soon-t.jail{color:var(--status-jail)}.mine-strip .soon-t.near{color:var(--status-soon)}
 .mine-strip .soon-t.oth{color:var(--mist-light);font-size:1.7rem}
@@ -246,16 +252,30 @@ input[type=range]{width:100%;max-width:420px;accent-color:var(--bone-dim);height
 .newb.delb{color:var(--status-soon);border-color:color-mix(in srgb,var(--status-soon) 50%,transparent)}
 /* Section controls: Pin to board with its place in the order, and Hide. */
 .sctl{display:inline-flex;gap:6px;align-items:center}
-.sbp .ord{display:none;width:20px;height:20px;border-radius:50%;background:var(--pin);color:var(--pin-ink);font:800 .78rem/20px var(--text);text-align:center;font-style:normal}
+.sbp .ord{display:none;width:14px;height:14px;border-radius:50%;border:2px solid var(--pin);background:radial-gradient(circle,var(--pin) 0 2.5px,transparent 3px);font-style:normal}
 .sbp[aria-pressed=true]{border-color:color-mix(in srgb,var(--pin) 60%,transparent);color:var(--bone)}
 .sbp[aria-pressed=true] .ord{display:inline-block}
 .hidbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-top:26px;font-size:.88rem;color:var(--mist-dim)}
 .hidbar .chip{min-height:30px;padding:3px 10px}
 .hidbar .chip::before{content:"+";color:var(--mist)}
 #secMsg{margin-top:20px}
+/* The note box for personal targets, and the notes themselves. */
+.notepop{position:absolute;z-index:20;width:min(340px,calc(100vw - 16px));padding:12px 12px 8px;background:var(--graphite);border:1px solid var(--pin);border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+.notepop .hint{display:flex;justify-content:space-between;gap:10px;margin:6px 0 0;font-size:.78rem}
+.tnote,.soon-note{display:flex;align-items:center;gap:6px;margin-top:2px;font-size:.8rem;color:var(--pin);min-width:0}
+.tnote .ntxt,.soon-note .ntxt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-style:italic}
+.soon-note{margin-top:6px}
+.icon.noteb{margin:0;width:22px;height:22px;flex:none;border-color:var(--ash)}
+.icon.noteb svg{width:11px;height:11px}
+/* "+N more" on cards */
+.cmorew{display:block;margin-top:2px;font-size:.8rem}
+.cmore{color:var(--mist-light);font-size:.8rem}
+.cbl{list-style:none;display:flex;flex-wrap:wrap;gap:2px 10px;margin:4px 0 0;padding:0}
+.cbl li{padding:0!important;border:0!important;flex:none!important}
+.cbl .qty{margin-left:3px;color:var(--mist-dim)}
 /* Board groups: Pinned first, then each section pinned to the board, then everyone else. */
 #tbl tbody.grp td{padding:16px 12px 6px;font-size:.8rem;font-weight:700;color:var(--mist);letter-spacing:.04em;text-transform:uppercase;border-bottom:1px solid var(--ash)}
-#tbl tbody.grp .gord{display:inline-block;width:18px;height:18px;margin-right:8px;border-radius:50%;background:var(--pin);color:var(--pin-ink);text-align:center;line-height:18px;font-size:.74rem;letter-spacing:0}
+#tbl tbody.grp .gord{display:inline-block;width:13px;height:13px;margin-right:8px;vertical-align:-1px;border-radius:50%;border:2px solid var(--pin);background:radial-gradient(circle,var(--pin) 0 2px,transparent 2.5px)}
 #tbl tbody.grp .gn{margin-left:8px;color:var(--mist-faint);font-weight:400}
 #tbl tbody.t.pin>tr>td{background-color:color-mix(in srgb,var(--pin) 8%,transparent)}
 #tbl tbody.t.pin>tr.main>td:first-child{background-image:linear-gradient(90deg,var(--pin) 0 4px,transparent 4px)}
@@ -279,15 +299,21 @@ input[type=range]{width:100%;max-width:420px;accent-color:var(--bone-dim);height
 /* The board. Every row gets its value border. Neighbors in the same tier merge into one shape,
    each row keeping its own shade. A target FFScouter has no estimate for gets a gray background. */
 @media(min-width:880px){
-  #tbl tbody.vb>tr>td{box-shadow:inset var(--bl,0px) 0 0 0 var(--vb),inset calc(-1 * var(--br,0px)) 0 0 0 var(--vb),inset 0 var(--bt,0px) 0 0 var(--vb),inset 0 calc(-1 * var(--bb,0px)) 0 0 var(--vb)}
-  #tbl tbody.vb>tr>td:first-child{--bl:2px}
-  #tbl tbody.vb>tr.detail>td{--br:2px}
+  /* The border is 2px inset shadows on the outer cells. The glow is a soft inset shadow on the same edges only. */
+  /* The tint goes on the row, not the cells: see-through cell backgrounds leave hairline seams between cells. */
+  #tbl tbody.vb>tr{background-color:var(--vbt)}
+  #tbl tbody.vb:hover>tr.main{background-color:color-mix(in srgb,var(--vb) 18%,transparent)}
+  #tbl tbody.vb>tr>td{box-shadow:inset var(--bl,0px) 0 0 0 var(--vb),inset calc(-1 * var(--br,0px)) 0 0 0 var(--vb),inset 0 var(--bt,0px) 0 0 var(--vb),inset 0 calc(-1 * var(--bb,0px)) 0 0 var(--vb),
+    inset var(--gl,0px) 0 12px -8px var(--gcl,transparent),inset calc(-1 * var(--gr,0px)) 0 12px -8px var(--gcr,transparent),inset 0 var(--gt,0px) 12px -8px var(--gct,transparent),inset 0 calc(-1 * var(--gb,0px)) 12px -8px var(--gcb,transparent)}
+  #tbl tbody.vb>tr>td:first-child{--bl:2px;--gl:8px;--gcl:var(--vbg)}
+  #tbl tbody.vb>tr.detail>td{--br:2px;--gr:8px;--gcr:var(--vbg)}
+  /* Inside a merged shape, a thin line in the tier's color splits the rows. */
+  #tbl tbody.vb:not(.ge)>tr.main>td,#tbl tbody.vb:not(.ge)>tr.detail>td{border-bottom-color:color-mix(in srgb,var(--vb) 40%,transparent)}
   #board[data-last=lvl] tbody.vb>tr.main>td.c-lvl,#board[data-last=status] tbody.vb>tr.main>td.c-status,#board[data-last=reward] tbody.vb>tr.main>td.c-reward,
   #board[data-last=bounties] tbody.vb>tr.main>td.c-bounties,#board[data-last=ff] tbody.vb>tr.main>td.c-ff,#board[data-last=age] tbody.vb>tr.main>td.c-age,
-  #board[data-last=checked] tbody.vb>tr.main>td.c-checked,#board[data-last=act] tbody.vb>tr.main>td.c-act{--br:2px}
-  #tbl tbody.vb.gs>tr.main>td{--bt:2px}
-  #tbl tbody.vb.ge>tr:last-child>td{--bb:2px}
-  #tbl tbody.vb4>tr>td{background:color-mix(in srgb,var(--gold) 6%,transparent)}
+  #board[data-last=checked] tbody.vb>tr.main>td.c-checked,#board[data-last=act] tbody.vb>tr.main>td.c-act{--br:2px;--gr:8px;--gcr:var(--vbg)}
+  #tbl tbody.vb.gs>tr.main>td{--bt:2px;--gt:8px;--gct:var(--vbg)}
+  #tbl tbody.vb.ge>tr:last-child>td{--bb:2px;--gb:8px;--gcb:var(--vbg)}
   #tbl tbody.noff>tr>td{background:color-mix(in srgb,var(--mist-faint) 16%,transparent)}
 }
 /* Resizable columns, desktop only. Widths are saved on this device. */
@@ -323,12 +349,13 @@ body.rzing{cursor:col-resize;user-select:none}
 .chip[aria-pressed=true]{background:var(--bone);border-color:var(--bone);color:var(--obsidian)}
 .chip[aria-pressed=true] .c{color:#3a3a3a}
 .ftoggle{display:none;margin-bottom:12px}
+.fpoop{align-self:end;min-height:44px;white-space:nowrap}
 .filters{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr));background:var(--carbon);border:1px solid var(--ash);border-radius:6px;padding:12px;margin-bottom:16px}
 .filters .q,.filters .sort,.filters .freset{grid-column:1/-1}
 .filters .field{font-size:.8rem}
 .freset{display:flex;align-items:flex-end;justify-content:flex-end;min-height:20px}
 @media(min-width:880px){
-  .filters{grid-template-columns:minmax(0,1.7fr) repeat(5,minmax(0,1fr)) minmax(0,1.6fr) auto}
+  .filters{grid-template-columns:minmax(0,1.7fr) repeat(4,minmax(0,1fr)) auto minmax(0,1fr) minmax(0,1.6fr) auto}
   .filters .q,.filters .sort,.filters .freset{grid-column:auto}
   .freset{min-height:44px;align-items:center}
 }
@@ -369,6 +396,11 @@ tbody.t:hover>tr.main{background:var(--obsidian-soft)}
 .sb.ready.unconf{background:color-mix(in srgb,var(--status-ready) 62%,var(--obsidian))}
 .sb.ready.unconf::after{content:"";position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;background:var(--status-ready-ink);animation:blink 1.2s ease-in-out infinite}
 .hitq{margin-left:10px;color:var(--gold-light);font-weight:700}
+.askw{display:inline-flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px}
+.ask{font-size:.8rem;color:var(--bone-soft);font-weight:700}
+.soon-m .askw{margin-left:8px}
+.c-act .askw{display:inline-flex;align-items:center}
+.c-act .askw .btn{margin-left:0}
 .newb.hitb{color:var(--gold-light);border-color:color-mix(in srgb,var(--gold) 50%,transparent)}
 .sb.hosp{--c:var(--status-hospital)}
 .sb.soon{--c:var(--status-soon)}
@@ -421,12 +453,12 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
   #tbl,#tbl>tbody{display:block}
   tbody.t{border:1px solid var(--ash);border-radius:4px;background:var(--carbon);margin-bottom:8px}
   tbody.t:hover>tr.main{background:transparent}
-  tbody.t.vb{border:2px solid var(--vb)}
-  tbody.t.vb4{background:color-mix(in srgb,var(--gold) 6%,var(--carbon))}
+  tbody.t.vb{border:2px solid var(--vb);background:color-mix(in srgb,var(--vb) 10%,var(--carbon));box-shadow:inset 0 0 18px -6px var(--vbg)}
+  tbody.t.vb0{background:color-mix(in srgb,var(--vb) 20%,var(--carbon))}
   tbody.t.noff{background:color-mix(in srgb,var(--mist-faint) 16%,var(--carbon))}
   /* Same tier, glued: no gap, no rounded corners where they touch, a thin line between them. */
   tbody.t.vb:not(.ge){margin-bottom:0;border-bottom-width:0;border-bottom-left-radius:0;border-bottom-right-radius:0}
-  tbody.t.vb:not(.gs){border-top:1px solid var(--ash-deep);border-top-left-radius:0;border-top-right-radius:0}
+  tbody.t.vb:not(.gs){border-top:1px solid color-mix(in srgb,var(--vb) 45%,transparent);border-top-left-radius:0;border-top-right-radius:0}
   tbody.t>tr.main{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name lvl" "status reward" "status ff" "bounties checked" "act act";gap:8px 14px;padding:14px}
   #board.hitview tbody.t>tr.main{grid-template-areas:"name lvl" "status reward" "status ff" "bounties checked" "gained times" "act act"}
   .c-gained{grid-area:gained}
@@ -471,6 +503,9 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
 .dev h2{font-size:1.6rem}
 .dpane{margin-top:12px}
 .dnote{margin:0 0 12px}
+.pacebox{display:grid;gap:4px;max-width:760px;padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--ash)}
+.pacebox .hint{margin:0 0 8px}
+.pacebox .qhead,.dpane>.qhead{margin-top:0}
 .eng{display:grid;gap:0}
 .op{display:grid;grid-template-columns:minmax(260px,auto) 220px minmax(0,1fr);gap:4px 16px;align-items:center;padding:8px 0;border-bottom:1px solid var(--ash-deep);font-size:.88rem}
 .opx{display:flex;gap:8px;align-items:center}
@@ -527,11 +562,17 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
 .pdiv span{font-size:.8rem;color:var(--mist-light)}
 .pdiv time{margin-left:auto;font-size:.76rem;color:var(--mist-dim)}
 .dlg-pane[data-pane=log] .dlg-tools{position:sticky;top:-12px;z-index:2;background:var(--carbon);padding:10px 0 8px;margin-top:-10px}
-.call>summary{display:grid;grid-template-columns:70px 64px minmax(0,1fr) 110px 52px 64px 64px;gap:10px;align-items:center;min-height:34px;width:auto;padding:4px 0;font-weight:400;color:var(--mist-light)}
+.call>summary{display:grid;grid-template-columns:70px 64px minmax(0,1fr) 110px 78px 52px 64px 64px;gap:10px;align-items:center;min-height:34px;width:auto;padding:4px 0;font-weight:400;color:var(--mist-light)}
 .call>summary::before{display:none}
 .call>summary:hover{background:var(--obsidian-soft);color:var(--bone)}
 .call .cp{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--bone-dim)}
 .call .cm{color:var(--mist-dim);text-align:right}
+.callhead{display:grid;grid-template-columns:70px 64px minmax(0,1fr) 110px 78px 52px 64px 64px;gap:10px;padding:0 11px 4px;font-size:.74rem;color:var(--mist-dim);border-bottom:1px solid var(--ash)}
+.callhead .r{text-align:right}
+@media(max-width:879px){.callhead{display:none}}
+.cst{font-size:.78rem;font-weight:700;white-space:nowrap;color:var(--mist-light)}
+.cst.na{color:var(--mist-faint);font-weight:400}.cst.ok{color:var(--status-ready)}.cst.hosp{color:var(--status-hospital)}
+.cst.jail{color:var(--status-jail)}.cst.travel{color:var(--status-travel)}
 .svc{font-size:.72rem;font-weight:700;border-radius:3px;padding:1px 6px;text-align:center;color:var(--obsidian)}
 .svc.torn{background:var(--bone-dim)}
 .svc.ffs{background:var(--status-travel)}
@@ -549,6 +590,25 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
 .call-body pre{margin:0;padding:10px;background:var(--obsidian-deep);border:1px solid var(--ash);border-radius:4px;max-height:340px;overflow:auto;font-size:.78rem;line-height:1.45;color:var(--bone-dim);white-space:pre-wrap;overflow-wrap:anywhere}
 .learn-card{margin:4px 0 6px;padding:10px 12px;border-left:3px solid var(--gold-dark);background:var(--obsidian-soft);color:var(--mist-light);font-size:.86rem;max-width:90ch}
 .learn-card b{color:var(--bone)}
+.bcard{margin:6px 0 8px}
+.ltop{margin:0 0 12px;padding:10px 12px;border:1px solid var(--ash);border-radius:6px;background:var(--obsidian-soft)}
+.ltop>summary{font-weight:700;color:var(--bone-soft)}
+.lmap{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0}
+.lmap li{flex:1 1 130px;padding:8px 10px;border:1px solid var(--ash);border-radius:6px;background:var(--carbon);font-size:.84rem}
+.lmap li b{display:block;color:var(--mist-light)}
+.lmap li span{color:var(--mist-dim)}
+.lmap li.done b{color:var(--bone-soft)}.lmap li.done span{color:var(--status-ready)}
+.lmap li.now{border-color:var(--gold);box-shadow:inset 0 0 12px -4px var(--gold)}.lmap li.now b{color:var(--gold-light)}.lmap li.now span{color:var(--gold-light)}
+.lbudget{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:.84rem}
+.lbudget li{display:grid;grid-template-columns:minmax(120px,190px) minmax(0,1fr) 90px;gap:10px;align-items:center}
+.lbudget .lb{height:8px;border-radius:4px;background:var(--ash-deep);overflow:hidden}
+.lbudget .lb i{display:block;height:100%;background:var(--pc,var(--mist))}
+.lbudget .lv{text-align:right;font-variant-numeric:tabular-nums}
+.lbudget li[data-ph=connect]{--pc:var(--mist-light)}.lbudget li[data-ph=board]{--pc:var(--gold)}.lbudget li[data-ph=ff]{--pc:var(--status-travel)}
+.lbudget li[data-ph=first]{--pc:var(--status-ready)}.lbudget li[data-ph=recheck]{--pc:var(--status-protected)}.lbudget li[data-ph=fresh]{--pc:var(--status-soon)}
+.lbudget li[data-ph=manual]{--pc:var(--status-jail)}.lbudget li[data-ph=refresh]{--pc:#e070b0}.lbudget li[data-ph=tracked]{--pc:var(--pin)}
+.lcmp th[scope=row]{color:var(--mist-dim);font-size:.78rem;white-space:nowrap}
+.lcmp td{min-width:180px}
 /* Codex */
 .cx{margin:0;border-top:1px solid var(--ash-deep)}
 .cx>summary{width:100%;padding:12px 0;font-size:1rem;color:var(--bone-soft)}
@@ -585,7 +645,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
 .cat td{padding:10px 10px 10px 0;border-bottom:1px solid var(--ash-deep);vertical-align:top}
 .cat code{font-size:.78rem;color:var(--bone-dim);overflow-wrap:anywhere}
 @media(max-width:879px){
-  .call>summary{grid-template-columns:60px 58px minmax(0,1fr) 46px;}
+  .call>summary{grid-template-columns:60px 58px minmax(0,1fr) 64px 46px;}
   .call .ck,.call .cms,.call .csz{display:none}
   .qlist li{grid-template-columns:24px minmax(0,1fr) 80px}
   .qlist .w{grid-column:2/-1}
@@ -630,6 +690,15 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
   </div>
 
   <div class="dpane" data-dpane="engine">
+    <div class="pacebox">
+      <p class="qhead">Pace and live checks</p>
+      <label class="field range" for="pace"><span>Torn calls per minute <output id="paceOut" for="pace">60</output></span>
+        <input id="pace" type="range" min="20" max="90" step="5" value="60"></label>
+      <p class="hint">Torn allows 100 a minute across every tool and script you run. Leave room for the rest.</p>
+      <label class="check"><input type="checkbox" id="live" checked><span>Keep checking while this page is open</span></label>
+      <p class="hint">Okay targets at the top of High value and Easy fights get re-checked every 90 seconds. Other Okay targets get re-checked every 10 to 30 minutes, slower the longer they have been offline. Re-checks never use more than 25% of your pace. Hospital timers are never re-checked: the target gets one check when the timer ends, even in a background tab. Other re-checks pause while this tab is in the background. After 30 minutes with no click, key press, scroll or touch, every call stops until you resume.</p>
+    </div>
+    <p class="qhead">Engine</p>
     <p class="hint dnote">Run each part of the engine on its own. The cost shows before you press.</p>
     <div class="eng" id="eng">
       <div class="op"><button class="btn sm ghost" type="button" data-op="board">Refetch the board</button><span class="cost" data-cost="board"></span><span class="what">Reads every page again, even if Torn's timestamp hasn't moved.</span></div>
@@ -652,7 +721,9 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
       <label class="field range" for="sFF"><span>Max fair fight <output id="sFFOut"></output></span><input id="sFF" type="range" min="10" max="50" step="1"></label>
       <label class="field range" for="sVmin"><span>Value from <output id="sVminOut"></output></span><input id="sVmin" type="range" min="0" max="100" step="1"></label>
       <label class="field range" for="sVmax"><span>Value up to <output id="sVmaxOut"></output></span><input id="sVmax" type="range" min="0" max="100" step="1"></label>
+      <label class="field" for="poopAt"><span>Poop threshold <em>remembered on this device</em></span><input id="poopAt" type="text" autocomplete="off" placeholder="10k"></label>
     </div>
+    <p class="hint">Bounties under the poop threshold get a 💩 tag and a brown border. "Discard poop" on the board hides them and skips their checks. 0 turns poop off.</p>
     <p class="qhead">Columns</p>
     <div class="cols" id="cols"></div>
   </div>
@@ -715,20 +786,8 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
       <input id="specFF" type="text" inputmode="decimal" autocomplete="off" placeholder="2.5"></label>
     <div class="go-wrap"><button class="btn gold" id="huntBtn" type="button">Start the hunt</button></div>
   </div>
-  <p class="hint">Rewards take 250k or 1.5m, and count per hit: one attack claims one bounty, the biggest on that target. Fair Fight Score is the fight you want: Easy fights puts the targets closest to it first, and High value shows the biggest bounties within 1.5 of it. It also caps the board, which you can change there.</p>
-  <details class="adv">
-    <summary>Pace and live checks</summary>
-    <div class="fields">
-      <label class="field range" for="pace"><span>Torn calls per minute <output id="paceOut" for="pace">60</output></span>
-        <input id="pace" type="range" min="20" max="90" step="5" value="60"></label>
-      <p class="hint" style="margin-top:-4px">Torn allows 100 a minute across every tool and script you run. Leave room for the rest.</p>
-      <label class="check"><input type="checkbox" id="live" checked><span>Keep checking while this page is open</span></label>
-      <p class="hint" style="margin-top:-4px">Okay targets at the top of High value and Easy fights get re-checked every 90 seconds. Other Okay targets get re-checked every 10 to 30 minutes, slower the longer they have been offline. Re-checks never use more than 25% of your pace. Hospital timers are never re-checked: the target gets one check when the timer ends, even in a background tab. Other re-checks pause while this tab is in the background. After 30 minutes with no click, key press, scroll or touch, every call stops until you resume.</p>
-      <label class="check"><input type="checkbox" id="notify"><span>Browser notification when a target turns Fresh</span></label>
-      <p class="hint" style="margin-top:-4px" id="notifyHint">Sound plays for the same moments. The Sound button at the top turns all sound off.</p>
-    </div>
-  </details>
-  <div class="gains" id="gains" hidden><b id="gainsText"></b><span class="hint">based on your Hit marks</span></div>
+  <p class="hint">Rewards take 250k or 1.5m, and count per hit: one attack claims one bounty, the biggest on that target. Fair Fight Score is the fight you want: Easy fights puts the targets closest to it first, and High value shows the biggest bounties of $250k and up within 1.5 of it. It also caps the board, which you can change there.</p>
+  <div class="gains" id="gains" hidden><b id="gainsText"></b><span class="hint">based on the hits you marked as yours</span></div>
   <p class="msg" id="huntMsg" role="status" aria-live="polite"></p>
 </section>
 
@@ -816,6 +875,16 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
   <ol class="soon-list car" id="soonList"></ol>
 </section>
 
+<section class="soon tpin-strip" id="tpin" hidden aria-labelledby="tpinTitle">
+  <div class="sec-head">
+    <h2 id="tpinTitle">Targets to pin</h2>
+    <p class="meta grow" id="tpinSub"></p>
+    <span class="sctl"><button class="btn ghost sm sbp" type="button" data-secpin="tpin" aria-pressed="false" title="Show this section's targets first on the board"><i class="ord" aria-hidden="true"></i><span class="lab">Pin to board</span></button><button class="btn ghost sm" type="button" data-sechide="tpin" title="Hide this section">Hide</button></span>
+    <span class="car-nav"><button class="btn ghost sm" type="button" data-car="tpinList" data-dir="-1" aria-label="Scroll Targets to pin left"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg></button><button class="btn ghost sm" type="button" data-car="tpinList" data-dir="1" aria-label="Scroll Targets to pin right"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 3 5 5-5 5"/></svg></button></span>
+  </div>
+  <ol class="soon-list car" id="tpinList"></ol>
+</section>
+
 <section class="board" id="board" hidden aria-labelledby="boardTitle">
   <div class="sec-head">
     <h2 id="boardTitle">The board</h2>
@@ -846,6 +915,7 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
     <label class="field" for="fLvlMax"><span>Level to</span><input id="fLvlMax" type="number" min="1" max="100" inputmode="numeric" placeholder="100"></label>
     <label class="field" for="fReward"><span>Min value</span><input id="fReward" type="text" autocomplete="off" placeholder="Any"></label>
     <label class="field" for="fFF"><span>Max fair fight</span><input id="fFF" type="text" inputmode="decimal" autocomplete="off" placeholder="Any"></label>
+    <label class="check fpoop" for="fPoop"><input type="checkbox" id="fPoop"><span>Discard poop <span aria-hidden="true">💩</span></span></label>
     <label class="field" for="fAge"><span>Min account age</span><input id="fAge" type="number" min="0" inputmode="numeric" placeholder="Days" title="14 or more hides new players under Torn's New Player Protection"></label>
     <label class="field sort" for="sortSel"><span>Sort by</span>
       <select id="sortSel">
@@ -885,6 +955,12 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
   <div class="more" id="moreWrap" hidden><button class="btn ghost" id="moreBtn" type="button">Show more</button></div>
 </section>
 
+<div class="notepop" id="notePop" hidden role="dialog" aria-labelledby="noteWho">
+  <label class="field" for="noteIn"><span id="noteWho">Add to personal targets</span>
+    <input id="noteIn" type="text" maxlength="80" autocomplete="off" spellcheck="true" placeholder="A note, optional"></label>
+  <p class="hint"><span>Enter or a click away saves. Escape saves with no note.</span><span id="noteCount"></span></p>
+</div>
+
 <dialog class="dlg" id="insp" aria-labelledby="inspTitle">
   <div class="dlg-head">
     <h2 id="inspTitle">API calls</h2>
@@ -909,7 +985,27 @@ tr.detail>td{padding:0;border-bottom:1px solid var(--ash-deep)}
       <button class="btn ghost sm" type="button" id="inspExport">Export JSON</button>
       <span class="hint" id="inspNew"></span>
     </div>
-    <p class="learn-only learn-intro">Oldest call at the top, newest at the bottom. Each colored block is one job the engine was doing. Click a call to see what was sent, what came back, and why the tool asked. Keys are always masked. The log lives in memory and is gone on reload.</p>
+    <p class="learn-only learn-intro">Oldest call at the top, newest at the bottom. Each colored block is one job the engine was doing, with a card that says what the job is, why it ran, what it feeds and what it cost. Click a call to see what was sent, what came back, why the tool asked, and what changed. Keys are always masked. The log lives in memory and is gone on reload.</p>
+    <details class="learn-only ltop" open>
+      <summary>How to read this log</summary>
+      <p class="qhead">Where the engine is</p>
+      <ol class="lmap" id="lmap"></ol>
+      <p class="qhead">Where your calls went this session</p>
+      <ul class="lbudget" id="lbudget"></ul>
+      <p class="qhead">The three calls that do the work</p>
+      <div class="tblwrap"><table class="cat lcmp">
+        <thead><tr><th></th><th>Board sweep</th><th>Target profile</th><th>Fair fight</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Asks</th><td><code>GET /v2/torn/bounties</code></td><td><code>GET /v2/user/{id}/profile</code></td><td><code>FFScouter get-stats</code></td></tr>
+          <tr><th scope="row">Answers</th><td>Who has a bounty, how much, until when</td><td>Where one target is right now, and when their timer ends</td><td>How strong each target is compared to you</td></tr>
+          <tr><th scope="row">Costs</th><td>1 call per 100 listings, <span id="lcost">pages depend on the board</span></td><td>1 call per target, every time</td><td>1 call per 205 targets, outside your Torn pace</td></tr>
+          <tr><th scope="row">Cache</th><td>Torn's shared snapshot. Same timestamp as last time: 1 call and done</td><td>The <code>timestamp</code> parameter skips Torn's 30-second cache, so the answer is live</td><td>Saved 6 hours in your browser, for your account only</td></tr>
+          <tr><th scope="row">How often</th><td>When you start a hunt or press Refetch board</td><td>Once for everyone, then on a timer, on a budget</td><td>Once per target, every 6 hours at most</td></tr>
+          <tr><th scope="row">Feeds</th><td>The board, every value and border, Targets to pin</td><td>Every status, timer and strip</td><td>The fair fight pills, the scan order, High value, Easy fights</td></tr>
+        </tbody>
+      </table></div>
+    </details>
+    <div class="callhead" aria-hidden="true"><span>Time</span><span>Service</span><span>Request</span><span>Call</span><span>Status</span><span>Code</span><span class="r">Took</span><span class="r">Size</span></div>
     <div class="calls" id="inspList"></div>
   </div>
   <div class="dlg-pane" data-pane="queue" hidden><div id="inspQueue"></div></div>
@@ -1005,7 +1101,8 @@ const RECHECK_SHARE = 0.25;       // re-checks never use more than 25% of your p
 const IDLE_STOP = 30 * 60e3;      // no click, key, scroll or touch for this long: every call stops
 const FRESH_HOLD = 5 * 60e3;      // "Fresh out of the hospital" keeps everyone for 5 minutes after they turn Fresh
 const BAND = 1.5;                 // High value and the first checks look this far on either side of your score
-const UNDO_MS = 60e3;             // a Hit mark can be undone for this long
+const UNDO_MS = 60e3;             // a hit you said Yes to can be undone for this long
+const ASK_MS = 60e3;              // after Hospitalized, "Was it you?" stays up this long. No answer counts as No
 const TRAVEL_RECHECK = 5 * 60e3;
 const IDLE_RECHECK = 10 * 60e3;   // everything else
 const FF_BATCH = 205;             // FFScouter max targets per call
@@ -1017,6 +1114,7 @@ const PIN_GRACE = 2 * 86400e3;    // a pin marked for deletion is removed 2 days
 const TRACK_OKAY = 60e3;          // pinned and personal targets: Okay, re-checked every minute
 const TRACK_SLOW = 5 * 60e3;      // pinned and personal: hospital, jail and travel, every 5 min (catches early revives and bails)
 const TRACK_SHARE = 0.15;         // their re-checks never use more than 15% of your pace, on top of the 25%
+const NOTE_MAX = 80;              // a note on a personal target, short enough to fit on a board row
 const HOLD_MSG = 'Torn says too many requests. Your other tools share the same limit, so this waits 30 seconds.';
 const FATAL = new Set([1, 2, 8, 9, 10, 13, 14, 16, 18, 24]);
 const RETRY = new Set([-1, -2, 5, 15, 17]);
@@ -1041,7 +1139,7 @@ const TORN_MSG = {
 /* ------------------------------------------------------------------ *
  *  State
  * ------------------------------------------------------------------ */
-const blankFilters = () => ({ q: '', lvlMin: 0, lvlMax: 0, rewardMin: 0, rewardMax: 0, ffMax: 0, ageMin: 0, states: new Set() });
+const blankFilters = () => ({ q: '', lvlMin: 0, lvlMax: 0, rewardMin: 0, rewardMax: 0, ffMax: 0, ageMin: 0, noPoop: false, states: new Set() });
 const savedF = store.get('filters', null);
 if (savedF && Array.isArray(savedF.states)) savedF.states = savedF.states.map(s => (s === 'ready' ? 'okay' : s));
 
@@ -1067,7 +1165,8 @@ const S = {
   phase: 'idle',                              // idle | list | hunting | paused | stopped
   runId: 0, sweepRun: 0, pumping: false, searchNote: '',
   hover: false, freezeAt: 0,
-  clicked: new Set(),                         // Attack opened this session, so offer "Hit?"
+  clicked: new Set(),                         // Attack opened this session, so offer "Hospitalized"
+  hosp: new Map(),                            // id -> when you pressed Hospitalized. Asks "Was it you?" for a minute
   hit: new Map(store.get('hit', [])),         // id -> when it was marked hit. Hidden, and never checked, until the hospital timer from that hit ends
   ledger: loadLedger(),                       // id -> { n: name, h: [[when, value], ...] }: every hit you marked, for the gains
   rmArm: null,                                // { id, at }: Remove pressed once in the Hit view, waiting for the second press
@@ -1077,6 +1176,7 @@ const S = {
   mine: loadMine(),                           // id -> { n, lvl, at }: personal targets, bounty or not, only ever added by hand
   adding: new Set(),                          // personal targets added by ID, waiting for the check that says they exist
   mineArm: null,                              // { id, at }: Remove pressed once on a personal target
+  cmore: new Set(),                           // cards showing every bounty on their target ("+N more" pressed)
 };
 function loadPins() {
   const m = new Map(), raw = store.get('pins', []);
@@ -1085,7 +1185,7 @@ function loadPins() {
 }
 function loadMine() {
   const m = new Map(), raw = store.get('mine', []);
-  if (Array.isArray(raw)) for (const r of raw) if (Array.isArray(r) && r[1]) m.set(Number(r[0]), { n: String(r[1].n || ''), lvl: Number(r[1].lvl) || 0, at: Number(r[1].at) || 0 });
+  if (Array.isArray(raw)) for (const r of raw) if (Array.isArray(r) && r[1]) m.set(Number(r[0]), { n: String(r[1].n || ''), lvl: Number(r[1].lvl) || 0, at: Number(r[1].at) || 0, note: String(r[1].note || '').slice(0, NOTE_MAX) });
   return m;
 }
 function loadLedger() {
@@ -1188,7 +1288,7 @@ const CATALOG = {
     learn: "Torn serves one shared snapshot of the board. Page 1 also says how many listings exist (_metadata.total), so the tool knows exactly how many pages to read. It also carries bounties_timestamp: if that hasn't moved since last time, the board is the same and the sweep stops after one call. Listings on the same target get stacked into one row.",
   },
   target_profile: {
-    cx: 'sched', svc: 'torn', path: '/v2/user/{id}/profile', label: 'Target status', when: 'Status loop, Check now',
+    cx: 'sched', svc: 'torn', path: '/v2/user/{id}/profile', label: 'Target profile', when: 'Status loop, Check now',
     why: "One target's live status. One call per target.",
     fields: 'profile.status.state, status.until, status.description, status.details, last_action.timestamp, age, signed_up, level, name',
     learn: "This is the call the whole tool is built on. status.state says Okay, Hospital, Jail, Traveling and so on. status.until is when a timer ends, so the countdowns tick in your browser without more calls. age and signed_up give New Player Protection. last_action says when the target last did anything in Torn: an Okay target that has been offline for hours gets re-checked less often. The timestamp parameter makes Torn skip its 30-second cache, so a re-check never hands back an old answer.",
@@ -1216,10 +1316,17 @@ function kindOf(svc, path) {
 // Keys never show in full anywhere in the inspector, not even in an export.
 const maskKey = k => k ? '••••••••••••' + String(k).slice(-4) : '(none)';
 
+// A status in a few words, for Learn mode's "what changed": "Hospital, 12m 04s left", "Okay", "never checked".
+function stSum(st, ns = nowS()) {
+  if (!st) return 'never checked';
+  const left = st.until && st.until > ns ? ', ' + fmtLeft(st.until - ns) + ' left' : '';
+  return (isProt(st) ? 'Protected' : st.state) + left;
+}
 const CallLog = {
-  list: [], n: 0, KEEP: 500, BODIES: 80, counts: { torn: 0, ffs: 0, err: 0 },
+  list: [], n: 0, KEEP: 500, BODIES: 80, counts: { torn: 0, ffs: 0, err: 0 }, byPh: {},
   start(o) {
     const e = { n: ++this.n, at: Date.now(), ms: 0, state: 'pending', http: 0, demo: S.demo, size: 0, ...o };
+    this.byPh[e.phase] = (this.byPh[e.phase] || 0) + 1;
     this.list.push(e);
     if (this.list.length > this.KEEP) this.list.shift();
     // Keep full answers for the recent calls only. A board page is big.
@@ -1231,6 +1338,16 @@ const CallLog = {
   },
   done(e, http, body) {
     e.ms = Date.now() - e.at; e.http = http; e.state = 'ok'; e.body = body;
+    // A target profile says what state the target is in. Kept apart from the body, which gets dropped to save memory.
+    if (e.kind === 'target_profile') {
+      const st = body?.profile?.status || {};
+      e.tstate = String(st.state || 'Unknown');
+      e.after = stSum({ state: e.tstate, until: Number(st.until) || 0 });
+    }
+    // A short summary of the answer, kept after the body is dropped.
+    if (e.kind === 'bounties') e.got = { n: Array.isArray(body?.bounties) ? body.bounties.length : 0, total: Number(body?._metadata?.total) || 0, ts: Number(body?.bounties_timestamp) || 0 };
+    if (e.kind === 'ffs_stats' && Array.isArray(body)) e.got = { n: body.length, none: body.filter(o => o.fair_fight == null).length };
+    if (e.kind === 'key_info') e.got = { type: String(body?.info?.access?.type || '') };
     try { e.size = JSON.stringify(body).length; } catch {}
     Insp.onUpd(e);
     return body;
@@ -1287,13 +1404,16 @@ const KeyGuard = {
 async function torn(path, params = {}, meta = {}) {
   const kind = kindOf('torn', path);
   if (!S.demo) { const g = KeyGuard.gate(S.key); if (g) throw g; }
+  const q0 = Date.now();
   await Pacer.take({ kind, why: meta.why });
+  const waited = Date.now() - q0, behind = Pacer.waiting.size;
   // Check again: another call or another tab may have hit a refused key or an IP block while this one waited.
   if (!S.demo) { const g = KeyGuard.gate(S.key); if (g) throw g; }
   const u = new URL('https://api.torn.com/v2' + path);
   for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
   u.searchParams.set('comment', 'HBountyTracker');
-  const e = CallLog.start({ svc: 'torn', kind, url: u.toString(), headers: { Authorization: 'ApiKey ' + maskKey(S.key) }, params, why: meta.why, phase: meta.phase || 'other' });
+  const e = CallLog.start({ svc: 'torn', kind, url: u.toString(), headers: { Authorization: 'ApiKey ' + maskKey(S.key) }, params, why: meta.why, phase: meta.phase || 'other',
+    waited, behind, target: meta.target || 0, before: meta.target ? stSum(S.status.get(meta.target)) : '' });
   if (S.demo) {
     try { return CallLog.done(e, 200, await Demo.torn(path, params)); }
     catch (x) { CallLog.fail(e, 200, x); throw x; }
@@ -1341,7 +1461,7 @@ async function ffs(path, params = {}, meta = {}) {
   u.searchParams.set('key', S.ffKey);              // FFScouter only takes the key as a query param
   for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
   const shown = new URL(u); shown.searchParams.set('key', maskKey(S.ffKey));
-  const e = CallLog.start({ svc: 'ffs', kind: kindOf('ffs', path), url: shown.toString(), headers: {}, params, why: meta.why, phase: meta.phase || 'other' });
+  const e = CallLog.start({ svc: 'ffs', kind: kindOf('ffs', path), url: shown.toString(), headers: {}, params, why: meta.why, phase: meta.phase || 'other', waited: Math.max(0, w), behind: 0 });
   if (S.demo) {
     try { return CallLog.done(e, 200, await Demo.ffs(path, params)); }
     catch (x) { CallLog.fail(e, 200, x); throw x; }
@@ -1497,22 +1617,47 @@ const gainOf = id => { const e = S.ledger.get(id); return e ? e.h.reduce((a, x) 
 const timesOf = id => { const e = S.ledger.get(id); return e ? e.h.length : 0; };
 function gainsTotal() { let v = 0, n = 0; for (const e of S.ledger.values()) for (const x of e.h) { v += Number(x[1]) || 0; n++; } return { v, n, people: S.ledger.size }; }
 
+// Hospitalized: the target went to hospital, by your hand or someone else's. One check about 5 seconds later picks up
+// the real hospital timer, then they follow the normal flow (Available soon, Fresh, Okay). "Was it you?" asks for
+// a minute: Yes logs a hit in your gains, No (or no answer) logs nothing.
+function markHosp(id) {
+  if (!known(id)) return;
+  const at = Date.now();
+  S.hosp.set(id, at); S.clicked.delete(id);
+  if (S.demo) Demo.hit(id);
+  setTimeout(() => {
+    const st = S.status.get(id);
+    if (st && st.at > at) return;   // already checked since the press
+    if (!S.priority.includes(id)) S.priority.unshift(id);
+    S.pwhy.set(id, 'You marked them hospitalized, picking up the real hospital timer'); S.pph.set(id, 'manual'); pump();
+  }, 5000);
+  setTimeout(() => dirty(), ASK_MS + 200);
+  render();
+}
+const asking = id => { const at = S.hosp.get(id); return at != null && Date.now() - at < ASK_MS; };
+function answerHosp(id, mine) {
+  const at = S.hosp.get(id);
+  S.hosp.delete(id);
+  if (mine && at != null) markHit(id, at); else render();
+}
+
 // A hit goes in the ledger at the value shown when you pressed it: what that hit paid, as far as the tool can know.
 // The target hides once the minute to undo is over, and gets no status checks until the hospital timer from the hit ends.
 // One check about 5 seconds after the mark picks up that timer.
-function markHit(id) {
+// from: when Hospitalized was pressed. The hit counts from then, so the check that followed the press already covers it.
+function markHit(id, from) {
   const t = S.targets.get(id);
   if (!t) return;
   const at = Date.now();
-  S.hit.set(id, at); S.clicked.delete(id);
+  S.hit.set(id, from || at); S.clicked.delete(id);
   const e = S.ledger.get(id) || { n: t.name, h: [] };
   e.n = t.name; e.h.push([at, t.reward]);
   S.ledger.set(id, e);
   saveHits(); saveLedger();
   // A hit on a pinned target's last bounty: nothing left to collect, so the pin is marked for deletion.
   if (S.pins.has(id) && t.count <= 1) markPin(id, 'hit');
-  if (S.demo) Demo.hit(id);
-  setTimeout(() => { if (S.hit.get(id) === at) { if (!S.priority.includes(id)) S.priority.push(id); S.pwhy.set(id, 'You marked a hit, picking up the new hospital timer'); S.pph.set(id, 'manual'); pump(); } }, 5000);
+  if (S.demo && !from) Demo.hit(id);
+  setTimeout(() => { if (S.hit.get(id) === (from || at) && !(S.status.get(id)?.at > (from || at))) { if (!S.priority.includes(id)) S.priority.push(id); S.pwhy.set(id, 'You marked a hit, picking up the new hospital timer'); S.pph.set(id, 'manual'); pump(); } }, 5000);
   render();
 }
 function undoHit(id) {
@@ -1521,7 +1666,7 @@ function undoHit(id) {
   const e = S.ledger.get(id);
   e.h.pop();
   if (!e.h.length) S.ledger.delete(id);
-  if (S.hit.get(id) === last[0]) S.hit.delete(id);
+  if (S.hit.has(id) && S.hit.get(id) <= last[0]) S.hit.delete(id);
   S.clicked.add(id);
   const p = S.pins.get(id);
   if (p && p.why === 'hit' && p.mark >= last[0]) { p.mark = 0; p.why = ''; savePins(); }
@@ -1598,22 +1743,56 @@ function togglePin(id) {
   render();
 }
 // Remove from Personal takes two presses: these are hand-picked and never come back by themselves.
-function toggleMine(id) {
+// Adding opens a small note box first. Enter or a click away saves (with or without a note), Escape saves with no note.
+function toggleMine(id, anchor) {
   if (S.mine.has(id)) {
     if (!(S.mineArm && S.mineArm.id === id && Date.now() - S.mineArm.at < 3000)) { S.mineArm = { id, at: Date.now() }; render(); setTimeout(() => dirty(), 3100); return; }
     S.mineArm = null; S.mine.delete(id); saveMine(); render(); return;
   }
+  Note.open(id, anchor, 'add');
+}
+function addMine(id, note) {
   const t = personOf(id);
-  S.mine.set(id, { n: t.name, lvl: lvlOf(t), at: Date.now() });
+  S.mine.set(id, { n: t.name, lvl: lvlOf(t), at: Date.now(), note: note || '' });
   saveMine();
   Sec.hidden.delete('mineSec'); Sec.save();
   render();
 }
+// The note box. One for the whole page, placed above the button that opened it.
+const Note = {
+  id: 0, mode: '', closedAt: 0,
+  open(id, anchor, mode) {
+    if (this.id) this.close('save');
+    this.id = id; this.mode = mode;
+    const pop = $('notePop'), inp = $('noteIn');
+    inp.value = mode === 'edit' ? (S.mine.get(id)?.note || '') : '';
+    $('noteWho').textContent = (mode === 'edit' ? 'Note on ' : 'Add ') + personOf(id).name + (mode === 'edit' ? '' : ' to personal targets');
+    pop.hidden = false;
+    const r = anchor ? anchor.getBoundingClientRect() : { left: 40, top: 120, width: 0, bottom: 120 };
+    const w = pop.offsetWidth, h = pop.offsetHeight, sx = window.scrollX, sy = window.scrollY;
+    pop.style.left = clamp(r.left + sx + r.width / 2 - w / 2, sx + 8, sx + document.documentElement.clientWidth - w - 8) + 'px';
+    pop.style.top = (r.top - h - 8 > 8 ? r.top + sy - h - 8 : r.bottom + sy + 8) + 'px';
+    this.count();
+    inp.focus();
+  },
+  count() { $('noteCount').textContent = `${$('noteIn').value.length} / ${NOTE_MAX}`; },
+  // how: 'save' keeps what was typed, 'empty' saves no note, 'cancel' (editing only) keeps the old note.
+  close(how) {
+    if (!this.id) return;
+    const id = this.id, mode = this.mode, text = how === 'save' ? $('noteIn').value.trim().slice(0, NOTE_MAX) : '';
+    this.id = 0; this.closedAt = Date.now();
+    $('notePop').hidden = true;
+    if (mode === 'add') { addMine(id, text); return; }
+    const r = S.mine.get(id);
+    if (r && how !== 'cancel') { r.note = text; saveMine(); }
+    render();
+  },
+};
 // Keep: a pin marked for deletion moves to Personal targets, where nothing removes it.
 function keepPin(id) {
   const p = S.pins.get(id);
   if (!p) return;
-  if (!S.mine.has(id)) S.mine.set(id, { n: p.n, lvl: p.lvl, at: Date.now() });
+  if (!S.mine.has(id)) S.mine.set(id, { n: p.n, lvl: p.lvl, at: Date.now(), note: '' });
   S.pins.delete(id);
   savePins(); saveMine();
   Sec.hidden.delete('mineSec'); Sec.save();
@@ -1661,7 +1840,7 @@ function addById() {
   if (S.mine.has(id)) return msg(`${personOf(id).name} is already in your personal targets.`);
   if (!S.key && !S.demo) return msg('Connect your key first, or try the demo. Adding someone costs one call, to check they exist.');
   const t = personOf(id);
-  S.mine.set(id, { n: t.off ? '' : t.name, lvl: t.off ? 0 : lvlOf(t), at: Date.now() });
+  S.mine.set(id, { n: t.off ? '' : t.name, lvl: t.off ? 0 : lvlOf(t), at: Date.now(), note: '' });
   saveMine();
   Sec.hidden.delete('mineSec'); Sec.save();
   S.adding.add(id);
@@ -2311,7 +2490,7 @@ async function scheduleFF() {
       // Scout every target your search allows, past the fair fight cap too: 205 per call keeps even a
       // full board to a handful of calls, and the band, the strips and the scan order need complete data.
       // Personal and pinned targets ride along, even off the board: same call, a few more ids.
-      const scope = [...new Set([...S.pool.map(t => t.id), ...S.mine.keys(), ...S.pins.keys()])];
+      const scope = [...new Set([...S.pool.map(t => t.id), ...S.mine.keys(), ...S.pins.keys(), ...toPinList().map(t => t.id)])];
       const need = [], c = Date.now() - FF_TTL;
       let have = 0;
       for (const id of scope) {
@@ -2411,6 +2590,8 @@ function computeView() {
     if (f.lvlMax && lvl > f.lvlMax) continue;
     if (f.rewardMin && t.reward < f.rewardMin) continue;
     if (f.rewardMax && t.reward > f.rewardMax) continue;
+    // Discard poop: gone from the board and never checked. Pinned and personal targets are exempt.
+    if (f.noPoop && isPoop(t) && !S.pins.has(t.id) && !S.mine.has(t.id)) continue;
     // Age is only known once a target has been checked; until then it stays in.
     if (f.ageMin && st && st.age != null && st.age < f.ageMin) continue;
     pool.push(t);
@@ -2463,7 +2644,7 @@ function computeView() {
   if (hitView) view.sort(SORTS[S.sort] || SORTS.reward_desc);
   S.view = view;
   S.groups = null;
-  // Pinned targets always come first. Then each section pinned to the board, in the order you pinned them.
+  // Pinned targets always come first. Then the section pinned to the board, if there is one.
   // The board's filters ran once already, so each group only takes targets the filters let through.
   if (!hitView && (S.pins.size || Sec.order.length)) {
     const inView = new Set(view.map(t => t.id)), used = new Set(), groups = [];
@@ -2485,22 +2666,43 @@ function computeView() {
 /* ------------------------------------------------------------------ *
  *  Rendering
  * ------------------------------------------------------------------ */
-// The value scale, shared by the High value strip and the board. 0: under $50k, 1: $50k to $500k,
-// 2: $500k to $1m, 3: $1m to $2m, 4: $2m and up.
-const VB_GREEN = '#1d5c36', VB_PURPLE = '#6a35b0';
-const valTier = v => v < 5e4 ? 0 : v < 5e5 ? 1 : v < 1e6 ? 2 : v < 2e6 ? 3 : 4;
+// The value scale, shared by the High value strip and the board.
+// 0 poop: under your poop threshold ($10k unless you change it in devmode), brown, with a poop tag.
+// 1: up to $50k, plain white. 2: $50k to $250k, dark orange to bright orange.
+// 3: $250k to $750k, green fading into gold. 4: $750k to $1.5m, gold to purple.
+// 5: $1.5m and up, a color cycle over purple: faint at $1.5m, full at $3m.
+// Every step inside a tier is on a log scale, so halfway between $50k and $250k is about $112k.
+const VB = { poop: '#7a4a24', white: '#d9d4c7', orA: '#8a4a14', orB: '#f0902a', green: '#2fae5a', purple: '#7a3fc4' };
+const HV_MIN = 250e3;            // High value only shows bounties of $250k and up: below that, selling the loot pays as well
+const Poop = {
+  at: (v => Number.isFinite(v) && v >= 0 ? v : 1e4)(Number(store.get('poop', 1e4))),
+  set(v) { this.at = v; store.set('poop', v); },
+};
+const isPoop = t => !!(t && t.count && t.reward < Poop.at);
+const poopTag = t => isPoop(t) ? `<span class="poop" title="Under ${fmtMoney(Poop.at)}: barely worth the energy">💩</span>` : '';
+const valTier = v => v < Poop.at ? 0 : v < 5e4 ? 1 : v < 25e4 ? 2 : v < 75e4 ? 3 : v < 15e5 ? 4 : 5;
+const logPos = (v, a, b) => clamp(Math.log(v / a) / Math.log(b / a), 0, 1);
+const vmix = (a, b, p) => `color-mix(in oklab, ${b} ${Math.round(p * 100)}%, ${a})`;
 function valColor(v) {
-  const t = valTier(v);
-  if (t === 0) return 'var(--mist-faint)';
-  // Log scale: $50k is the darkest green, $500k is gold (halfway is about $160k). $1m to $2m goes from gold to purple the same way.
-  if (t === 1) return `color-mix(in oklab, var(--gold) ${Math.round(clamp(Math.log(v / 5e4) / Math.log(10), 0, 1) * 100)}%, ${VB_GREEN})`;
-  if (t === 2) return 'var(--gold)';
-  if (t === 3) return `color-mix(in oklab, ${VB_PURPLE} ${Math.round(clamp(Math.log2(v / 1e6), 0, 1) * 100)}%, var(--gold))`;
-  return '';   // the color cycle comes from CSS
+  switch (valTier(v)) {
+    case 0: return VB.poop;
+    case 1: return VB.white;
+    case 2: return vmix(VB.orA, VB.orB, logPos(v, 5e4, 25e4));
+    case 3: return vmix(VB.green, 'var(--gold)', logPos(v, 25e4, 75e4));
+    case 4: return vmix('var(--gold)', VB.purple, logPos(v, 75e4, 15e5));
+    default: return '';   // the color cycle comes from CSS
+  }
+}
+// How much of the color cycle shows over the purple: 15% at $1.5m, all of it at $3m.
+const chromaPct = v => Math.round(15 + 85 * logPos(v, 15e5, 3e6)) + '%';
+// The class and inline style a card or a row needs for its value colors.
+function vbAttrs(v) {
+  const tier = valTier(v), col = valColor(v);
+  return { tier, style: col ? `--vb:${col}` : `--cm:${chromaPct(v)}` };
 }
 // Every color cycle on the page runs on the same clock, so merged rows change color together.
 function syncChroma() {
-  for (const el of document.querySelectorAll('.vb4')) {
+  for (const el of document.querySelectorAll('.vb5')) {
     if (!el.getAnimations) return;
     for (const a of el.getAnimations()) if (a.startTime !== 0) a.startTime = 0;
   }
@@ -2510,10 +2712,12 @@ const ICON_RECHECK = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor"
 const profileUrl = id => 'https://www.torn.com/profiles.php?XID=' + id;
 const attackUrl = id => 'https://www.torn.com/page.php?sid=attack&amp;user2ID=' + id;
 const attackA = (t, cls) => `<a${cls ? ` class="${cls}"` : ''} href="${attackUrl(t.id)}" target="_blank" rel="noopener" data-act="attack" data-id="${t.id}">Attack</a>`;
-// Hit? once you opened Attack. For a minute after you press it, Undo instead.
+// Hospitalized once you opened Attack. Then, for a minute, "Was it you?" with Yes and No. After a Yes, Undo for a minute.
 const hitBtn = (t, cls) => undoable(t.id)
-  ? `<button class="${cls}" type="button" data-act="undo" data-id="${t.id}" title="Take back this Hit mark and its value">Undo</button>`
-  : S.clicked.has(t.id) && !t.ghost && !t.off ? `<button class="${cls}" type="button" data-act="hit" data-id="${t.id}" title="Mark ${esc(t.name)} hit: hidden until the hospital timer ends, and counted in your gains">Hit?</button>` : '';
+  ? `<button class="${cls}" type="button" data-act="undo" data-id="${t.id}" title="Take back this hit and its value">Undo</button>`
+  : asking(t.id) && !t.ghost
+  ? `<span class="askw"><span class="ask">Was it you?</span><button class="${cls}" type="button" data-act="hyes" data-id="${t.id}" title="Yes: counted in your gains, hidden until the hospital timer from your hit ends">Yes</button><button class="${cls.replace('gold', 'ghost')}" type="button" data-act="hno" data-id="${t.id}" title="No: someone else got them. Nothing is counted">No</button></span>`
+  : S.clicked.has(t.id) && !t.ghost && !t.off ? `<button class="${cls}" type="button" data-act="hosp" data-id="${t.id}" title="${esc(t.name)} went to hospital, by you or someone else. One check in 5 seconds picks up the real timer">Hospitalized</button>` : '';
 const ICON_PIN = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path class="fillme" d="M10 1.8l4.2 4.2-1.7.5-2.8 2.8.4 3-1.3 1.3L3.4 8.2l1.3-1.3 3 .4 2.8-2.8z"/><path d="M5.9 10.1 2 14"/></svg>';
 const ICON_MINE = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle class="fillme" cx="8" cy="5.2" r="2.8"/><path class="fillme" d="M2.6 14.2c.4-3 2.6-4.6 5.4-4.6s5 1.6 5.4 4.6z"/></svg>';
 const mineArmed = id => !!(S.mineArm && S.mineArm.id === id && Date.now() - S.mineArm.at < 3000);
@@ -2523,11 +2727,25 @@ function pinBtn(t) {
   const on = S.pins.has(t.id);
   if (!on && !t.count) return '';
   const full = !on && S.pins.size >= PIN_MAX;
-  return `<button class="icon pinb" type="button" data-act="pin" data-id="${t.id}" aria-pressed="${on}" ${full ? 'aria-disabled="true" ' : ''}title="${on ? 'Unpin' : full ? `Pinned is full (${PIN_MAX}). Unpin someone first` : 'Pin: checked every minute while Okay, first on the board, its own sound'}" aria-label="${on ? 'Unpin' : 'Pin'} ${esc(t.name)}">${ICON_PIN}</button>`;
+  return `<button class="icon pinb" type="button" data-act="pin" data-id="${t.id}" aria-pressed="${on}" ${full ? 'aria-disabled="true" ' : ''}title="${on ? 'Unpin bounty' : full ? `Pinned is full (${PIN_MAX}). Unpin someone first` : 'Pin bounty: tracked for as long as there is a bounty on them, plus 2 days. Checked every minute while Okay, first on the board, its own sound'}" aria-label="${on ? 'Unpin bounty on' : 'Pin bounty on'} ${esc(t.name)}">${ICON_PIN}</button>`;
 }
 function mineBtn(t) {
   const on = S.mine.has(t.id), arm = on && mineArmed(t.id);
   return `<button class="icon mineb2${arm ? ' arm' : ''}" type="button" data-act="mine" data-id="${t.id}" aria-pressed="${on}" title="${arm ? 'Press again to remove from personal targets' : on ? 'Remove from personal targets (two presses)' : 'Add to personal targets: kept until you remove them, bounty or not'}" aria-label="${on ? 'Remove' : 'Add'} ${esc(t.name)} ${on ? 'from' : 'to'} personal targets">${arm ? 'Sure?' : ICON_MINE}</button>`;
+}
+// The note on a personal target, with the small button that edits it.
+const ICON_EDIT = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M10.8 2.6l2.6 2.6-7.6 7.6-3.2.6.6-3.2z"/><path d="M9.4 4l2.6 2.6"/></svg>';
+function noteHTML(t, cls) {
+  const r = S.mine.get(t.id);
+  if (!r) return '';
+  return `<span class="${cls}">${r.note ? `<span class="ntxt" title="Your note">${esc(r.note)}</span>` : '<span class="faint">No note</span>'}<button class="icon noteb" type="button" data-act="note" data-id="${t.id}" title="${r.note ? 'Edit the note' : 'Add a note'}" aria-label="${r.note ? 'Edit the note on' : 'Add a note to'} ${esc(t.name)}">${ICON_EDIT}</button></span>`;
+}
+// "+N more" on a card: every bounty on that target, one value each.
+function moreHTML(t) {
+  if (!t.count || t.count < 2) return '';
+  const open = S.cmore.has(t.id);
+  return `<span class="cmorew"><button class="link cmore" type="button" data-act="cmore" data-id="${t.id}" aria-expanded="${open}" title="One hit claims one bounty. These are all of them.">${open ? 'Hide' : `+${t.count - 1} more`}</button>${open
+    ? `<ul class="cbl">${t.listings.map(l => `<li><span class="money" title="${fmtFull(l.reward)}">${fmtMoney(l.reward)}</span>${l.qty > 1 ? `<span class="qty">× ${l.qty}</span>` : ''}</li>`).join('')}</ul>` : ''}</span>`;
 }
 const rmBtn = t => `<button class="btn sm ghost" type="button" data-act="rmhit" data-id="${t.id}" title="Take ${esc(t.name)} out of your hits and your gains">${S.rmArm && S.rmArm.id === t.id && Date.now() - S.rmArm.at < 3000 ? 'Sure?' : 'Remove'}</button>`;
 
@@ -2616,7 +2834,7 @@ function rowHTML(t) {
   const hitView = S.f.states.has('hit');
   const ends = t.ends < FAR ? `<span class="ends" title="${esc(fmtClock(t.ends))}">${t.listings.length > 1 ? 'next ' : ''}ends in <span data-until="${t.ends}">${fmtLeft(t.ends - ns)}</span></span>` : '';
   let html = `<tr class="main">
-<td class="c-name"><a class="tname" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}</a>${tag}${tag2}<span class="tid">[${t.id}]${t.ghost ? '' : `<span class="rowpins">${pinBtn(t)}${mineBtn(t)}</span>`}</span></td>
+<td class="c-name"><a class="tname" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}</a>${poopTag(t)}${tag}${tag2}${noteHTML(t, 'tnote')}<span class="tid">[${t.id}]${t.ghost ? '' : `<span class="rowpins">${pinBtn(t)}${mineBtn(t)}</span>`}</span></td>
 <td class="c-lvl"><span class="lv"><span class="lvk">Level </span>${lvlOf(t)}</span></td>
 <td class="c-status">${statusHTML(st, busy)}</td>
 <td class="c-reward">${t.ghost ? '<span class="faint">none left</span>' : `<span class="money big" title="Current value: ${fmtFull(t.reward)} for your next hit">${fmtMoney(t.reward)}</span>`}</td>
@@ -2643,9 +2861,9 @@ function sigOf(t) {
   const st = S.status.get(t.id), x = S.ff.get(t.id), ns = nowS();
   return [t.name, lvlOf(t), t.reward, t.total, t.count, t.ends < ns,
     st ? st.at + st.state + (st.until > ns) + (st.until - ns < SOON_SECS) + (st.until + FRESH_MS / 1000 > ns) + isProt(st) : '', x ? x.at : S.ffState,
-    S.inflight.has(t.id), S.open.has(t.id), S.clicked.has(t.id), S.hit.has(t.id), timesOf(t.id), gainOf(t.id), !!undoable(t.id),
+    S.inflight.has(t.id), S.open.has(t.id), S.clicked.has(t.id), S.hit.has(t.id), timesOf(t.id), gainOf(t.id), !!undoable(t.id), asking(t.id),
     S.f.states.has('hit'), S.rmArm && S.rmArm.id === t.id && Date.now() - S.rmArm.at < 3000,
-    S.pins.has(t.id), S.pins.get(t.id)?.mark || 0, S.pins.size >= PIN_MAX, S.mine.has(t.id), mineArmed(t.id)].join('|');
+    S.pins.has(t.id), S.pins.get(t.id)?.mark || 0, S.pins.size >= PIN_MAX, S.mine.has(t.id), mineArmed(t.id), Poop.at, S.mine.get(t.id)?.note ?? ''].join('|');
 }
 
 const rowCache = new Map();   // id -> { el, sig, state }
@@ -2705,7 +2923,7 @@ function renderRows() {
     if (g) {
       let h = grpCache.get(g.key);
       if (!h) { h = document.createElement('tbody'); h.className = 'grp'; grpCache.set(g.key, h); }
-      const html = `<tr><td colspan="11">${g.ord ? `<span class="gord" aria-hidden="true">${g.ord}</span>` : ''}${esc(g.label)}<span class="gn">${fmtInt(g.list.length)}</span></td></tr>`;
+      const html = `<tr><td colspan="11">${g.ord ? '<span class="gord" aria-hidden="true"></span>' : ''}${esc(g.label)}<span class="gn">${fmtInt(g.list.length)}</span></td></tr>`;
       if (h.dataset.html !== html) { h.dataset.html = html; h.innerHTML = html; }
       if (prev.nextElementSibling !== h) prev.after(h);
       prev = h;
@@ -2722,13 +2940,17 @@ function renderRows() {
     // Value border. Neighbors in the same tier merge: only the first draws a top, only the last a bottom.
     const tier = tiers[i], cl = r.el.classList;
     cl.add('vb');
-    for (let k = 0; k <= 4; k++) cl.toggle('vb' + k, k === tier);
+    for (let k = 0; k <= 5; k++) cl.toggle('vb' + k, k === tier);
     // A group header breaks the shape too.
     cl.toggle('gs', i === 0 || tiers[i - 1] !== tier || heads.has(i));
     cl.toggle('ge', i === page.length - 1 || tiers[i + 1] !== tier || heads.has(i + 1));
     cl.toggle('pin', S.pins.has(t.id));
     const col = valColor(t.reward);
-    if (r.vb !== col) { r.vb = col; if (col) r.el.style.setProperty('--vb', col); else r.el.style.removeProperty('--vb'); }
+    if (r.vb !== col || (!col && r.cm !== chromaPct(t.reward))) {
+      r.vb = col;
+      if (col) { r.el.style.setProperty('--vb', col); r.el.style.removeProperty('--cm'); r.cm = ''; }
+      else { r.el.style.removeProperty('--vb'); r.cm = chromaPct(t.reward); r.el.style.setProperty('--cm', r.cm); }
+    }
     if (prev.nextElementSibling !== r.el) prev.after(r.el);
     prev = r.el;
   }
@@ -2737,7 +2959,7 @@ function renderRows() {
   if (!page.length) {
     empty.hidden = false;
     $('emptyText').innerHTML = S.f.states.has('hit') && !S.ledger.size
-      ? 'No hits marked yet. Open Attack on a target, then press Hit? once you hospitalize them.'
+      ? 'No hits marked yet. Open Attack on a target, press Hospitalized once they are in hospital, then Yes if it was you.'
       : S.targets.size
       ? 'No targets match these filters. <button class="link" type="button" data-act="clear">Clear filters</button>'
       : (S.phase === 'list' ? 'Loading the bounty list.' : 'Start a search to load the bounty board.');
@@ -2768,11 +2990,11 @@ function perfectList() {
   } else list.sort((a, b) => b.reward - a.reward);
   return list;
 }
-// High value: Okay targets within 1.5 of your score, either side, biggest bounty first.
+// High value: Okay targets worth $250k or more, within 1.5 of your score, either side, biggest bounty first.
 // Needs fair fight and a score: without them there's no band to look in.
 function highList() {
   if (!byFFScore()) return [];
-  return okayPool().filter(inBand).sort((a, b) => b.reward - a.reward || a.id - b.id);
+  return okayPool().filter(t => t.reward >= HV_MIN && inBand(t)).sort((a, b) => b.reward - a.reward || a.id - b.id);
 }
 
 // Fresh out of the hospital: everyone who turned Fresh in the last 5 minutes, newest first.
@@ -2845,7 +3067,7 @@ function trackBig(st) {
   if (st.state === 'Traveling') return ['oth', 'Flying'];
   return ['oth', esc(effState(st) || st.state)];
 }
-const trackSig = list => list.map(t => { const st = S.status.get(t.id), p = S.pins.get(t.id); return [t.id, t.name, t.reward, t.count, st ? st.at + st.state + st.until + isFresh(st) + isPresumed(st) + (st.until - nowS() < SOON_SECS) : '', p ? p.mark : '', S.mine.has(t.id), mineArmed(t.id), S.pins.has(t.id), S.pins.size >= PIN_MAX, S.clicked.has(t.id), !!undoable(t.id), S.ff.get(t.id)?.at || 0, S.inflight.has(t.id)].join(':'); }).join(',');
+const trackSig = list => list.map(t => { const st = S.status.get(t.id), p = S.pins.get(t.id); return [t.id, t.name, t.reward, t.count, st ? st.at + st.state + st.until + isFresh(st) + isPresumed(st) + (st.until - nowS() < SOON_SECS) : '', p ? p.mark : '', S.mine.has(t.id), mineArmed(t.id), S.pins.has(t.id), S.pins.size >= PIN_MAX, S.clicked.has(t.id), !!undoable(t.id), asking(t.id), S.ff.get(t.id)?.at || 0, S.inflight.has(t.id), S.cmore.has(t.id), S.mine.get(t.id)?.note ?? '', Poop.at].join(':'); }).join(',');
 
 function renderStrips() {
   const ns = nowS(), hv = highList(), pm = perfectList();
@@ -2858,9 +3080,10 @@ function renderStrips() {
       const st = S.status.get(t.id), [cls, big, until] = trackBig(st);
       return `<li>${cb(t)}
 <span class="soon-t ${cls}"${until ? ` data-until="${until}" data-slots` : ''}>${until ? slots(big) : big}</span>
-<a class="soon-n" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}</a>
+<a class="soon-n" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}${poopTag(t)}</a>${moreHTML(t)}
 <span class="soon-st">${trackLine(st)}${S.inflight.has(t.id) ? ' <span class="faint">checking</span>' : ''}</span>
 <span class="soon-st soon-k">${t.count ? `Bounty <span class="money" title="${fmtFull(t.reward)}">${fmtMoney(t.reward)}</span>` : 'No bounty'}</span>
+${noteHTML(t, 'soon-note')}
 <span class="soon-m"><span class="soon-k">${ffLine(t)}</span><span>${attackA(t)}${hitBtn(t, 'link hitq')}</span></span>
 </li>`; });
 
@@ -2870,7 +3093,7 @@ function renderStrips() {
       const st = S.status.get(t.id), p = S.pins.get(t.id);
       return `<li${p.mark ? ' class="marked"' : ''}>${cb(t)}
 <span class="soon-t" title="${t.count ? fmtFull(t.reward) : 'No bounty on the board'}">${t.count ? fmtMoney(t.reward) : 'No bounty'}</span>
-<a class="soon-n" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}</a>
+<a class="soon-n" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}${poopTag(t)}</a>${moreHTML(t)}
 <span class="soon-st">${trackLine(st)}</span>
 ${p.mark ? `<span class="pmark" title="${esc(markWhy(p))}">Marked for deletion, removed in <span data-until="${(p.mark + PIN_GRACE) / 1000}">${fmtLeft((p.mark + PIN_GRACE) / 1000 - ns)}</span><button class="link" type="button" data-act="keep" data-id="${t.id}">Keep as personal</button></span>` : ''}
 <span class="soon-m"><span class="soon-k">${ffLine(t)}</span><span>${attackA(t)}${hitBtn(t, 'link hitq')}</span></span>
@@ -2881,65 +3104,75 @@ ${p.mark ? `<span class="pmark" title="${esc(markWhy(p))}">Marked for deletion, 
   else if (!S.freshShown && (hv.length || pm.length || fresh.length || S.scan.some(t => { const st = S.status.get(t.id); return st && st.state === 'Hospital' && st.until > ns; }))) S.freshShown = true;
   const okayCard = (t, extra) => `<li${extra || ''}>${cb(t)}
 <span class="soon-t" title="${fmtFull(t.reward)}">${fmtMoney(t.reward)}</span>
-<a class="soon-n" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}</a>
+<a class="soon-n" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}${poopTag(t)}</a>${moreHTML(t)}
 <span class="soon-m"><span class="soon-k">${ffLine(t)}</span><span>${attackA(t)}${hitBtn(t, 'link hitq')}</span></span>
 </li>`;
-  const cardSig = list => list.map(t => t.id + ':' + t.reward + ':' + (S.ff.get(t.id)?.at || 0) + ':' + S.clicked.has(t.id) + ':' + !!undoable(t.id) + ':' + S.pins.has(t.id) + S.mine.has(t.id) + mineArmed(t.id) + (S.pins.size >= PIN_MAX)).join(',') + Sec.hidden.size;
+  const cardSig = list => list.map(t => t.id + ':' + t.reward + ':' + (S.ff.get(t.id)?.at || 0) + ':' + S.clicked.has(t.id) + ':' + !!undoable(t.id) + asking(t.id) + ':' + S.pins.has(t.id) + S.mine.has(t.id) + mineArmed(t.id) + (S.pins.size >= PIN_MAX) + S.cmore.has(t.id) + t.count).join(',') + Sec.hidden.size + ':' + Poop.at;
 
-  strip('hv', 'hvList', { id: 'hvSub', text: `${fmtInt(hv.length)} okay to hit within ${BAND} of your score of ${S.ffScore}, biggest bounty first` }, hv,
+  strip('hv', 'hvList', { id: 'hvSub', text: `${fmtInt(hv.length)} okay to hit, ${fmtMoney(HV_MIN)} and up, within ${BAND} of your score of ${S.ffScore}, biggest bounty first` }, hv,
     cardSig(hv),
-    t => { const tier = valTier(t.reward), col = valColor(t.reward);
-      return okayCard(t, ` class="vb vb${tier}"${col ? ` style="--vb:${col}"` : ''}`); });
+    t => { const a = vbAttrs(t.reward);
+      return okayCard(t, ` class="vb vb${a.tier}" style="${a.style}"`); });
 
   strip('ready', 'readyList', { id: 'readySub', text: `${fmtInt(pm.length)} okay to hit${byFFScore() ? `, closest to your score of ${S.ffScore} first` : ', highest bounty first'}` }, pm,
     cardSig(pm), t => okayCard(t));
 
   strip('freshSec', 'freshList', { id: 'freshSub', text: `${fmtInt(fresh.length)} out of hospital in the last 5 minutes, newest first`, empty: 'kept here for 5 minutes, with their latest status' }, fresh,
-    fresh.map(t => { const st = S.status.get(t.id); return t.id + ':' + (st ? st.at + st.state + st.until + isFresh(st) + isPresumed(st) : '') + ':' + S.clicked.has(t.id) + ':' + !!undoable(t.id) + ':' + S.pins.has(t.id) + S.mine.has(t.id) + mineArmed(t.id); }).join(','),
+    fresh.map(t => { const st = S.status.get(t.id); return t.id + ':' + (st ? st.at + st.state + st.until + isFresh(st) + isPresumed(st) : '') + ':' + S.clicked.has(t.id) + ':' + !!undoable(t.id) + asking(t.id) + ':' + S.pins.has(t.id) + S.mine.has(t.id) + mineArmed(t.id) + S.cmore.has(t.id); }).join(',') + Poop.at,
     t => `<li>${cb(t)}
 <span class="soon-t" title="${fmtFull(t.reward)}">${fmtMoney(t.reward)}</span>
-<a class="soon-n" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}</a>
+<a class="soon-n" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}${poopTag(t)}</a>${moreHTML(t)}
 <span class="soon-st">${freshState(S.status.get(t.id))}</span>
 <span class="soon-m"><span class="soon-k">${ffLine(t)}</span><span>${attackA(t)}${hitBtn(t, 'link hitq')}</span></span>
 </li>`, 'Nobody out of hospital in the last 5 minutes. Anyone whose timer ends shows up here.');
 
+  const tp = toPinList();
+  strip('tpin', 'tpinList', { id: 'tpinSub', text: `${fmtInt(tp.length)} with 2 bounties or more and ${fmtMoney(TPIN_MIN)} or more stacked${byFFScore() ? ', biggest stack and best fair fight match in turn' : ', biggest stack first'}` }, tp,
+    trackSig(tp), t => {
+      const st = S.status.get(t.id);
+      return `<li>${cb(t)}
+<span class="soon-t" title="${fmtFull(t.total)} stacked">${fmtMoney(t.total)}</span>
+<a class="soon-n" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}${poopTag(t)}</a>${moreHTML(t)}
+<span class="soon-st soon-k">${fmtInt(t.count)} bounties, next hit <span class="money" title="${fmtFull(t.reward)}">${fmtMoney(t.reward)}</span></span>
+<span class="soon-st">${st ? trackLine(st) : '<span class="faint">Status not checked</span>'}</span>
+<span class="soon-m"><span class="soon-k">${ffLine(t)}</span><span>${attackA(t)}${hitBtn(t, 'link hitq')}</span></span>
+</li>`; });
+
   const soon = soonItems();
   strip('soon', 'soonList', { id: 'soonSub', text: `${fmtInt(soon.length)} of your matches are in hospital, soonest out first` }, soon,
-    soon.map(([t, st]) => t.id + ':' + st.until + ':' + (st.until - ns < SOON_SECS) + ':' + S.clicked.has(t.id) + ':' + !!undoable(t.id) + ':' + (S.ff.get(t.id)?.at || 0) + ':' + S.pins.has(t.id) + S.mine.has(t.id) + mineArmed(t.id)).join(','),
+    soon.map(([t, st]) => t.id + ':' + st.until + ':' + (st.until - ns < SOON_SECS) + ':' + S.clicked.has(t.id) + ':' + !!undoable(t.id) + asking(t.id) + ':' + (S.ff.get(t.id)?.at || 0) + ':' + S.pins.has(t.id) + S.mine.has(t.id) + mineArmed(t.id) + S.cmore.has(t.id)).join(',') + Poop.at,
     ([t, st]) => {
       const left = st.until - ns;
       return `<li>${cb(t)}
 <span class="soon-t${left < SOON_SECS ? ' near' : ''}"${left > 0 ? ` data-until="${st.until}" data-slots` : ''}>${slots(fmtLeft(left))}</span>
-<a class="soon-n" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}</a>
+<a class="soon-n" href="${profileUrl(t.id)}" target="_blank" rel="noopener">${esc(t.name)}${poopTag(t)}</a>${moreHTML(t)}
 <span class="soon-st soon-k">${ffLine(t)}</span>
 <span class="soon-m"><span class="money" title="${fmtFull(t.reward)}">${fmtMoney(t.reward)}</span><span>${attackA(t)}${hitBtn(t, 'link hitq')}</span></span>
 </li>`;
     });
 }
 
-/* Sections: hide any of them, and pin any of them to the board. Pinned sections show their targets first
-   on the board, in the order you pinned them, each in its own order. The board's filters still apply. */
-const SECS = { mineSec: 'Personal targets', pinSec: 'Pinned', hv: 'High value', ready: 'Easy fights', freshSec: 'Fresh out of the hospital', soon: 'Available soon' };
-const BOARDABLE = ['mineSec', 'hv', 'ready', 'freshSec', 'soon'];
+/* Sections: hide any of them, and pin ONE of them to the board. The pinned section shows its targets first
+   on the board, in its own order, right after your pinned targets. The board's filters still apply. */
+const SECS = { mineSec: 'Personal targets', pinSec: 'Pinned', hv: 'High value', ready: 'Easy fights', freshSec: 'Fresh out of the hospital', soon: 'Available soon', tpin: 'Targets to pin' };
+const BOARDABLE = ['mineSec', 'hv', 'ready', 'freshSec', 'soon', 'tpin'];
 const Sec = {
   hidden: new Set((store.get('sechide', []) || []).filter(k => k in SECS)),
-  order: (store.get('secboard', []) || []).filter(k => BOARDABLE.includes(k)),
+  order: (store.get('secboard', []) || []).filter(k => BOARDABLE.includes(k)).slice(0, 1),
   save() { store.set('sechide', [...this.hidden]); store.set('secboard', this.order); },
   hide(k) { this.hidden.add(k); this.save(); S.hotAt = 0; render(); },
   show(k) { this.hidden.delete(k); this.save(); S.hotAt = 0; render(); },
-  // Pressing again unpins it; the ones after it move up a place.
+  // One section on the board at a time. Pinning another one replaces it; pressing again unpins it.
   pin(k) {
-    const i = this.order.indexOf(k);
-    if (i >= 0) this.order.splice(i, 1); else this.order.push(k);
+    this.order = this.order[0] === k ? [] : [k];
     this.save(); S.shown = SHOW_STEP; render();
   },
   paint() {
     for (const b of document.querySelectorAll('[data-secpin]')) {
       const i = this.order.indexOf(b.dataset.secpin);
       b.setAttribute('aria-pressed', String(i >= 0));
-      b.querySelector('.ord').textContent = i >= 0 ? i + 1 : '';
       b.querySelector('.lab').textContent = i >= 0 ? 'Pinned to board' : 'Pin to board';
-      b.title = i >= 0 ? `Shown on the board in place ${i + 1}. Press to unpin.` : "Show this section's targets first on the board";
+      b.title = i >= 0 ? 'Shown first on the board. Press to unpin.' : "Show this section's targets first on the board. Replaces any other pinned section.";
     }
     const bar = $('hidBar'), hid = Object.keys(SECS).filter(k => this.hidden.has(k));
     bar.hidden = !hid.length || S.phase === 'idle';
@@ -2950,6 +3183,30 @@ const Sec = {
 function mineList() { return [...S.mine.keys()].map(personOf).sort((a, b) => outAt(a) - outAt(b) || a.nameLc.localeCompare(b.nameLc)); }
 // Pinned: ready first, then soonest out, the ones marked for deletion last.
 function pinList() { return [...S.pins.keys()].map(personOf).sort((a, b) => (S.pins.get(a.id).mark ? 1 : 0) - (S.pins.get(b.id).mark ? 1 : 0) || outAt(a) - outAt(b) || b.reward - a.reward); }
+// Targets to pin: 2 bounties or more, $1m or more stacked, not pinned yet. Two lists zipped together:
+// A by stacked total, biggest first. B by fair fight, closest to your score first (the Easy fights rule).
+// A1, B1, A2, B2... and anyone already shown is skipped. Without fair fight and a score: list A only.
+// No extra calls: these come straight from the board you already have.
+const TPIN_MIN = 1e6;
+function toPinList() {
+  if (S.phase === 'idle' || S.phase === 'list') return [];
+  const pool = [];
+  for (const t of S.targets.values()) if (t.count >= 2 && t.total >= TPIN_MIN && !S.pins.has(t.id) && !isHidden(t.id)) pool.push(t);
+  const a = pool.slice().sort((x, y) => y.total - x.total || x.id - y.id);
+  if (!byFFScore()) return a;
+  const score = S.ffScore, dist = t => Math.round(Math.abs(ffOf(t, 0) - score) * 100);
+  const b = pool.filter(t => ffOf(t, null) != null)
+    .sort((x, y) => dist(x) - dist(y) || (ffOf(x, 0) <= score ? 0 : 1) - (ffOf(y, 0) <= score ? 0 : 1) || y.total - x.total);
+  const out = [], seen = new Set();
+  let i = 0, j = 0;
+  while (i < a.length || j < b.length) {
+    while (i < a.length && seen.has(a[i].id)) i++;
+    if (i < a.length) { seen.add(a[i].id); out.push(a[i++]); }
+    while (j < b.length && seen.has(b[j].id)) j++;
+    if (j < b.length) { seen.add(b[j].id); out.push(b[j++]); }
+  }
+  return out;
+}
 function freshTargets() { return S.freshList.map(e => S.targets.get(e.id)).filter(Boolean); }
 // Available soon: matches whose hospital timer is still running, soonest out first.
 function soonItems() {
@@ -2971,6 +3228,7 @@ function secList(k) {
   if (k === 'ready') return perfectList();
   if (k === 'freshSec') return freshTargets();
   if (k === 'soon') return soonItems().map(x => x[0]);
+  if (k === 'tpin') return toPinList();
   return [];
 }
 
@@ -3004,7 +3262,7 @@ const Car = {
     el.addEventListener('pointerdown', e => {
       halt();
       if (e.pointerType !== 'mouse' || e.button !== 0) return;   // touch scrolls natively
-      if (e.target.closest('button')) return;                     // a pin or a Hit? button is a click, not a grab
+      if (e.target.closest('button')) return;                     // a pin or a Hospitalized button is a click, not a grab
       down = true; moved = false; x0 = e.clientX; s0 = el.scrollLeft; samples = [[performance.now(), e.clientX]];
     });
     window.addEventListener('pointermove', e => {
@@ -3062,13 +3320,13 @@ function renderHead() {
   $('refreshBtn').title = `Status checks only, no board: High value, then Easy fights, then everyone else. ${fmtInt(rl.length)} Torn calls${S.demo ? '' : `, about ${Math.max(1, Math.ceil(rl.length * Pacer.gap() / 60000))} min at your pace`}.`;
   // The Hit view sums up what the ledger holds.
   const hn = $('hitNote'), g = gainsTotal();
-  if (S.f.states.has('hit') && g.n) { hn.hidden = false; hn.innerHTML = `Gained <b>${fmtMoney(g.v)}</b> in ${fmtInt(g.n)} ${g.n === 1 ? 'hit' : 'hits'} on ${fmtInt(g.people)} ${g.people === 1 ? 'target' : 'targets'}, based on your Hit marks.`; }
+  if (S.f.states.has('hit') && g.n) { hn.hidden = false; hn.innerHTML = `Gained <b>${fmtMoney(g.v)}</b> in ${fmtInt(g.n)} ${g.n === 1 ? 'hit' : 'hits'} on ${fmtInt(g.people)} ${g.people === 1 ? 'target' : 'targets'}, based on the hits you marked as yours.`; }
   else hn.hidden = true;
   for (const b of document.querySelectorAll('#chips .chip')) {
     b.setAttribute('aria-pressed', S.f.states.has(b.dataset.s) ? 'true' : 'false');
     b.querySelector('.c').textContent = fmtInt(c[b.dataset.s] || 0);
   }
-  const active = (S.f.q ? 1 : 0) + (S.f.lvlMin ? 1 : 0) + (S.f.lvlMax ? 1 : 0) + (S.f.rewardMin ? 1 : 0) + (S.f.rewardMax ? 1 : 0) + (S.f.ffMax ? 1 : 0) + (S.f.ageMin ? 1 : 0);
+  const active = (S.f.q ? 1 : 0) + (S.f.lvlMin ? 1 : 0) + (S.f.lvlMax ? 1 : 0) + (S.f.rewardMin ? 1 : 0) + (S.f.rewardMax ? 1 : 0) + (S.f.ffMax ? 1 : 0) + (S.f.ageMin ? 1 : 0) + (S.f.noPoop ? 1 : 0);
   $('ftoggle').textContent = 'Filters and sort' + (active ? ` (${active} on)` : '');
   const key = S.sort.replace(/_(asc|desc)$/, '');
   for (const th of document.querySelectorAll('#thead th[data-col]')) {
@@ -3173,7 +3431,7 @@ function render() {
 
 function tick() {
   const ns = nowS();
-  for (const el of document.querySelectorAll('#tbl [data-until], #soonList [data-until], #freshList [data-until], #mineList [data-until], #pinList [data-until]')) {
+  for (const el of document.querySelectorAll('#tbl [data-until], #soonList [data-until], #freshList [data-until], #mineList [data-until], #pinList [data-until], #tpinList [data-until]')) {
     const s = fmtLeft(Number(el.dataset.until) - ns);
     if ('slots' in el.dataset) el.innerHTML = slots(s); else el.textContent = s;
   }
@@ -3254,6 +3512,8 @@ function syncFilters() {
   $('fReward').value = S.f.rewardMin ? shortNum(S.f.rewardMin) : '';
   $('fFF').value = S.f.ffMax || '';
   $('fAge').value = S.f.ageMin || '';
+  $('fPoop').checked = !!S.f.noPoop;
+  $('fPoop').title = `Hides bounties under ${fmtMoney(Poop.at)} and skips their status checks. Pinned and personal targets stay. Change the threshold in devmode.`;
   $('sortSel').value = S.sort;
   Dev.syncSliders();
   for (const id of ['fLvlMin', 'fLvlMax', 'fReward', 'fFF', 'fAge']) $(id).removeAttribute('aria-invalid');
@@ -3313,11 +3573,11 @@ function setSort(v) {
 
 
 /* ------------------------------------------------------------------ *
- *  Alerts: a sound, and a browser notification if you opt in, the
- *  moment a matching target turns Fresh or comes back Okay.
+ *  Alerts: a sound the moment a matching target turns Fresh, and
+ *  another for pinned and personal targets. No notifications.
  * ------------------------------------------------------------------ */
 const Alerts = {
-  sound: store.get('sound', true) !== false, notify: store.get('notify', false) === true,
+  sound: store.get('sound', true) !== false,
   ctx: null, lastSound: 0, done: new Set(),
   // Browsers only allow audio after a click on the page, so the audio engine starts on the first one.
   unlock() {
@@ -3341,24 +3601,9 @@ const Alerts = {
       o.start(t0 + at); o.stop(t0 + at + .25);
     }
   },
-  // Notifications are blocked inside a cross-site iframe, which is how the tool sits on thegreatstag.com.
-  get embedded() { try { return window.top !== window.self; } catch { return true; } },
-  canNotify() { return 'Notification' in window && !this.embedded; },
-  async setNotify(on) {
-    if (on && !this.canNotify()) { on = false; }
-    else if (on && Notification.permission !== 'granted') on = (await Notification.requestPermission()) === 'granted';
-    this.notify = on; store.set('notify', on);
-    this.paint();
-  },
   paint() {
     $('soundBtn').textContent = this.sound ? 'Sound on' : 'Sound off';
     $('soundBtn').setAttribute('aria-pressed', String(this.sound));
-    $('notify').checked = this.notify;
-    const hint = $('notifyHint');
-    if (this.embedded) hint.innerHTML = `Browsers block notifications inside an embedded page. <a href="${esc(location.href)}" target="_blank" rel="noopener">Open the tool on its own</a> to turn them on. Sound works here.`;
-    else if ('Notification' in window && Notification.permission === 'denied') hint.textContent = 'Notifications are blocked for this site in your browser settings. Sound still works.';
-    else hint.textContent = 'Sound plays for the same moments. The Sound button at the top turns all sound off.';
-    $('notify').disabled = !this.canNotify();
   },
   fire(kind, t, what) {
     const key = kind + ':' + t.id + ':' + Math.floor(Date.now() / 60000);
@@ -3366,14 +3611,6 @@ const Alerts = {
     this.done.add(key);
     if (this.done.size > 500) this.done = new Set([...this.done].slice(-200));
     this.beep(kind);
-    if (this.notify && this.canNotify() && Notification.permission === 'granted' && document.hidden) {
-      try {
-        const n = new Notification(kind === 'pin' ? `${t.name} ${what || 'is out'}` : `Fresh: ${t.name}`, {
-          body: `${t.count ? fmtMoney(t.reward) + ' on your next hit. ' : ''}Level ${lvlOf(t)}.`, tag: 'hbt-' + t.id, silent: true,
-        });
-        n.onclick = () => { window.focus(); n.close(); };
-      } catch {}
-    }
   },
   // Only matches you can actually hit: not marked hit, not protected.
   eligible(t) { return t && !S.hit.has(t.id) && inPlay(t); },
@@ -3544,7 +3781,7 @@ const Dev = {
       ['mine', 'Personal targets', `${fmtInt(S.mine.size)} players you tagged`, ['mine']],
       ['ledger', 'Gains', (g => g.n ? `${fmtInt(g.n)} hits worth ${fmtMoney(g.v)} on ${fmtInt(g.people)} targets. Clearing takes two presses.` : 'No hits marked yet')(gainsTotal()), ['ledger']],
       ['search', 'Search and filters', 'Your last search, filters and sort', ['spec', 'filters', 'sort']],
-      ['settings', 'Settings', 'Pace, live checks, Learn mode, columns and their widths, devmode, sound, alerts, inactivity stop, hidden and pinned sections', ['pace', 'live', 'learn', 'cols', 'colw', 'dev', 'sound', 'notify', 'remember', 'noidle', 'sechide', 'secboard']],
+      ['settings', 'Settings', 'Pace, live checks, Learn mode, columns and their widths, devmode, sound, inactivity stop, poop threshold, hidden and pinned sections', ['pace', 'live', 'learn', 'cols', 'colw', 'dev', 'sound', 'remember', 'noidle', 'poop', 'sechide', 'secboard']],
       ['pacer', 'Rate limit log', 'When your recent Torn calls went out, shared by every tab. Not clearable: it keeps you under Torn\'s cap.', ['pacer']],
       ['deadkeys', 'Refused keys', `${fmtInt(KeyGuard.dead().length)} keys Torn refused, kept as fingerprints, never the keys. The tool won't send them again. Clear only if one of them works again (unpaused, back from inactivity).`, ['deadkeys']],
       ['ipblock', 'IP block cooldown', KeyGuard.blockedUntil() > Date.now() ? `Active: nothing goes to Torn for ${fmtLeft((KeyGuard.blockedUntil() - Date.now()) / 1000)}. Not clearable.` : 'None. Not clearable: it protects your IP after Torn blocks it.', ['ipblock']],
@@ -3568,7 +3805,7 @@ const Dev = {
     }
     if (id === 'deadkeys') store.del('deadkeys');
     if (id === 'search') ['spec', 'filters', 'sort'].forEach(k => store.del(k));
-    if (id === 'settings') { ['pace', 'live', 'learn', 'cols', 'colw', 'dev', 'sound', 'notify', 'remember', 'noidle', 'sechide', 'secboard'].forEach(k => store.del(k)); Idle.never = false; Idle.paint(); Cols.reset(); Sec.hidden.clear(); Sec.order = []; }
+    if (id === 'settings') { ['pace', 'live', 'learn', 'cols', 'colw', 'dev', 'sound', 'remember', 'noidle', 'poop', 'sechide', 'secboard'].forEach(k => store.del(k)); Idle.never = false; Idle.paint(); Cols.reset(); Sec.hidden.clear(); Sec.order = []; }
     render(); this.storage();
   },
   wipe() {
@@ -3600,9 +3837,22 @@ const PHASES = {
   recheck: ['Re-checks', 'Keeping known statuses fresh: the top of High value and Easy fights every 90s, other Okay targets every 10 to 30 min by last action. Never more than 25% of your pace.'],
   fresh: ['Timer ended, confirming', 'A hospital or jail timer just ran out. One check to confirm the target is really out, since someone may have hit them in the Fresh window.'],
   tracked: ['Pinned and personal', 'Your pinned and personal targets. Personal first when a hunt starts, then their own clock: Okay every minute, hospital, jail and travel every 5 min to catch early exits. Never more than 15% of your pace.'],
-  manual: ['Manual checks', 'Checks you asked for: Check now, the timer pickup after a Hit mark, or devmode.'],
+  manual: ['Manual checks', 'Checks you asked for: Check now, the timer pickup after you press Hospitalized, or devmode.'],
   refresh: ['Refresh list', 'Status checks only, no board: High value first, then Easy fights, then everyone else.'],
   other: ['Other calls', ''],
+};
+// Learn mode, one card per job block: what the job is, why it runs, what it feeds on the page.
+const PHASE_LEARN = {
+  connect: ['Before anything else, the tool makes sure your key can do the job and finds out who you are.', 'You pressed Connect, or a saved key connected on page load.', 'The name in the header, the key type, your account age (for New Player Protection), and whether fair fight is on.'],
+  board: ["The engine reads every page of Torn's bounty board and stacks several bounties on one person into one target.", 'You started a hunt or pressed Refetch board. Page 1 says if the board changed; if not, the sweep stops there.', 'The board itself, every value and border, the Bounties column, Targets to pin, and the list the status loop walks.'],
+  ff: ['FFScouter estimates how strong each target is compared to you, 205 targets per call.', 'Fresh targets showed up with no estimate yet, or saved ones are older than 6 hours.', 'The fair fight pills, the scan order (your band first), High value, Easy fights, and the board fair fight filter.'],
+  first: ['The first look at every target your search allows: Okay, hospital, jail, flying, and when each timer ends.', 'Targets never checked go before any re-check, your fair fight band first.', 'Every status block and timer, Easy fights, High value, Available soon, the Okay count, and the chips.'],
+  recheck: ['Statuses go stale, so the engine looks again, only where it matters, on a budget.', 'This target was due: the top of High value and Easy fights every 90s, others every 10 to 30 min by last action.', 'Keeps the strips honest: someone who got hit since the last look leaves Easy fights and High value.'],
+  fresh: ['A timer just ran out. One check confirms the target is really out.', 'Other hunters watch the same timers. In the 10 seconds after, many targets get hit again.', 'Fresh out of the hospital, the Fresh sound, and the move from Available soon to Easy fights.'],
+  tracked: ['Your pinned and personal targets, on their own clock and their own 15% of your pace.', 'Personal targets go first at the start of a hunt, then Okay every minute, hospital, jail and travel every 5 min.', 'Personal targets, Pinned, their three-note sound, and the pinned rows at the top of the board.'],
+  manual: ['Checks you asked for yourself.', 'Check now, Add personal target, the pickup 5 seconds after Hospitalized, or devmode.', 'The row or card you pressed, and the hospital timer after Hospitalized.'],
+  refresh: ['Statuses only, no board read: personal and pinned, High value, Easy fights, then everyone else.', 'You pressed Refresh list.', 'Every status on the page, in that order.'],
+  other: ['Calls outside the usual jobs.', '', ''],
 };
 const Insp = {
   paused: false, missed: 0, tab: 'log', els: new Map(), qT: 0, lastShown: null,
@@ -3611,8 +3861,21 @@ const Insp = {
     const ph = PHASES[e.phase] ? e.phase : 'other', [title, what] = PHASES[ph];
     const d = document.createElement('div');
     d.className = 'psec'; d.dataset.ph = ph;
-    d.innerHTML = `<div class="pdiv"><b>${esc(title)}</b>${what ? `<span>${esc(what)}</span>` : ''}<time>from ${new Date(e.at).toLocaleTimeString([], { hour12: false })}</time></div>`;
+    const [lw, ly, lf] = PHASE_LEARN[ph];
+    d.dataset.t0 = e.at; d.dataset.svc = e.svc;
+    d.innerHTML = `<div class="pdiv"><b>${esc(title)}</b>${what ? `<span>${esc(what)}</span>` : ''}<time>from ${new Date(e.at).toLocaleTimeString([], { hour12: false })}</time></div>`
+      + `<div class="learn-only learn-card bcard"><b>What this job is.</b> ${esc(lw)}${ly ? `<br><b>Why now.</b> ${esc(ly)}` : ''}${lf ? `<br><b>What it feeds.</b> ${esc(lf)}` : ''}<br><b>What it cost.</b> <span class="bc"></span></div>`;
     return d;
+  },
+  // The cost line of a block: calls in it, over how long, and what share of your pace that is.
+  cost(sec, last) {
+    const n = sec.querySelectorAll('.call').length, t0 = Number(sec.dataset.t0), dur = Math.max(0, (last || Date.now()) - t0);
+    const el = sec.querySelector('.bc');
+    if (!el) return;
+    const span = dur < 1000 ? 'in under a second' : 'over ' + fmtLeft(dur / 1000);
+    if (sec.dataset.svc === 'ffs') { el.textContent = `${fmtInt(n)} ${n === 1 ? 'call' : 'calls'} ${span}. FFScouter has its own limit, so none of this comes out of your Torn pace.`; return; }
+    const perMin = n / Math.max(1, dur / 60000), pct = Math.round(perMin / S.pace * 100);
+    el.textContent = `${fmtInt(n)} Torn ${n === 1 ? 'call' : 'calls'} ${span}. ${S.demo ? 'Demo: nothing left your browser.' : `About ${fmtInt(perMin)} a minute, ${pct}% of your pace of ${S.pace}.`}`;
   },
   get isOpen() { return $('insp').open; },
   passes(e) {
@@ -3635,6 +3898,7 @@ const Insp = {
     let sec = list.lastElementChild;
     if (!sec || !prev || prev.phase !== e.phase) { sec = this.sec(e); list.append(sec); }
     sec.append(this.make(e));
+    this.cost(sec, e.at);
     this.lastShown = e;
     // Keep the DOM in step with what the log keeps: drop the oldest calls, then any block left empty.
     while (this.els.size > CallLog.KEEP) {
@@ -3663,8 +3927,16 @@ const Insp = {
       : !e.http || (ecode && Number(ecode[1]) < 0) ? '<span class="code net" title="No usable answer came back">fail</span>'
       : `<span class="code err" title="${esc(e.err || 'Error')}">${e.http}${ecode ? ' · E' + ecode[1] : ''}</span>`;
     return `<span>${new Date(e.at).toLocaleTimeString([], { hour12: false })}</span><span class="svc ${e.svc}" title="${e.svc === 'torn' ? 'Torn API' : 'FFScouter'}">${e.svc === 'torn' ? 'Torn' : 'FFS'}</span>`
-      + `<span class="cp" title="${esc(e.url)}">GET ${esc(u.pathname)}${q ? '?' + esc(decodeURIComponent(q)) : ''}</span><span class="ck">${esc(c.label || e.kind)}</span>`
+      + `<span class="cp" title="${esc(e.url)}">GET ${esc(u.pathname)}${q ? '?' + esc(decodeURIComponent(q)) : ''}</span><span class="ck">${esc(c.label || e.kind)}</span>${this.tst(e)}`
       + `${code}<span class="cm cms">${e.state === 'pending' ? '' : e.ms + 'ms'}</span><span class="cm csz">${e.size ? (e.size / 1024).toFixed(1) + 'kb' : ''}</span>`;
+  },
+  // The Status column: the state the target was in, for target profiles. Every other call has no target.
+  tst(e) {
+    if (e.kind !== 'target_profile') return '<span class="cst na" title="This call is not about one target">n/a</span>';
+    if (e.state === 'pending') return '<span class="cst na">...</span>';
+    if (e.state === 'error') return '<span class="cst na">failed</span>';
+    const s = e.tstate || 'Unknown', cls = { Okay: 'ok', Hospital: 'hosp', Jail: 'jail', Federal: 'jail', Traveling: 'travel', Abroad: 'travel' }[s] || 'oth';
+    return `<span class="cst ${cls}">${esc(s)}</span>`;
   },
   make(e) {
     const el = document.createElement('details');
@@ -3694,11 +3966,57 @@ const Insp = {
       resp = (e.err ? `<p class="code err">${esc(e.err)}</p>` : '') + (txt ? `<pre>${esc(cut ? txt.slice(0, max) : txt)}</pre>${cut ? `<p class="faint">Cut at ${fmtInt(max)} characters of ${fmtInt(txt.length)}. Export JSON for the whole thing.</p>` : ''}` : '');
     }
     el.querySelector('.call-body').innerHTML = `
+<div class="learn-only learn-card"><b>This call, right now.</b> ${this.story(e)}</div>
 <div class="learn-only learn-card"><b>${esc(c.label || '')}.</b> ${esc(c.learn || '')}<br><br><b>Fields the tool reads:</b> ${esc(c.fields || '')}${c.cx ? `<br><button class="link" type="button" data-cx-go="${c.cx}">More in the Codex</button> <button class="link" type="button" data-cx-go="anatomy">Take this request apart</button>` : ''}</div>
 <h4>Why now</h4><p style="margin:0">${esc(e.why || c.why || '')}</p>
 <h4>Request</h4><pre>${esc(JSON.stringify({ method: 'GET', url: e.url, headers: e.headers, sent: new Date(e.at).toISOString(), demo: e.demo || undefined }, null, 2))}</pre>
 ${e.demo ? '<p class="faint">Demo mode: answered inside your browser. Nothing was sent.</p>' : ''}
 <h4>Response${e.state !== 'pending' ? ` <span class="faint">HTTP ${e.http || 'none'}, ${e.ms}ms${e.size ? ', ' + (e.size / 1024).toFixed(1) + 'kb' : ''}</span>` : ''}</h4>${resp}`;
+  },
+  // Learn mode for one call: why this one, its place in line, what changed, and where the target sits now.
+  story(e) {
+    const out = [];
+    const who = e.target ? (known(e.target) ? `<b>${esc(personOf(e.target).name)}</b>` : `player ${e.target}`) : '';
+    out.push(`<b>Why:</b> ${esc(e.why || 'no reason recorded')}${who ? `, for ${who}` : ''}.`);
+    if (e.waited != null) out.push(`<b>Its place in line:</b> ${e.waited < 50 ? 'went straight out, the pacer had a free slot' : `waited ${(e.waited / 1000).toFixed(1)}s at the pacer`}${e.behind ? `, with ${fmtInt(e.behind)} more ${e.behind === 1 ? 'call' : 'calls'} waiting behind it` : ''}.`);
+    if (e.kind === 'target_profile' && e.state === 'ok') {
+      out.push(`<b>What changed:</b> ${e.before === e.after ? `nothing. Still ${esc(e.after)}` : `${esc(e.before)} → ${esc(e.after)}`}.`);
+      const t = known(e.target) ? personOf(e.target) : null;
+      if (t) {
+        const where = [], at = (list, label) => { const i = list.findIndex(x => x.id === t.id); if (i >= 0) where.push(`${label} #${i + 1}`); };
+        if (S.mine.has(t.id)) where.push('Personal targets');
+        if (S.pins.has(t.id)) where.push('Pinned');
+        at(highList(), 'High value'); at(perfectList(), 'Easy fights'); at(freshTargets(), 'Fresh out of the hospital');
+        at(soonItems().map(x => x[0]), 'Available soon'); at(toPinList(), 'Targets to pin');
+        const bi = S.view.findIndex(x => x.id === t.id);
+        if (bi >= 0) where.push(`board row ${fmtInt(bi + 1)}`);
+        out.push(`<b>Where they sit now:</b> ${where.length ? esc(where.join(', ')) : 'nowhere on screen right now (filtered out, or no longer a match)'}.`);
+      }
+    }
+    if (e.kind === 'bounties' && e.got) out.push(`<b>What came back:</b> ${fmtInt(e.got.n)} listings on this page, ${fmtInt(e.got.total)} on the whole board, so ${fmtInt(Math.ceil(e.got.total / PAGE_SIZE) || 1)} pages. Board snapshot from ${e.got.ts ? fmtAgo(e.got.ts * 1000) : 'an unknown time'}.`);
+    if (e.kind === 'ffs_stats' && e.got) out.push(`<b>What came back:</b> ${fmtInt(e.got.n)} estimates, ${fmtInt(e.got.none)} of them with no data (gray rows on the board).`);
+    if (e.kind === 'key_info' && e.got) out.push(`<b>What came back:</b> a ${esc(e.got.type || 'unknown')} key.`);
+    if (e.state === 'error') out.push(`<b>What went wrong:</b> ${esc(e.err || 'no answer')}.`);
+    return out.join('<br>');
+  },
+  // The top of the log in Learn mode: where the engine is, where your calls went, and the three big calls side by side.
+  learnTop() {
+    if (!this.isOpen || this.tab !== 'log' || !$('insp').classList.contains('learn')) return;
+    const steps = [['connect', 'Connect'], ['board', 'Board sweep'], ['ff', 'Fair fight'], ['first', 'Initial profile fetch'], ['loop', 'Re-checks and confirms']];
+    const last = CallLog.list[CallLog.list.length - 1];
+    let cur = '';
+    if (last && Date.now() - last.at < 10000) cur = ['recheck', 'fresh', 'tracked', 'manual', 'refresh'].includes(last.phase) ? 'loop' : last.phase;
+    else if (S.phase === 'list') cur = 'board';
+    else if (S.phase === 'hunting') cur = Idle.firstPassLeft() ? 'first' : 'loop';
+    const done = { connect: !!S.me, board: S.targets.size > 0, ff: S.ffState === 'on' && !ffBusy && S.ff.size > 0, first: S.phase !== 'idle' && S.phase !== 'list' && !Idle.firstPassLeft() };
+    $('lmap').innerHTML = steps.map(([k, l]) => `<li class="${k === cur ? 'now' : done[k] ? 'done' : ''}"><b>${esc(l)}</b><span>${k === cur ? 'running now' : done[k] ? 'done' : k === 'ff' && S.ffState !== 'on' ? 'off' : 'waiting'}</span></li>`).join('');
+    const by = CallLog.byPh, total = Object.values(by).reduce((a, n) => a + n, 0);
+    $('lbudget').innerHTML = total ? Object.entries(by).sort((a, b) => b[1] - a[1]).map(([ph, n]) => {
+      const pct = Math.round(n / total * 100);
+      return `<li data-ph="${esc(ph)}"><span class="ln">${esc((PHASES[ph] || PHASES.other)[0])}</span><span class="lb"><i style="width:${Math.max(1, pct)}%"></i></span><span class="lv">${fmtInt(n)} <span class="faint">${pct}%</span></span></li>`;
+    }).join('') : '<li class="faint">No calls yet this session.</li>';
+    const pages = S.lastPages || Math.ceil(S.listCount / PAGE_SIZE) || 0;
+    $('lcost').textContent = pages ? `about ${fmtInt(pages)} pages right now` : 'pages depend on the board';
   },
   rebuild() {
     const list = $('inspList');
@@ -3710,6 +4028,7 @@ ${e.demo ? '<p class="faint">Demo mode: answered inside your browser. Nothing wa
       if (!this.passes(e)) continue;
       if (!sec || !prev || prev.phase !== e.phase) { sec = this.sec(e); frag.append(sec); }
       sec.append(this.make(e));
+      this.cost(sec, e.at);
       prev = e;
     }
     this.lastShown = prev;
@@ -3788,7 +4107,8 @@ ${Object.entries(CATALOG).map(([k, c]) => `<tr><td><span class="svc ${c.svc}">${
     this.setTab(this.tab);
     this.summary();
     clearInterval(this.qT);
-    this.qT = setInterval(() => { if (!this.isOpen) return clearInterval(this.qT); this.summary(); this.queue(); }, 1000);
+    this.qT = setInterval(() => { if (!this.isOpen) return clearInterval(this.qT); this.summary(); this.queue(); this.learnTop(); }, 1000);
+    this.learnTop();
   },
   export() {
     const data = CallLog.list.map(({ n, at, svc, kind, url, headers, why, phase, http, ms, state, err, size, demo, body }) => ({ n, at: new Date(at).toISOString(), svc, kind, phase, url, headers, why, http, ms, state, err, size, demo, body }));
@@ -3870,7 +4190,7 @@ ${this.ch('rate', 5, 'Rate limits, and how tabs share them', `Torn counts 100 ca
 ${this.ch('sched', 6, 'The scheduler', 'a timer is math, not a question. Torn tells you when the hospital stay ends, so the tool never asks again until then.', `
 <p>Every status answer carries <code>status.until</code>: a Unix timestamp for when the timer ends. Your browser counts down to it locally. Zero calls. That's why a target in hospital for 2 hours costs nothing for 2 hours.</p>
 <p>Each time a slot frees up at the pacer, the loop picks ONE target, in this order:</p>
-<ol><li>Hand-picked checks (Check now, Add by ID, the check 5 seconds after a Hit mark), and timers that just ran out.</li>
+<ol><li>Hand-picked checks (Check now, Add by ID, the check 5 seconds after you press Hospitalized), and timers that just ran out.</li>
 <li>Personal and pinned targets never checked. Personal targets also jump the queue at the start of every hunt.</li>
 <li>Everyone else never checked: your fair fight band first, then under it, then over it.</li>
 <li>Pinned and personal re-checks, on their own clock. At most ${tk} a minute (15% of your pace).</li>
@@ -3900,14 +4220,15 @@ ${this.ch('keys', 8, 'Your key, and the walls around it', 'the safest key is one
 <p>Torn keys come in types: Public Only, Minimal, Limited, Full, Custom. This tool needs only public data (the board, profiles), so a <b>Public Only</b> key is enough. If it ever leaked, it could read nothing private.</p>
 <p>Connect calls <code>/key/info</code> first. It answers for any key, even a weak one, so the tool learns the key type before spending anything else.</p>
 <p>Torn warns that repeated calls with a bad key can get your IP banned. So when Torn refuses a key, the tool never sends it again. It keeps a <b>fingerprint</b> instead: a hash (FNV-1a), a short number computed from the key that can't be turned back into the key. Same key, same fingerprint, so it's recognised without being stored.</p>
-<p>The page also ships with a <b>Content Security Policy</b>, a header that tells your browser what this page is allowed to do. This one says: only talk to api.torn.com and ffscouter.com, load fonts from Google, run no outside scripts, and only be embedded on thegreatstag.com. Even a bug in the code couldn't send your key elsewhere: the browser would block it.</p>
-<p>On thegreatstag.com, the tool sits in an <b>iframe</b> (a page inside a page). Browsers block notifications from iframes of another site, which is why notifications only work on the tool's own page.</p>`)}
+<p>The page also ships with a <b>Content Security Policy</b>, a header that tells your browser what this page is allowed to do. This one says: only talk to api.torn.com and ffscouter.com, load fonts from Google, run no outside scripts, and only be embedded on thegreatstag.com. Even a bug in the code couldn't send your key elsewhere: the browser would block it.</p>`)}
 ${this.ch('sections', 9, 'Sections, pins and personal targets', 'a pin is a promise to keep watching, paid for out of a fixed budget.', `
-<ul><li><b>Pin</b> a bounty target (10 at most): checked every minute while Okay, first on the board, its own three-note sound. If their bounty goes (gone from the board, expired, or you hit their last one), they're marked for deletion and removed 2 days later. A new bounty in those 2 days lifts the mark.</li>
+<ul><li><b>Pin bounty</b> on a target (10 at most): checked every minute while Okay, first on the board, its own three-note sound. If their bounty goes (gone from the board, expired, or you hit their last one), they're marked for deletion and removed 2 days later. A new bounty in those 2 days lifts the mark.</li>
 <li><b>Personal targets</b>: anyone, bounty or not, no cap, added by hand or by ID. Nothing removes them but you. Checked first at the start of every hunt.</li>
 <li><b>Keep as personal</b> moves a pin marked for deletion into Personal targets.</li>
+<li><b>Targets to pin</b> suggests pins: 2 bounties or more and $1m or more stacked, biggest stack and best fair fight match in turn. It reads the board you already have, so it costs no calls.</li>
+<li>Personal targets can carry a <b>note</b>, 80 characters at most, edited with the pencil button.</li>
 <li><b>Hide</b> a section and its fast re-checks stop too. Hidden Fresh means no Fresh sound.</li>
-<li><b>Pin to board</b> puts a section's targets at the top of the board, in the order you pinned them (the number in the circle). The board's filters still apply.</li></ul>
+<li><b>Pin to board</b> puts one section's targets at the top of the board, right after your pinned targets. Pinning another section replaces it. The board's filters still apply.</li></ul>
 <p>The sound for pinned and personal targets plays when a hospital or jail timer runs out. Flights have no timer in the API, so for travelers it plays when a check finds them back in Torn.</p>`)}
 ${this.ch('history', 10, 'How we got here', 'every version taught the next one what not to do.', `
 <ol><li><b>Discord alerts.</b> Two workflows: a Scout every 5 minutes and a Call every 30 seconds, pinging before a target left hospital. Dropped: you only want bounty info when you're about to attack, not all day.</li>
@@ -3938,16 +4259,15 @@ ${this.ch('glossary', 11, 'Glossary', 'most tech words are boring names for simp
 for (const [k, c] of Object.entries(CATALOG)) $('inspKind').add(new Option(c.label, k));
 $('devBtn').addEventListener('click', () => Dev.toggle());
 $('soundBtn').addEventListener('click', () => { Alerts.sound = !Alerts.sound; store.set('sound', Alerts.sound); Alerts.unlock(); Alerts.paint(); if (Alerts.sound) { Alerts.lastSound = 0; Alerts.beep('fresh'); } });
-$('notify').addEventListener('change', e => Alerts.setNotify(e.target.checked));
 document.addEventListener('pointerdown', () => Alerts.unlock(), { capture: true });
 // Activity for the inactivity stop: clicks, typing, scrolling, touch. Not mouse movement: a bumped mouse isn't someone using the tool.
 // Scrolling counts through wheel, touch and keys, not the scroll event: the page fires that by itself when the strips change height.
 for (const ev of ['pointerdown', 'keydown', 'wheel', 'touchstart']) document.addEventListener(ev, () => Idle.touch(), { capture: true, passive: true });
 $('idleResume').addEventListener('click', () => Idle.resume());
-for (const id of ['mineList', 'pinList', 'hvList', 'readyList', 'freshList', 'soonList']) Car.wire(id);
+for (const id of ['mineList', 'pinList', 'hvList', 'readyList', 'freshList', 'soonList', 'tpinList']) Car.wire(id);
 // Sections and pins: Pin to board, Hide, show again, and the pin / personal / keep buttons on cards and rows.
 document.addEventListener('click', e => {
-  const b = e.target.closest('[data-secpin], [data-sechide], [data-secshow], [data-act="pin"], [data-act="mine"], [data-act="keep"]');
+  const b = e.target.closest('[data-secpin], [data-sechide], [data-secshow], [data-act="pin"], [data-act="mine"], [data-act="keep"], [data-act="note"], [data-act="cmore"]');
   if (!b) return;
   if (b.dataset.secpin) return Sec.pin(b.dataset.secpin);
   if (b.dataset.sechide) return Sec.hide(b.dataset.sechide);
@@ -3955,11 +4275,23 @@ document.addEventListener('click', e => {
   const id = Number(b.dataset.id);
   if (!id) return;
   e.preventDefault();
+  // The click that closed the note box must not also press the button under it.
+  if (Date.now() - Note.closedAt < 350 && (b.dataset.act === 'mine' || b.dataset.act === 'note')) return;
   if (b.dataset.act === 'pin') togglePin(id);
-  else if (b.dataset.act === 'mine') toggleMine(id);
+  else if (b.dataset.act === 'mine') toggleMine(id, b);
+  else if (b.dataset.act === 'note') Note.open(id, b, 'edit');
+  else if (b.dataset.act === 'cmore') { if (S.cmore.has(id)) S.cmore.delete(id); else S.cmore.add(id); render(); }
   else keepPin(id);
 });
 $('addBtn').addEventListener('click', addById);
+$('noteIn').addEventListener('input', () => Note.count());
+$('noteIn').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); Note.close('save'); }
+  if (e.key === 'Escape') { e.preventDefault(); Note.close(Note.mode === 'add' ? 'empty' : 'cancel'); }
+});
+// A click anywhere outside the box saves it. So does tabbing away.
+document.addEventListener('pointerdown', e => { if (Note.id && !$('notePop').contains(e.target)) Note.close('save'); }, { capture: true });
+$('notePop').addEventListener('focusout', e => { if (Note.id && !$('notePop').contains(e.relatedTarget)) Note.close('save'); });
 $('addId').addEventListener('keydown', e => { if (e.key === 'Enter') addById(); });
 document.addEventListener('click', e => { const b = e.target.closest('[data-car]'); if (b) Car.step(b.dataset.car, Number(b.dataset.dir)); });
 $('noIdle').addEventListener('change', e => Idle.setNever(e.target.checked));
@@ -3987,7 +4319,7 @@ $('insp').addEventListener('click', e => { if (e.target === $('insp')) $('insp')
 for (const b of document.querySelectorAll('#insp .tab')) b.addEventListener('click', () => Insp.setTab(b.dataset.tab));
 $('inspLearn').checked = store.get('learn', false) === true;
 $('insp').classList.toggle('learn', $('inspLearn').checked);
-$('inspLearn').addEventListener('change', e => { $('insp').classList.toggle('learn', e.target.checked); store.set('learn', e.target.checked); if (Insp.tab === 'catalog') Insp.catalog(); });
+$('inspLearn').addEventListener('change', e => { $('insp').classList.toggle('learn', e.target.checked); store.set('learn', e.target.checked); if (Insp.tab === 'catalog') Insp.catalog(); Insp.learnTop(); });
 for (const id of ['inspSvc', 'inspKind']) $(id).addEventListener('change', () => Insp.rebuild());
 $('inspPause').addEventListener('click', e => {
   Insp.paused = !Insp.paused;
@@ -4024,6 +4356,16 @@ $('boardBtn').addEventListener('click', () => refetchBoard(false));
 
 for (const id of ['fQ', 'fLvlMin', 'fLvlMax', 'fReward', 'fFF', 'fAge']) $(id).addEventListener('input', onFilterInput);
 $('sortSel').addEventListener('change', e => setSort(e.target.value));
+$('fPoop').addEventListener('change', e => { S.f.noPoop = e.target.checked; S.shown = SHOW_STEP; saveFilters(); render(); });
+$('poopAt').value = Poop.at ? shortNum(Poop.at) : '0';
+$('poopAt').addEventListener('input', e => {
+  const v = parseMoney(e.target.value);
+  const bad = Number.isNaN(v);
+  e.target.setAttribute('aria-invalid', bad ? 'true' : 'false');
+  if (bad) return;
+  Poop.set(e.target.value.trim() === '' ? 1e4 : v);
+  syncFilters(); dirty();
+});
 $('clearBtn').addEventListener('click', clearFilters);
 $('ftoggle').addEventListener('click', e => {
   const open = !$('filters').classList.contains('open');
@@ -4062,15 +4404,17 @@ $('board').addEventListener('click', e => {
   if (btn.dataset.act === 'toggle') { if (S.open.has(id)) S.open.delete(id); else S.open.add(id); render(); }
   if (btn.dataset.act === 'check') checkNow(id);
 });
-// Attack and Hit? live in the board and both strips, so one listener covers all three.
+// Attack, Hospitalized, Was it you? and Undo live in the board and every strip, so one listener covers them all.
 document.addEventListener('click', e => {
-  const el = e.target.closest('[data-act="attack"], [data-act="hit"], [data-act="undo"]');
+  const el = e.target.closest('[data-act="attack"], [data-act="hosp"], [data-act="hyes"], [data-act="hno"], [data-act="undo"]');
   if (!el) return;
   const id = Number(el.dataset.id);
   if (!id) return;
-  if (el.dataset.act === 'attack') { S.clicked.add(id); dirty(); }   // the link still opens Torn
-  else if (el.dataset.act === 'undo') undoHit(id);
-  else markHit(id);
+  const a = el.dataset.act;
+  if (a === 'attack') { S.clicked.add(id); dirty(); }   // the link still opens Torn
+  else if (a === 'undo') undoHit(id);
+  else if (a === 'hosp') markHosp(id);
+  else answerHosp(id, a === 'hyes');
 });
 const tbl = $('tbl');
 tbl.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') S.hover = true; });
@@ -4155,7 +4499,7 @@ const Demo = (() => {
 
   return {
     reset() { board = null; people = new Map(); st = new Map(); seed = 20261101; },
-    // A Hit mark in the demo acts like a real hit: the target goes to hospital for 20 to 70 minutes.
+    // Hospitalized in the demo acts like a real hit: the target goes to hospital for 20 to 70 minutes.
     hit(id) { st.set(id, hosp(1200 + rnd() * 3000, 'Hospitalized by Demo hunter')); },
     async torn(path, p) {
       await sleep(60 + rnd() * 140);
@@ -4196,6 +4540,7 @@ const Demo = (() => {
  *  Boot
  * ------------------------------------------------------------------ */
 (function boot() {
+  store.del('notify');   // browser notifications are gone; drop the old setting
   const sp = store.get('spec', null);
   if (sp) { $('specLevel').value = sp.lvl || ''; $('specReward').value = sp.reward || ''; $('specFF').value = sp.ff || ''; }
   { const n = Number(String(sp?.ff ?? '').replace(',', '.')); S.ffScore = Number.isFinite(n) && n >= 1 ? n : 0; }
